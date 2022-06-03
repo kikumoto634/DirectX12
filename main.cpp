@@ -576,15 +576,38 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		
 		///ビューポート
 		//設定コマンド
-		D3D12_VIEWPORT viewport{};
-		viewport.Width = window_width;
-		viewport.Height = window_height;
-		viewport.TopLeftX = 0;
-		viewport.TopLeftY = 0;
-		viewport.MinDepth = 0.0f;
-		viewport.MaxDepth = 1.0f;
+		D3D12_VIEWPORT viewport[2] = {};
+		viewport[0].Width = window_width - window_width/3;
+		viewport[0].Height = window_height - window_height/3;
+		viewport[0].TopLeftX = 0;
+		viewport[0].TopLeftY = 0;
+		viewport[0].MinDepth = 0.0f;
+		viewport[0].MaxDepth = 1.0f;
+
+		viewport[1].Width = window_width/3;
+		viewport[1].Height = window_height - window_height/3;
+		viewport[1].TopLeftX = window_width - window_width/3;
+		viewport[1].TopLeftY = 0;
+		viewport[1].MinDepth = 0.0f;
+		viewport[1].MaxDepth = 1.0f;
+
+		/*viewport[2].Width = window_width - window_width/3;
+		viewport[2].Height = window_height/3;
+		viewport[2].TopLeftX = 0;
+		viewport[2].TopLeftY = window_height - window_height/3;
+		viewport[2].MinDepth = 0.0f;
+		viewport[2].MaxDepth = 1.0f;
+
+		viewport[3].Width = window_width/3;
+		viewport[3].Height = window_height/3;
+		viewport[3].TopLeftX = window_width - window_width/3;
+		viewport[3].TopLeftY = window_height - window_height/3;
+		viewport[3].MinDepth = 0.0f;
+		viewport[3].MaxDepth = 1.0f;*/
+
 		//ビューポート設定コマンドをコマンドリストに積む
-		commandList->RSSetViewports(1, &viewport);
+		commandList->RSSetViewports(2, viewport);
+
 		 
 		///シザー矩形
 		//設定
