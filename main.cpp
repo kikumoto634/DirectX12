@@ -1,5 +1,6 @@
 #include <Windows.h>
 
+//基本(初期化)
 #include <d3d12.h>
 #include <dxgi1_6.h>
 #include <cassert>
@@ -9,6 +10,30 @@
 //アダプタの列挙
 #include <vector>
 #include <string>
+
+//図形描画
+#include <DirectXMath.h>
+using namespace DirectX;
+
+//D3Dコンパイラのインクルード
+#include <d3dcompiler.h>
+#pragma comment(lib, "d3dcompiler.lib")
+
+//キーボード入力
+#define DIRECTINPUT_VERSION 0x0800	//DirectInputのバージョン指定
+#include <dinput.h>
+#pragma comment(lib, "dinput8.lib")
+#pragma comment(lib, "dxguid.lib")
+
+
+/// <summary>
+/// 入力
+/// </summary>
+void InputUpdate(IDirectInputDevice8* devkeyboard, BYTE key[], BYTE oldkey[], int arraysize);
+bool Input(const BYTE key[], int KeysName);
+bool Output(const BYTE key[], int KeysName);
+bool IsInKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName);
+bool IsOutKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName);
 
 /// ウィンドウプロシージャ
 LRESULT WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -239,11 +264,248 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	result = device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
 
 
+	///DirectInPut
+	//初期化 (他入力方法追加でもこのオブジェクトは一つのみ)
+	IDirectInput8* directInput = nullptr;
+	result = DirectInput8Create(
+		w.hInstance, 
+		DIRECTINPUT_VERSION, 
+		IID_IDirectInput8,
+		(void**)&directInput, 
+		nullptr
+	);
+	assert(SUCCEEDED(result));
+
+	//キーボードデバイスの生成 (GUID_Joystick (ジョイステック)、 GUID_SysMouse (マウス))
+	IDirectInputDevice8* keyboard = nullptr;
+	result = directInput->CreateDevice(
+		GUID_SysKeyboard,
+		&keyboard,
+		NULL
+	);
+	assert(SUCCEEDED(result));
+
+	//入力データ形式のセット (入力デバイスの種類によって、あらかじめ何種類か用意する)
+	result = keyboard->SetDataFormat(&c_dfDIKeyboard);	//標準形式
+	assert(SUCCEEDED(result));
+
+	//排他的制御レベルのセット
+	//DISCL_FOREGROUND		画面が手前にある場合のみ入力を受け付ける
+	//DISCL_NONEXCLUSIVE	デバイスをこのアプリだけで専有しない
+	//DISCL_NOWINKEY		Windowsキーを無効にする
+	result = keyboard->SetCooperativeLevel(
+		hwnd,
+		DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY
+	);
+	assert(SUCCEEDED(result));
+
+
+
+
 	/// <summary>
 	/// DirectX12 初期化処理 ここまで
 	/// </summary>
 	
 
+	
+	/// <summary>
+	/// DirectX12 描画初期化処理 ここまで
+	/// </summary>
+	 
+	
+	///頂点データ
+	XMFLOAT3 vertices[] = 
+	{
+		{-0.5f, -0.5f, 0.0f},
+		{-0.5f, +0.5f, 0.0f},
+		{+0.5f, -0.5f, 0.0f},
+	};
+	//頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
+	UINT sizeVB = static_cast<UINT>(sizeof(XMFLOAT3) * _countof(vertices));
+
+
+	///頂点バッファの確保
+	//設定
+	D3D12_HEAP_PROPERTIES heapProp{};			//ヒープ設定
+	heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;		//GPUへの転送
+	//リソース設定
+	D3D12_RESOURCE_DESC resDesc{};				//リソース設定
+	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	resDesc.Width = sizeVB;			//頂点データ全体のサイズ
+	resDesc.Height = 1;
+	resDesc.DepthOrArraySize = 1;
+	resDesc.MipLevels = 1;
+	resDesc.SampleDesc.Count = 1;
+	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+	//生成
+	ID3D12Resource* vertBuff = nullptr;
+	result = device->CreateCommittedResource(
+		&heapProp,				//ヒープ設定
+		D3D12_HEAP_FLAG_NONE,
+		&resDesc,				//リソース設定
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&vertBuff)
+	);
+	assert(SUCCEEDED(result));
+
+
+	///頂点バッファへのデータ転送
+	//GPU状のバッファに対応した仮想メモリ(メインメモリ上)を取得
+	XMFLOAT3* vertMap = nullptr;
+	result = vertBuff->Map(0, nullptr, (void**)&vertMap);
+	assert(SUCCEEDED(result));
+	//全頂点に対して
+	for(int i = 0; i < _countof(vertices); i++)
+	{
+		vertMap[i] = vertices[i];	//座標コピー
+	}
+	//繋がり解除
+	vertBuff->Unmap(0, nullptr);
+
+
+	///頂点バッファビューの作成(GPUに頂点バッファを教えるオブジェクト)
+	//作成
+	D3D12_VERTEX_BUFFER_VIEW vbView{};
+	//GPU仮想アドレス
+	vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();
+	//頂点バッファのサイズ
+	vbView.SizeInBytes = sizeVB;
+	//頂点一つ分のデータサイズ
+	vbView.StrideInBytes = sizeof(XMFLOAT3);
+
+
+	///頂点シェーダーfileの読み込みとコンパイル
+	ID3DBlob* vsBlob = nullptr;			//頂点シェーダーオブジェクト
+	ID3DBlob* psBlob = nullptr;			//ピクセルシェーダーオブジェクト
+	ID3DBlob* errorBlob = nullptr;		//エラーオブジェクト
+
+	//頂点シェーダーの読み込みコンパイル
+	result = D3DCompileFromFile(
+		L"BasicVS.hlsl",		//シェーダーファイル名
+		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,	//インクルード可能にする
+		"main", "vs_5_0",					//エントリーポイント名、シェーダーモデル指定
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,	//デバック用設定
+		0,
+		&vsBlob, &errorBlob);
+	//エラーなら
+	if(FAILED(result)){
+		//errorBlobからエラー内容をstring型にコピー
+		std::string error;
+		error.resize(errorBlob->GetBufferSize());
+
+		std::copy_n((char*)errorBlob->GetBufferPointer(),
+					errorBlob->GetBufferSize(),
+					error.begin());
+		error += "\n";
+		//エラー内容を出力ウィンドウに表示
+		OutputDebugStringA(error.c_str());
+		assert(0);
+	}
+
+	//ピクセルシェーダーの読み込みコンパイル
+	result = D3DCompileFromFile(
+		L"BasicPS.hlsl",		//シェーダーファイル名
+		nullptr,
+		D3D_COMPILE_STANDARD_FILE_INCLUDE,	//インクルード可能にする
+		"main", "ps_5_0",					//エントリーポイント名、シェーダーモデル指定
+		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,	//デバック用設定
+		0,
+		&psBlob, &errorBlob);
+	//エラーなら
+	if(FAILED(result)){
+		//errorBlobからエラー内容をstring型にコピー
+		std::string error;
+		error.resize(errorBlob->GetBufferSize());
+
+		std::copy_n((char*)errorBlob->GetBufferPointer(),
+					errorBlob->GetBufferSize(),
+					error.begin());
+		error += "\n";
+		//エラー内容を出力ウィンドウに表示
+		OutputDebugStringA(error.c_str());
+		assert(0);
+	}
+
+
+	///頂点レイアウト
+	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
+	
+		{
+			"POSITION",										//セマンティック名
+			0,												//同じセマンティック名が複数あるときに使うインデックス
+			DXGI_FORMAT_R32G32B32_FLOAT,					//要素数とビット数を表す (XYZの3つでfloat型なのでR32G32B32_FLOAT)
+			0,												//入力スロットインデックス
+			D3D12_APPEND_ALIGNED_ELEMENT,					//データのオフセット値 (D3D12_APPEND_ALIGNED_ELEMENTだと自動設定)
+			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,		//入力データ種別 (標準はD3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA)
+			0												//一度に描画するインスタンス数
+		},
+	};
+
+
+	///<summmary>
+	///グラフィックスパイプライン
+	///<summary/>
+	
+	//グラフィックスパイプライン設定
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc{};
+	//シェーダー設定
+	pipelineDesc.VS.pShaderBytecode = vsBlob->GetBufferPointer();
+	pipelineDesc.VS.BytecodeLength  = vsBlob->GetBufferSize();
+	pipelineDesc.PS.pShaderBytecode = psBlob->GetBufferPointer();
+	pipelineDesc.PS.BytecodeLength  = psBlob->GetBufferSize();
+	//サンプルマスク設定
+	pipelineDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;	//標準設定
+	//ラスタライザ設定
+	pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;	//カリングしない
+	pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;	//ポリゴン内塗りつぶし
+	pipelineDesc.RasterizerState.DepthClipEnable = true;			//深度クリッピングを有効に
+	//ブレンドステート
+	pipelineDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;	//RGBAすべてのチャンネルを描画
+	//頂点レイアウト設定
+	pipelineDesc.InputLayout.pInputElementDescs = inputLayout;
+	pipelineDesc.InputLayout.NumElements = _countof(inputLayout);
+	//図形の形状設定
+	pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	//その他設定
+	pipelineDesc.NumRenderTargets = 1;		//描画対象は一つ
+	pipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;	//0~255指定のRGBA
+	pipelineDesc.SampleDesc.Count = 1;	//1ピクセルにつき1回サンプリング
+
+
+	//ルートシグネチャ (テクスチャ、点数バッファなどシェーダーに渡すリソース情報をまとめたオブジェクト)
+	//ルートシグネチャの生成
+	ID3D12RootSignature* rootSignature;
+	//設定
+	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
+	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	//シリアライズ
+	ID3DBlob* rootSigBlob = nullptr;
+	result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &errorBlob);
+	assert(SUCCEEDED(result));
+	result = device->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
+	assert(SUCCEEDED(result));
+	rootSigBlob->Release();
+	//パイプラインにルートシグネチャをセット
+	pipelineDesc.pRootSignature = rootSignature;
+
+	//パイプラインステート (グラフィックスパイプラインの設定をまとめたのがパイプラインステートオブジェクト(PSO))
+	//パイプラインステートの生成
+	ID3D12PipelineState* pipelineState = nullptr;
+	result = device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
+	assert(SUCCEEDED(result));
+
+
+
+	/// <summary>
+	/// DirectX12 描画初期化処理 ここまで
+	/// </summary>
+
+	//全キーの入力状態を取得する
+	const int KeyNum = 256;
+	BYTE key[KeyNum] = {};
+	BYTE oldkeys[KeyNum] = {};
 
 	/// <summary>
 	/// ゲームループ
@@ -268,6 +530,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// DirectX12 毎フレーム処理 ここから
 		/// </summary>
 
+
+		///キーボード情報の取得開始
+		InputUpdate(keyboard, key, oldkeys, sizeof(key));
 
 
 		///リソースバリア01
@@ -294,10 +559,57 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		//3. 画面クリア
 		FLOAT clearColor[] = {0.1f, 0.25f, 0.5f, 0.0f};
 		commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+		if(Input(key, DIK_SPACE))
+		{
+			FLOAT clearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
+			commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
+		}
+
 
 
 		///描画コマンド
 		//4. 描画コマンド ここから
+
+		///<summary>
+		///	グラフィックスコマンド
+		///<summary/>
+		
+		///ビューポート
+		//設定コマンド
+		D3D12_VIEWPORT viewport{};
+		viewport.Width = window_width;
+		viewport.Height = window_height;
+		viewport.TopLeftX = 0;
+		viewport.TopLeftY = 0;
+		viewport.MinDepth = 0.0f;
+		viewport.MaxDepth = 1.0f;
+		//ビューポート設定コマンドをコマンドリストに積む
+		commandList->RSSetViewports(1, &viewport);
+		 
+		///シザー矩形
+		//設定
+		D3D12_RECT scissorRect{};
+		scissorRect.left = 0;
+		scissorRect.right = scissorRect.left + window_width;
+		scissorRect.top = 0;
+		scissorRect.bottom = scissorRect.top + window_height;
+		//シザー矩形設定コマンドを、コマンドリストに積む
+		commandList->RSSetScissorRects(1, &scissorRect);
+
+		///パイプラインステートとルートシグネチャの設定コマンド
+		commandList->SetPipelineState(pipelineState);
+		commandList->SetGraphicsRootSignature(rootSignature);
+
+		///プリミティブ形状
+		//プリミティブ形状の設定コマンド
+		commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+		///頂点バッファビュー
+		//頂点バッファビューの設定コマンド
+		commandList->IASetVertexBuffers(0, 1, &vbView);
+
+		///描画コマンド
+		commandList->DrawInstanced(_countof(vertices), 1, 0, 0);
 
 
 		//4. 描画コマンド ここまで
@@ -349,4 +661,44 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	}
 
 	///ウィンドウクラスを登録解除
+}
+
+void InputUpdate(IDirectInputDevice8* devkeyboard, BYTE key[], BYTE oldkey[], int arraysize)
+{
+	devkeyboard->Acquire();
+	for(int i = 0; i < arraysize; ++i) oldkey[i] = key[i];
+
+	devkeyboard->GetDeviceState(sizeof(BYTE) * arraysize, key);
+}
+bool Input(const BYTE key[], int KeysName)
+{
+	if(key[KeysName])
+	{
+		return true;
+	}
+	return false;
+}
+bool Output(const BYTE key[], int KeysName)
+{
+	if(!key[KeysName])
+	{
+		return true;
+	}
+	return false;
+}
+bool IsInKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName)
+{
+	if(key[KeysName] && !oldkey[KeysName])
+	{
+		return true;
+	}
+	return false;
+}
+bool IsOutKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName)
+{
+	if(!key[KeysName] && oldkey[KeysName])
+	{
+		return true;
+	}
+	return false;
 }
