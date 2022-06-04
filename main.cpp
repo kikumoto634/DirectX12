@@ -26,6 +26,11 @@ using namespace DirectX;
 #pragma comment(lib, "dxguid.lib")
 
 
+//定数バッファ用データ構造体(マテリアル)
+struct ConstBufferDataMaterial{
+	XMFLOAT4 color;	//色(RGBA)
+};
+
 /// <summary>
 /// 入力
 /// </summary>
@@ -309,7 +314,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	
 	/// <summary>
-	/// DirectX12 描画初期化処理 ここまで
+	/// DirectX12 描画初期化処理 ここから
 	/// </summary>
 	 
 	
@@ -325,7 +330,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 	///頂点バッファの確保
-	//設定
+	//ヒープ設定
 	D3D12_HEAP_PROPERTIES heapProp{};			//ヒープ設定
 	heapProp.Type = D3D12_HEAP_TYPE_UPLOAD;		//GPUへの転送
 	//リソース設定
@@ -444,6 +449,54 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	};
 
 
+
+	///定数バッファ
+	//生成用の設定
+	//ヒープ設定
+	D3D12_HEAP_PROPERTIES cbHeapProp{};
+	cbHeapProp.Type = D3D12_HEAP_TYPE_UPLOAD;	//GPUへの転送用
+	//リソース設定
+	D3D12_RESOURCE_DESC cbResourceDesc{};
+	cbResourceDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	cbResourceDesc.Width = (sizeof(ConstBufferDataMaterial) + 0xff) & ~0xff;	//256バイトアライメント
+	cbResourceDesc.Height = 1;
+	cbResourceDesc.DepthOrArraySize = 1;
+	cbResourceDesc.MipLevels = 1;
+	cbResourceDesc.SampleDesc.Count = 1;
+	cbResourceDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	//生成
+	ID3D12Resource* constBufferMaterial = nullptr;
+	result = device->CreateCommittedResource(
+		&cbHeapProp,			//ヒープ設定
+		D3D12_HEAP_FLAG_NONE,
+		&cbResourceDesc,		//リソース設定
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&constBufferMaterial)
+	);
+	assert(SUCCEEDED(result));
+
+	///定数バッファのマッピング(GPUのVRAMが、CPUのメインメモリに連動)
+	ConstBufferDataMaterial* constMapMaterial = nullptr;
+	result = constBufferMaterial->Map(0, nullptr, (void**)&constMapMaterial);
+	assert(SUCCEEDED(result));
+	
+	///定数バッファへのデータ転送
+	//値を書き込むと自動的に転送される
+	XMFLOAT4 color = {1.0f, 0.0f, 0.0f, 1.0f};
+	constMapMaterial->color = color;	//RGBAで半透明の赤
+
+
+	///ルートパラメータ
+	//設定
+	D3D12_ROOT_PARAMETER rootParam = {};
+	rootParam.ParameterType = D3D12_ROOT_PARAMETER_TYPE_CBV;	//定数バッファビュー
+	rootParam.Descriptor.ShaderRegister = 0;					//定数バッファ番号
+	rootParam.Descriptor.RegisterSpace = 0;						//デフォルト値
+	rootParam.ShaderVisibility = D3D12_SHADER_VISIBILITY_ALL;	//すべてのシェーダーから見える
+
+
 	///<summmary>
 	///グラフィックスパイプライン
 	///<summary/>
@@ -491,6 +544,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	//設定
 	D3D12_ROOT_SIGNATURE_DESC rootSignatureDesc{};
 	rootSignatureDesc.Flags = D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT;
+	rootSignatureDesc.pParameters = &rootParam;	//ルートパラメータの先頭アドレス
+	rootSignatureDesc.NumParameters = 1;		//ルートパラメータ数
 	//シリアライズ
 	ID3DBlob* rootSigBlob = nullptr;
 	result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &errorBlob);
@@ -512,6 +567,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	/// <summary>
 	/// DirectX12 描画初期化処理 ここまで
 	/// </summary>
+	 
+
 
 	//全キーの入力状態を取得する
 	const int KeyNum = 256;
@@ -541,10 +598,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// DirectX12 毎フレーム処理 ここから
 		/// </summary>
 
-
 		///キーボード情報の取得開始
 		InputUpdate(keyboard, key, oldkeys, sizeof(key));
 
+		if(constMapMaterial->color.y <= 1.0f)
+		{
+			constMapMaterial->color.y += 0.01f;
+		}
 
 		///リソースバリア01
 		//バックバッファの番号を取得(ダブルバッファなので 0 or 1)
@@ -613,6 +673,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		///頂点バッファビュー
 		//頂点バッファビューの設定コマンド
 		commandList->IASetVertexBuffers(0, 1, &vbView);
+
+		///定数バッファビュー
+		//定数バッファビュー(CBV)の設定コマンド
+		commandList->SetGraphicsRootConstantBufferView(0, constBufferMaterial->GetGPUVirtualAddress());
 
 		///描画コマンド
 		commandList->DrawInstanced(_countof(vertices), 1, 0, 0);
