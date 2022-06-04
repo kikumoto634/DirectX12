@@ -462,7 +462,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;	//ポリゴン内塗りつぶしか
 	pipelineDesc.RasterizerState.DepthClipEnable = true;			//深度クリッピングを有効に
 	//ブレンドステート
-	pipelineDesc.BlendState.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;	//RGBAすべてのチャンネルを描画
+	//レンダーターゲットのブレンド設定
+	D3D12_RENDER_TARGET_BLEND_DESC& blenddesc = pipelineDesc.BlendState.RenderTarget[0];
+	blenddesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;	//RGBAすべてのチャンネルを描画
+	//共通設定
+	blenddesc.BlendEnable = true;						//ブレンドを有効にする
+	blenddesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;		//加算
+	blenddesc.SrcBlendAlpha = D3D12_BLEND_ONE;			//ソースの値を100% 使う	(ソースカラー			 ： 今から描画しようとしている色)
+	blenddesc.DestBlendAlpha = D3D12_BLEND_ZERO;		//デストの値を  0% 使う	(デスティネーションカラー： 既にキャンバスに描かれている色)
+	//各種設定
+	blenddesc.BlendOp = D3D12_BLEND_OP_ADD;	//設定
+	blenddesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;			//ソースの値を 何% 使う
+	blenddesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;	//デストの値を 何% 使う
 	//頂点レイアウト設定
 	pipelineDesc.InputLayout.pInputElementDescs = inputLayout;
 	pipelineDesc.InputLayout.NumElements = _countof(inputLayout);
@@ -559,11 +570,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		//3. 画面クリア
 		FLOAT clearColor[] = {0.1f, 0.25f, 0.5f, 0.0f};
 		commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-		if(Input(key, DIK_SPACE))
-		{
-			FLOAT clearColor[] = {0.0f, 0.0f, 0.0f, 0.0f};
-			commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
-		}
 
 
 
