@@ -723,17 +723,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		//単位行列
 		constMapTransform->mat = XMMatrixIdentity();
 
-		//(1280, 720)への座標変換
-		//{2/1280,		 0, 0, 0},
-		//{		0,	-2/720, 0, 0},
-		//{		0,		 0, 0, 0},
-		//{	   -1,		 1, 0, 1}.
-		//横幅・縦幅
-		constMapTransform->mat.r[0].m128_f32[0] = 2.0f/ 1280.0f;
-		constMapTransform->mat.r[1].m128_f32[1] = -2.0f/ 720.0f;
-		//正規化デバイス座標系(左上)
-		constMapTransform->mat.r[3].m128_f32[0]= -1.0f;
-		constMapTransform->mat.r[3].m128_f32[1]= 1.0f;
+		//平行投影
+		constMapTransform->mat = XMMatrixOrthographicOffCenterLH(
+			0.0f	, 1280.0f,
+			720.0f	, 0.0f,
+			0.0f	, 1.0f
+		);
 	}
 
 
