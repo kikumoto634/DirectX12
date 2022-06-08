@@ -336,11 +336,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	///頂点データ
 	Vertex vertices[] = 
 	{
-		{{+0.0f,	+100.0f, 0.0f}, {0.0f, 1.0f}},	//左下
-		{{+0.0f,	+0.0f,	 0.0f}, {0.0f, 0.0f}},	//左上
+		{{-50.0f, -50.0f, 50.0f}  , {0.0f, 1.0f}},	//左下
+		{{-50.0f, +50.0f,	50.0f}, {0.0f, 0.0f}},	//左上
 
-		{{+100.0f,	+100.0f, 0.0f}, {1.0f, 1.0f}},	//右下
-		{{+100.0f,	+0.0f,	 0.0f}, {1.0f, 0.0f}},	//右上
+		{{+50.0f, -50.0f, 50.0f}  , {1.0f, 1.0f}},	//右下
+		{{+50.0f, +50.0f,	50.0f}, {1.0f, 0.0f}},	//右上
 	};
 	//頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
 	UINT sizeVB = static_cast<UINT>(sizeof(vertices[0]) * _countof(vertices));
@@ -723,12 +723,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		//単位行列
 		constMapTransform->mat = XMMatrixIdentity();
 
-		//平行投影
-		constMapTransform->mat = XMMatrixOrthographicOffCenterLH(
-			0.0f	, 1280.0f,
-			720.0f	, 0.0f,
-			0.0f	, 1.0f
+		//透視投影
+		XMMATRIX matProjection = XMMatrixPerspectiveFovLH(
+			XMConvertToRadians(45.0f),	//上下画角45°
+			(float)1280 / 720,			//aspect比(画面横幅/画面縦幅)
+			0.1f, 1000.0f				//前端、奥端
 		);
+
+		//定数バッファに転送
+		constMapTransform->mat = matProjection;
 	}
 
 
