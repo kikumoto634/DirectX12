@@ -336,11 +336,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	///頂点データ
 	Vertex vertices[] = 
 	{
-		{{-50.0f, -50.0f, 50.0f}  , {0.0f, 1.0f}},	//左下
-		{{-50.0f, +50.0f,	50.0f}, {0.0f, 0.0f}},	//左上
+		{{-50.0f, -50.0f, 0.0f}, {0.0f, 1.0f}},	//左下
+		{{-50.0f, +50.0f, 0.0f}, {0.0f, 0.0f}},	//左上
 
-		{{+50.0f, -50.0f, 50.0f}  , {1.0f, 1.0f}},	//右下
-		{{+50.0f, +50.0f,	50.0f}, {1.0f, 0.0f}},	//右上
+		{{+50.0f, -50.0f, 0.0f}, {1.0f, 1.0f}},	//右下
+		{{+50.0f, +50.0f, 0.0f}, {1.0f, 0.0f}},	//右上
 	};
 	//頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
 	UINT sizeVB = static_cast<UINT>(sizeof(vertices[0]) * _countof(vertices));
@@ -690,6 +690,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	ID3D12Resource* constBuffTransform = nullptr;
 	//マッピング用ポインタ
 	ConstBufferDataTransform* constMapTransform = nullptr;
+	
+	//透視投影
+	XMMATRIX matProjection;
+	//ビュー変換行列
+	XMMATRIX matView;
+	XMFLOAT3 eye;	//視点座標
+	XMFLOAT3 target;//注視点座標
+	XMFLOAT3 up;	//上方向ベクトル
 	{
 		//設定
 		//ヒープ
@@ -724,14 +732,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		constMapTransform->mat = XMMatrixIdentity();
 
 		//透視投影
-		XMMATRIX matProjection = XMMatrixPerspectiveFovLH(
+		matProjection = XMMatrixPerspectiveFovLH(
 			XMConvertToRadians(45.0f),	//上下画角45°
 			(float)1280 / 720,			//aspect比(画面横幅/画面縦幅)
 			0.1f, 1000.0f				//前端、奥端
 		);
 
+		//ビュー変換行列
+		matView;
+		eye = {0,0,-100};	//視点座標
+		target = {0,0,0};	//注視点座標
+		up = {0,1,0};		//上方向ベクトル
+		matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+
 		//定数バッファに転送
-		constMapTransform->mat = matProjection;
+		constMapTransform->mat = matView * matProjection;
 	}
 
 
@@ -851,6 +866,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	/// </summary>
 	 
 
+	float angle = 0.0f;//カメラの回転角
+
 
 	//全キーの入力状態を取得する
 	const int KeyNum = 256;
@@ -882,6 +899,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 		///キーボード情報の取得開始
 		InputUpdate(keyboard, key, oldkeys, sizeof(key));
+		if(key[DIK_D] || key[DIK_A])
+		{
+			if(key[DIK_D])		{angle += XMConvertToRadians(1.0f);}
+			else if(key[DIK_A])	{angle -= XMConvertToRadians(1.0f);}
+
+			//angleラジアンだけy軸まわりに回転、半径は-100
+			eye.x = -100 * sinf(angle);
+			eye.z = -100 * cosf(angle);
+			matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+		
+			//定数バッファに転送
+			constMapTransform->mat = matView * matProjection;
+		}
+
+
 
 
 		///リソースバリア01
@@ -1021,8 +1053,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// </summary>
 
 	}
-
 	///ウィンドウクラスを登録解除
+	UnregisterClass(w.lpszClassName, w.hInstance);
+
+	return 0;
 }
 
 void InputUpdate(IDirectInputDevice8* devkeyboard, BYTE key[], BYTE oldkey[], int arraysize)
