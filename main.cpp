@@ -413,9 +413,57 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		{{-5.0f, +5.0f, +5.0f}, {}, {1.0f, 1.0f}},
 		{{+5.0f, +5.0f, +5.0f}, {}, {1.0f, 0.0f}},
 	};
+
+	///インデックスデータ
+	uint16_t indices[] = 
+	{
+		//前
+		0, 1, 2,
+		2, 1, 3,
+		//後
+		5, 4, 6,
+		5, 6, 7,
+		//左
+		8, 9, 10,
+		10, 9, 11,
+		//右
+		13, 12, 14,
+		13, 14, 15,
+		//下
+		16, 17, 18,
+		18, 17, 19,
+		//上
+		21, 20, 22,
+		21, 22, 23,
+	};
+
+	///法線計算
+	for(int i = 0; i < _countof(vertices)/3; i++)
+	{//三角形一つごとに計算していく
+		//三角形にインデックスを取り出して、一時的な変数を入れる
+		uint16_t index0 = indices[i*3+0];
+		uint16_t index1 = indices[i*3+1];
+		uint16_t index2 = indices[i*3+2];
+		//三角形を構成する頂点座標をベクトルに代入
+		XMVECTOR p0 = XMLoadFloat3(&vertices[index0].pos);
+		XMVECTOR p1 = XMLoadFloat3(&vertices[index1].pos);
+		XMVECTOR p2 = XMLoadFloat3(&vertices[index2].pos);
+		//p0->p1ベクトル、p0->p2ベクトルの計算	(ベクトル減算)
+		XMVECTOR v1 = XMVectorSubtract(p1,p0);
+		XMVECTOR v2 = XMVectorSubtract(p2,p0);
+		//外積は両方から垂直なベクトル
+		XMVECTOR normal = XMVector3Cross(v1,v2);
+		//正規化(長さを1にする)
+		normal = XMVector3Normalize(normal);
+		//求めた法線を頂点データに代入
+		XMStoreFloat3(&vertices[index0].normal,normal);
+		XMStoreFloat3(&vertices[index1].normal,normal);
+		XMStoreFloat3(&vertices[index2].normal,normal);
+	}
+
+
 	//頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
 	UINT sizeVB = static_cast<UINT>(sizeof(vertices[0]) * _countof(vertices));
-
 
 	///頂点バッファの確保
 	//ヒープ設定
@@ -469,28 +517,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 	///頂点インデックス
-	//インデックスデータ
-	uint16_t indices[] = 
-	{
-		//前
-		0, 1, 2,
-		2, 1, 3,
-		//後
-		5, 4, 6,
-		5, 6, 7,
-		//左
-		8, 9, 10,
-		10, 9, 11,
-		//右
-		13, 12, 14,
-		13, 14, 15,
-		//下
-		16, 17, 18,
-		18, 17, 19,
-		//上
-		21, 20, 22,
-		21, 22, 23,
-	};
 	//インデックスデータ全体のサイズ
 	UINT sizeIB = static_cast<UINT>(sizeof(uint16_t) * _countof(indices));
 
