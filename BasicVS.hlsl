@@ -1,6 +1,6 @@
 #include "Basic.hlsli"
 
-VSOutput main( float4 pos : POSITION , float2 uv : TEXCOORD)
+VSOutput main( float4 pos : POSITION , float3 normal : NORMAL, float2 uv : TEXCOORD)
 {
 	VSOutput output;	//ピクセルシェーダーに渡す値
 	//Scale
@@ -9,6 +9,7 @@ VSOutput main( float4 pos : POSITION , float2 uv : TEXCOORD)
 	pos = pos + float4(0.0f, 0.0f, 0.0f, 0);
 
 	output.svpos = mul(mat,pos);
+	output.normal = normal;
 	output.uv = uv;
 
 	return output;

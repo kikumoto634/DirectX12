@@ -33,6 +33,7 @@ using namespace DirectX;
 struct Vertex
 {
 	XMFLOAT3 pos;	//xyz座標
+	XMFLOAT3 normal;//法線ベクトル
 	XMFLOAT2 uv;	//uv座標
 };
 
@@ -382,35 +383,35 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	Vertex vertices[] = 
 	{
 		//前
-		{{-5.0f, -5.0f, -5.0f}, {0.0f, 1.0f}},
-		{{-5.0f, +5.0f, -5.0f}, {0.0f, 0.0f}},
-		{{+5.0f, -5.0f, -5.0f}, {1.0f, 1.0f}},
-		{{+5.0f, +5.0f, -5.0f}, {1.0f, 0.0f}},
+		{{-5.0f, -5.0f, -5.0f}, {}, {0.0f, 1.0f}},
+		{{-5.0f, +5.0f, -5.0f}, {}, {0.0f, 0.0f}},
+		{{+5.0f, -5.0f, -5.0f}, {}, {1.0f, 1.0f}},
+		{{+5.0f, +5.0f, -5.0f}, {}, {1.0f, 0.0f}},
 		//後
-		{{-5.0f, -5.0f, +5.0f}, {0.0f, 1.0f}},
-		{{-5.0f, +5.0f, +5.0f}, {0.0f, 0.0f}},
-		{{+5.0f, -5.0f, +5.0f}, {1.0f, 1.0f}},
-		{{+5.0f, +5.0f, +5.0f}, {1.0f, 0.0f}},
+		{{-5.0f, -5.0f, +5.0f}, {}, {0.0f, 1.0f}},
+		{{-5.0f, +5.0f, +5.0f}, {}, {0.0f, 0.0f}},
+		{{+5.0f, -5.0f, +5.0f}, {}, {1.0f, 1.0f}},
+		{{+5.0f, +5.0f, +5.0f}, {}, {1.0f, 0.0f}},
 		//左
-		{{-5.0f, -5.0f, -5.0f}, {0.0f, 1.0f}},
-		{{-5.0f, -5.0f, +5.0f}, {0.0f, 0.0f}},
-		{{-5.0f, +5.0f, -5.0f}, {1.0f, 1.0f}},
-		{{-5.0f, +5.0f, +5.0f}, {1.0f, 0.0f}},
+		{{-5.0f, -5.0f, -5.0f}, {}, {0.0f, 1.0f}},
+		{{-5.0f, -5.0f, +5.0f}, {}, {0.0f, 0.0f}},
+		{{-5.0f, +5.0f, -5.0f}, {}, {1.0f, 1.0f}},
+		{{-5.0f, +5.0f, +5.0f}, {}, {1.0f, 0.0f}},
 		//右
-		{{+5.0f, -5.0f, -5.0f}, {0.0f, 1.0f}},
-		{{+5.0f, -5.0f, +5.0f}, {0.0f, 0.0f}},
-		{{+5.0f, +5.0f, -5.0f}, {1.0f, 1.0f}},
-		{{+5.0f, +5.0f, +5.0f}, {1.0f, 0.0f}},
+		{{+5.0f, -5.0f, -5.0f}, {}, {0.0f, 1.0f}},
+		{{+5.0f, -5.0f, +5.0f}, {}, {0.0f, 0.0f}},
+		{{+5.0f, +5.0f, -5.0f}, {}, {1.0f, 1.0f}},
+		{{+5.0f, +5.0f, +5.0f}, {}, {1.0f, 0.0f}},
 		//下
-		{{-5.0f, -5.0f, -5.0f}, {0.0f, 1.0f}},
-		{{+5.0f, -5.0f, -5.0f}, {0.0f, 0.0f}},
-		{{-5.0f, -5.0f, +5.0f}, {1.0f, 1.0f}},
-		{{+5.0f, -5.0f, +5.0f}, {1.0f, 0.0f}},
+		{{-5.0f, -5.0f, -5.0f}, {}, {0.0f, 1.0f}},
+		{{+5.0f, -5.0f, -5.0f}, {}, {0.0f, 0.0f}},
+		{{-5.0f, -5.0f, +5.0f}, {}, {1.0f, 1.0f}},
+		{{+5.0f, -5.0f, +5.0f}, {}, {1.0f, 0.0f}},
 		//上
-		{{-5.0f, +5.0f, -5.0f}, {0.0f, 1.0f}},
-		{{+5.0f, +5.0f, -5.0f}, {0.0f, 0.0f}},
-		{{-5.0f, +5.0f, +5.0f}, {1.0f, 1.0f}},
-		{{+5.0f, +5.0f, +5.0f}, {1.0f, 0.0f}},
+		{{-5.0f, +5.0f, -5.0f}, {}, {0.0f, 1.0f}},
+		{{+5.0f, +5.0f, -5.0f}, {}, {0.0f, 0.0f}},
+		{{-5.0f, +5.0f, +5.0f}, {}, {1.0f, 1.0f}},
+		{{+5.0f, +5.0f, +5.0f}, {}, {1.0f, 0.0f}},
 	};
 	//頂点データ全体のサイズ = 頂点データ一つ分のサイズ * 頂点データの要素数
 	UINT sizeVB = static_cast<UINT>(sizeof(vertices[0]) * _countof(vertices));
@@ -473,21 +474,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	{
 		//前
 		0, 1, 2,
-		1, 2, 3,
+		2, 1, 3,
 		//後
-		4, 5, 6,
+		5, 4, 6,
 		5, 6, 7,
 		//左
 		8, 9, 10,
-		9, 10, 11,
+		10, 9, 11,
 		//右
-		12, 13, 14,
+		13, 12, 14,
 		13, 14, 15,
 		//下
 		16, 17, 18,
-		17, 18, 19,
+		18, 17, 19,
 		//上
-		20, 21, 22,
+		21, 20, 22,
 		21, 22, 23,
 	};
 	//インデックスデータ全体のサイズ
@@ -602,6 +603,15 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 			D3D12_APPEND_ALIGNED_ELEMENT,					//データのオフセット値 (D3D12_APPEND_ALIGNED_ELEMENTだと自動設定)
 			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,		//入力データ種別 (標準はD3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA)
 			0												//一度に描画するインスタンス数
+		},
+		{//法線ベクトル
+			"NORMAL",
+			0,
+			DXGI_FORMAT_R32G32B32_FLOAT,
+			0,
+			D3D12_APPEND_ALIGNED_ELEMENT,
+			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
+			0
 		},
 		{//uv座標
 			"TEXCOORD",
@@ -895,7 +905,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	//サンプルマスク設定
 	pipelineDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;	//標準設定
 	//ラスタライザ設定
-	pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;	//カリングしない
+	pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;	//背面カリング
 	pipelineDesc.RasterizerState.FillMode = D3D12_FILL_MODE_SOLID;	//ポリゴン内塗りつぶしか
 	pipelineDesc.RasterizerState.DepthClipEnable = true;			//深度クリッピングを有効に
 	//ブレンドステート
