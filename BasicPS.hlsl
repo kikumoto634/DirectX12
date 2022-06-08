@@ -5,5 +5,9 @@ SamplerState smp : register(s0);		//0番スロットに設定されたサンプラー
 
 float4 main(VSOutput input) : SV_TARGET
 {
-	return float4(tex.Sample(smp, input.uv)) *float4(1.0f, 1.0f, 1.0f, 1.0f);
+	//テクスチャマッピング
+	//return float4(tex.Sample(smp, input.uv)) *float4(1.0f, 1.0f, 1.0f, 1.0f);
+
+	//色指定
+	return float4(1.0f, 1.0f, 1.0f, 1.0f);
 }
