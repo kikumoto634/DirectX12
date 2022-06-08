@@ -8,7 +8,7 @@ VSOutput main( float4 pos : POSITION , float2 uv : TEXCOORD)
 	//Trans
 	pos = pos + float4(0.0f, 0.0f, 0.0f, 0);
 
-	output.svpos = pos;
+	output.svpos = mul(mat,pos);
 	output.uv = uv;
 
 	return output;
