@@ -438,7 +438,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	};
 
 	///法線計算
-	for(int i = 0; i < _countof(vertices)/3; i++)
+	for(int i = 0; i < _countof(indices)/3; i++)
 	{//三角形一つごとに計算していく
 		//三角形にインデックスを取り出して、一時的な変数を入れる
 		uint16_t index0 = indices[i*3+0];
@@ -705,7 +705,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		ScratchImage scratchImg{};
 		//WICテクスチャデータのロード
 		result = LoadFromWICFile(
-			L"Resources/Morley_Idel.png",
+			L"Resources/Texture.jpg",
 			WIC_FLAGS_NONE,
 			&metadata, scratchImg);
 
