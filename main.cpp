@@ -47,6 +47,24 @@ struct ConstBufferDataTransform{
 	XMMATRIX mat;	//3D変換行列
 };
 
+//3Dオブジェクト型
+struct Object3d
+{
+	//定数バッファ(行列用)
+	ID3D12Resource* constBuffTransform;
+	//定数バッファマップ(行列用)
+	ConstBufferDataTransform* constMapTransform;
+	//アフィン変換
+	XMFLOAT3 scale = {1.0f, 1.0f, 1.0f};
+	XMFLOAT3 rotation = {0.0f, 0.0f, 0.0f};
+	XMFLOAT3 position = {0.0f, 0.0f, 0.0f};
+	//ワールド変換行列
+	XMMATRIX matWorld;
+	//親オブジェクトへのポインタ
+	Object3d* parent = nullptr;
+};
+
+
 
 /// <summary>
 /// 入力
@@ -56,6 +74,11 @@ bool Input(const BYTE key[], int KeysName);
 bool Output(const BYTE key[], int KeysName);
 bool IsInKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName);
 bool IsOutKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName);
+
+//3Dオブジェクト初期化
+void InitializeObject3d(Object3d* object, ID3D12Device* device);
+void UpdateObject3d(Object3d* object, XMMATRIX&matView, XMMATRIX& matProjection);
+void DrawObject3d(Object3d* object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW& vbView, D3D12_INDEX_BUFFER_VIEW& ibView, UINT numIndices);
 
 /// ウィンドウプロシージャ
 LRESULT WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
@@ -1319,4 +1342,76 @@ bool IsOutKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName)
 		return true;
 	}
 	return false;
+}
+
+void InitializeObject3d(Object3d *object, ID3D12Device *device)
+{
+	HRESULT result;
+	//定数バッファのヒープ設定
+	D3D12_HEAP_PROPERTIES heapProp{};
+	heapProp.Type =D3D12_HEAP_TYPE_UPLOAD;
+	//定数バッファのリソース設定
+	D3D12_RESOURCE_DESC resDesc{};
+	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
+	resDesc.Width = (sizeof(ConstBufferDataTransform)+ 0xff) & ~0xff;
+	resDesc.Height = 1;
+	resDesc.DepthOrArraySize = 1;
+	resDesc.MipLevels = 1;
+	resDesc.SampleDesc.Count = 1;
+	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
+
+	//定数バッファの生成
+	result = device->CreateCommittedResource(
+		&heapProp,
+		D3D12_HEAP_FLAG_NONE,
+		&resDesc,
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&object->constBuffTransform));
+	assert(SUCCEEDED(result));
+
+	//定数バッファのマッピング
+	result = object->constBuffTransform->Map(0,nullptr, (void**)&object->constMapTransform);
+	assert(SUCCEEDED(result));
+}
+
+void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection)
+{
+	XMMATRIX matScale, matRot, matTrans;
+
+	//スケール、回転、平行移動行列の計算
+	matScale = XMMatrixScaling(object->scale.x, object->scale.y, object->scale.z);
+	matRot = XMMatrixIdentity();
+	matRot *= XMMatrixRotationZ(object->rotation.z);
+	matRot *= XMMatrixRotationX(object->rotation.x);
+	matRot *= XMMatrixRotationY(object->rotation.y);
+	matTrans = XMMatrixTranslation(object->position.x, object->position.y, object->position.y);
+
+	//ワールド行列の合成
+	object->matWorld = XMMatrixIdentity();	//変形をリセット
+	object->matWorld *= matScale;			//ワールド行列にスケーリングを反映
+	object->matWorld *= matRot;				//ワールド行列に回転を反映
+	object->matWorld *= matTrans;			//ワールド行列に平行移動を反映
+
+	//親オブジェクトの存在
+	if(object->parent != nullptr)
+	{
+		//親オブジェクトのワールド行列を掛ける
+		object->matWorld += object->parent->matWorld;
+	}
+
+	//定数バッファへのデータ転送
+	object->constMapTransform->mat = object->matWorld * matView *matProjection;
+}
+
+void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList *commandList, D3D12_VERTEX_BUFFER_VIEW &vbView, D3D12_INDEX_BUFFER_VIEW &ibView, UINT numIndices)
+{
+	//頂点バッファの設定
+	commandList->IASetVertexBuffers(0, 1, &vbView);
+	//インデックスバッファの設定
+	commandList->IASetIndexBuffer(&ibView);
+	//定数バッファビュー(CBVの設定コマンド)
+	commandList->SetGraphicsRootConstantBufferView(2, object->constBuffTransform->GetGPUVirtualAddress());
+	//描画コマンド
+	commandList->DrawIndexedInstanced(numIndices,1, 0, 0, 0);
 }
