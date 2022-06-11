@@ -1259,6 +1259,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 		//SRVヒープの設定コマンド	//１番目はSV
 		commandList->SetDescriptorHeaps(1, &srvHeap);
+
 		//SRVヒープの先頭ハンドルを取得(SRVをさしているはず)
 		D3D12_GPU_DESCRIPTOR_HANDLE srvGpuHandle = srvHeap->GetGPUDescriptorHandleForHeapStart();
 		
@@ -1268,9 +1269,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 			srvGpuHandle = srvHeap->GetGPUDescriptorHandleForHeapStart();
 			commandList->SetGraphicsRootDescriptorTable(1, srvGpuHandle);
 		}
-
 		//2枚目を指し示すようにしたSRVのハンドルをルートパラメータ1番に設定
-		if(IsTexture)
+		else if(IsTexture)
 		{
 			srvGpuHandle.ptr += incrementSize;
 			commandList->SetGraphicsRootDescriptorTable(1, srvGpuHandle);
