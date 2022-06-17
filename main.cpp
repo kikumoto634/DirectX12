@@ -149,7 +149,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	///デバックレイヤー
 #ifdef _DEBUG
 	//デバックレイヤーをオンに
-	ComPtr<ID3D12Debug> debugController;
+	ID3D12Debug* debugController= nullptr;
 	if(SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))){
 		debugController->EnableDebugLayer();
 	}
@@ -161,7 +161,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	/// </summary>
 	HRESULT result;
 	ComPtr<ID3D12Device> device = nullptr;
-	ComPtr<IDXGIFactory7> dxgiFactory;
+	ComPtr<IDXGIFactory7> dxgiFactory= nullptr;
 	ComPtr<IDXGISwapChain4> swapChain = nullptr;
 	ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
 	ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
@@ -217,6 +217,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	{
 		//採用したアダプターでデバイスを生成
 		result = D3D12CreateDevice(tmpAdapter.Get(), levels[i], IID_PPV_ARGS(&device));
+		assert(SUCCEEDED(result));
 		if(result == S_OK)
 		{
 			//デバイスを生成出来た時点でループを抜ける
@@ -328,7 +329,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	idepthClearValue.DepthStencil.Depth = 1.0f;		//深度値1.0f(最大値)でクリア
 	idepthClearValue.Format = DXGI_FORMAT_D32_FLOAT;//深度値フォーマット
 	//リソース生成
-	ComPtr<ID3D12Resource> depthBuff = nullptr;
+	ComPtr<ID3D12Resource> depthBuff;
 	result = device->CreateCommittedResource(
 		&depthHeapProp,
 		D3D12_HEAP_FLAG_NONE,
@@ -344,6 +345,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;	//デプスステンシルビュー
 	ID3D12DescriptorHeap* dsvHeap = nullptr;
 	result = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&dsvHeap));
+	assert(SUCCEEDED(result));
 	//深度ビュー作成
 	D3D12_DEPTH_STENCIL_VIEW_DESC dsvDesc{};
 	dsvDesc.Format = DXGI_FORMAT_D32_FLOAT;
@@ -357,10 +359,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	///フェンス(CPUとGPUで同期をとるための仕組み)
 	//生成
-	ComPtr<ID3D12Fence> fence = nullptr;
+	ComPtr<ID3D12Fence> fence;
 	UINT64 fenceVal = 0;
 	result = device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
-
+	assert(SUCCEEDED(result));
 
 	///DirectInPut
 	//初期化 (他入力方法追加でもこのオブジェクトは一つのみ)
@@ -510,7 +512,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	resDesc.SampleDesc.Count = 1;
 	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	//生成
-	ComPtr<ID3D12Resource> vertBuff = nullptr;
+	ComPtr<ID3D12Resource> vertBuff;
 	result = device->CreateCommittedResource(
 		&heapProp,				//ヒープ設定
 		D3D12_HEAP_FLAG_NONE,
@@ -562,7 +564,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
 	//生成
-	ComPtr<ID3D12Resource> indexBuff = nullptr;
+	ComPtr<ID3D12Resource> indexBuff;
 	result = device->CreateCommittedResource(
 		&heapProp,				//ヒープ設定
 		D3D12_HEAP_FLAG_NONE,
@@ -596,9 +598,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 	///頂点シェーダーfileの読み込みとコンパイル
-	ComPtr<ID3DBlob> vsBlob = nullptr;			//頂点シェーダーオブジェクト
-	ComPtr<ID3DBlob> psBlob = nullptr;			//ピクセルシェーダーオブジェクト
-	ComPtr<ID3DBlob> errorBlob = nullptr;		//エラーオブジェクト
+	ComPtr<ID3DBlob> vsBlob ;			//頂点シェーダーオブジェクト
+	ComPtr<ID3DBlob> psBlob ;			//ピクセルシェーダーオブジェクト
+	ComPtr<ID3DBlob> errorBlob ;		//エラーオブジェクト
 
 	//頂点シェーダーの読み込みコンパイル
 	result = D3DCompileFromFile(
@@ -685,7 +687,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	///定数バッファ Color
 	//GPUリソースポインタ
-	ComPtr<ID3D12Resource> constBufferMaterial = nullptr;
+	ComPtr<ID3D12Resource> constBufferMaterial ;
 	//マッピング用ポインタ
 	ConstBufferDataMaterial* constMapMaterial = nullptr;
 	{
@@ -812,7 +814,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		textureResourceDesc2.SampleDesc.Count = 1;
 
 		//テクスチャバッファの生成
-		ComPtr<ID3D12Resource> texBuff = nullptr;
+		ComPtr<ID3D12Resource> texBuff ;
 		result = device->CreateCommittedResource(
 			&textureHandleProp,
 			D3D12_HEAP_FLAG_NONE,
@@ -822,7 +824,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 			IID_PPV_ARGS(&texBuff)
 		);
 		assert(SUCCEEDED(result));
-		ComPtr<ID3D12Resource> texBuff2 = nullptr;
+		ComPtr<ID3D12Resource> texBuff2 ;
 		result = device->CreateCommittedResource(
 			&textureHandleProp,
 			D3D12_HEAP_FLAG_NONE,
@@ -1077,7 +1079,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	rootSignatureDesc.pStaticSamplers = &samplerDesc;
 	rootSignatureDesc.NumStaticSamplers= 1;
 	//シリアライズ
-	ComPtr<ID3DBlob> rootSigBlob = nullptr;
+	ComPtr<ID3DBlob> rootSigBlob;
 	result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &errorBlob);
 	assert(SUCCEEDED(result));
 	result = device->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
@@ -1087,7 +1089,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	//パイプラインステート (グラフィックスパイプラインの設定をまとめたのがパイプラインステートオブジェクト(PSO))
 	//パイプラインステートの生成
-	ComPtr<ID3D12PipelineState> pipelineState = nullptr;
+	ComPtr<ID3D12PipelineState> pipelineState ;
 	result = device->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineState));
 	assert(SUCCEEDED(result));
 
@@ -1192,7 +1194,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		D3D12_RESOURCE_BARRIER barrierDesc{};
 		barrierDesc.Transition.pResource = backBuffers[bbIndex].Get();					//バックバッファを指定
 		barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;			//表示状態から
-		barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;	//描画状態へ
+		barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;	//描画状態へ
 		commandList->ResourceBarrier(1, &barrierDesc);
 
 
