@@ -98,13 +98,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	/// </summary>
 
 	///デバックレイヤー
-#ifdef _DEBUG
-	//デバックレイヤーをオンに
-	ID3D12Debug* debugController;
-	if(SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))){
-		debugController->EnableDebugLayer();
-	}
-#endif // _DEBUG
+//#ifdef _DEBUG
+//	//デバックレイヤーをオンに
+//	ID3D12Debug* debugController;
+//	if(SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))){
+//		debugController->EnableDebugLayer();
+//	}
+//#endif // _DEBUG
 
 
 	/// <summary>
