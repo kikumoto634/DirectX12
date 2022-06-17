@@ -80,8 +80,8 @@ bool IsInKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName);
 bool IsOutKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName);
 
 //3Dオブジェクト初期化
-void InitializeObject3d(Object3d* object, ComPtr<ID3D12Device> device);
-void UpdateObject3d(Object3d* object, XMMATRIX&matView, XMMATRIX& matProjection);
+void InitializeObject3d(Object3d* object, ID3D12Device* device);
+void UpdateObject3d(Object3d* object, XMMATRIX& matView, XMMATRIX& matProjection);
 void DrawObject3d(Object3d* object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW& vbView, D3D12_INDEX_BUFFER_VIEW& ibView, UINT numIndices);
 
 /// ウィンドウプロシージャ
@@ -272,7 +272,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		&swapChainDesc,
 		nullptr,
 		nullptr,
-		(IDXGISwapChain1**)&swapchain1
+		&swapchain1
 	);
 	assert(SUCCEEDED(result));
 	//生成したIDXGISwapChain1のオブジェクトをIDXGISwapChain4に変換する
@@ -596,9 +596,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 	///頂点シェーダーfileの読み込みとコンパイル
-	ID3DBlob* vsBlob = nullptr;			//頂点シェーダーオブジェクト
-	ID3DBlob* psBlob = nullptr;			//ピクセルシェーダーオブジェクト
-	ID3DBlob* errorBlob = nullptr;		//エラーオブジェクト
+	ComPtr<ID3DBlob> vsBlob = nullptr;			//頂点シェーダーオブジェクト
+	ComPtr<ID3DBlob> psBlob = nullptr;			//ピクセルシェーダーオブジェクト
+	ComPtr<ID3DBlob> errorBlob = nullptr;		//エラーオブジェクト
 
 	//頂点シェーダーの読み込みコンパイル
 	result = D3DCompileFromFile(
@@ -839,7 +839,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		for(size_t i = 0; i < metadata.mipLevels; i++)
 		{
 			//ミップマップレベルを指定してイメージを取得
-			const Image*img = scratchImg.GetImage(i, 0, 0);
+			const Image* img = scratchImg.GetImage(i, 0, 0);
 			//テクスチャバッファにデータ転送
 			result = texBuff->WriteToSubresource(
 				(UINT)i,				
@@ -853,7 +853,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		for(size_t i = 0; i < metadata2.mipLevels; i++)
 		{
 			//ミップマップレベルを指定してイメージを取得
-			const Image*img = scratchImg2.GetImage(i, 0, 0);
+			const Image* img = scratchImg2.GetImage(i, 0, 0);
 			//テクスチャバッファにデータ転送
 			result = texBuff2->WriteToSubresource(
 				(UINT)i,				
@@ -1077,12 +1077,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	rootSignatureDesc.pStaticSamplers = &samplerDesc;
 	rootSignatureDesc.NumStaticSamplers= 1;
 	//シリアライズ
-	ID3DBlob* rootSigBlob = nullptr;
+	ComPtr<ID3DBlob> rootSigBlob = nullptr;
 	result = D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &errorBlob);
 	assert(SUCCEEDED(result));
 	result = device->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(&rootSignature));
 	assert(SUCCEEDED(result));
-	rootSigBlob->Release();
 	//パイプラインにルートシグネチャをセット
 	pipelineDesc.pRootSignature = rootSignature.Get();
 
@@ -1384,7 +1383,7 @@ bool IsOutKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName)
 	return false;
 }
 
-void InitializeObject3d(Object3d *object, ComPtr<ID3D12Device> device)
+void InitializeObject3d(Object3d *object, ID3D12Device* device)
 {
 	HRESULT result;
 	//定数バッファのヒープ設定
@@ -1444,7 +1443,7 @@ void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection
 	object->constMapTransform->mat = object->matWorld * matView *matProjection;
 }
 
-void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList *commandList, D3D12_VERTEX_BUFFER_VIEW &vbView, D3D12_INDEX_BUFFER_VIEW &ibView, UINT numIndices)
+void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW &vbView, D3D12_INDEX_BUFFER_VIEW &ibView, UINT numIndices)
 {
 	//頂点バッファの設定
 	commandList->IASetVertexBuffers(0, 1, &vbView);
