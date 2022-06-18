@@ -164,9 +164,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	ComPtr<IDXGIFactory7> dxgiFactory= nullptr;
 	ComPtr<IDXGISwapChain4> swapChain = nullptr;
 	ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
-	ID3D12GraphicsCommandList* commandList = nullptr;
+	ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
 	ComPtr<ID3D12CommandQueue> commandQueue = nullptr;
-	ID3D12DescriptorHeap* rtvHeap = nullptr;
+	ComPtr<ID3D12DescriptorHeap> rtvHeap = nullptr;
 
 	///アダプタ列挙
 	//DXGIファクトリー
@@ -343,7 +343,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc{};
 	dsvHeapDesc.NumDescriptors = 1;			//深度ビューは一つ
 	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;	//デプスステンシルビュー
-	ID3D12DescriptorHeap* dsvHeap = nullptr;
+	ComPtr<ID3D12DescriptorHeap> dsvHeap = nullptr;
 	result = device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&dsvHeap));
 	assert(SUCCEEDED(result));
 	//深度ビュー作成
@@ -731,7 +731,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 	//シェーダリソースビューのデスクリプタヒープ
-	ID3D12DescriptorHeap* srvHeap = nullptr;
+	ComPtr<ID3D12DescriptorHeap> srvHeap = nullptr;
 	
 		///画像ファイルの用意
 		TexMetadata metadata{};
@@ -1204,13 +1204,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		D3D12_CPU_DESCRIPTOR_HANDLE rtvHandle = rtvHeap->GetCPUDescriptorHandleForHeapStart();
 		rtvHandle.ptr += bbIndex * device->GetDescriptorHandleIncrementSize(rtvHeapDesc.Type);
 		//深度ステンシルビュー用デスクリプタヒープのハンドル取得
-		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle =dsvHeap->GetCPUDescriptorHandleForHeapStart();
+		D3D12_CPU_DESCRIPTOR_HANDLE dsvHandle = dsvHeap->GetCPUDescriptorHandleForHeapStart();
 		commandList->OMSetRenderTargets(1, &rtvHandle, false, &dsvHandle);
 
 
 		///画面クリアコマンド
 		//3. 画面クリア
-		FLOAT clearColor[] = {0.1f, 0.25f, 0.5f, 0.0f};
+		float clearColor[] = {0.1f, 0.25f, 0.5f, 0.0f};
 		//色クリア
 		commandList->ClearRenderTargetView(rtvHandle, clearColor, 0, nullptr);
 		//深度クリア
@@ -1267,7 +1267,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		commandList->SetGraphicsRootConstantBufferView(0, constBufferMaterial->GetGPUVirtualAddress());
 
 		//SRVヒープの設定コマンド	//１番目はSV
-		commandList->SetDescriptorHeaps(1, &srvHeap);
+		ID3D12DescriptorHeap* ppHeaps[] = {srvHeap.Get()};
+		commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 		//SRVヒープの先頭ハンドルを取得(SRVをさしているはず)
 		D3D12_GPU_DESCRIPTOR_HANDLE srvGpuHandle = srvHeap->GetGPUDescriptorHandleForHeapStart();
@@ -1288,7 +1289,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		//全オブジェクトについて処理
 		for(size_t i = 0; i < _countof(object3ds); i++)
 		{
-			DrawObject3d(&object3ds[i], commandList, vbView, ibView, _countof(indices));
+			DrawObject3d(&object3ds[i], commandList.Get(), vbView, ibView, _countof(indices));
 		}
 
 
@@ -1307,7 +1308,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		result = commandList->Close();
 		assert(SUCCEEDED(result));
 		//コマンドリストの実行
-		ID3D12CommandList* commandLists[] = {commandList};
+		ID3D12CommandList* commandLists[] = {commandList.Get()};
 		commandQueue->ExecuteCommandLists(1, commandLists);
 		
 		//画面に表示するバッファをフリップ(表裏の入れ替え)
