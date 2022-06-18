@@ -55,15 +55,21 @@ struct ConstBufferDataTransform{
 struct Object3d
 {
 	//定数バッファ(行列用)
-	ComPtr<ID3D12Resource> constBuffTransform;
+	ComPtr<ID3D12Resource> constBuffTransform = nullptr;
 	//定数バッファマップ(行列用)
-	ConstBufferDataTransform* constMapTransform;
+	ConstBufferDataTransform* constMapTransform = nullptr;
 	//アフィン変換
 	XMFLOAT3 scale = {1.0f, 1.0f, 1.0f};
 	XMFLOAT3 rotation = {0.0f, 0.0f, 0.0f};
 	XMFLOAT3 position = {0.0f, 0.0f, 0.0f};
 	//ワールド変換行列
-	XMMATRIX matWorld;
+	XMMATRIX matWorld = 
+	{
+		{1.0f, 0.0f, 0.0f, 0.0f},
+		{0.0f, 1.0f, 0.0f, 0.0f},
+		{0.0f, 0.0f, 1.0f, 0.0f},
+		{0.0f, 0.0f, 0.0f, 1.0f}
+	};
 	//親オブジェクトへのポインタ
 	Object3d* parent = nullptr;
 };
@@ -329,7 +335,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	idepthClearValue.DepthStencil.Depth = 1.0f;		//深度値1.0f(最大値)でクリア
 	idepthClearValue.Format = DXGI_FORMAT_D32_FLOAT;//深度値フォーマット
 	//リソース生成
-	ComPtr<ID3D12Resource> depthBuff;
+	ComPtr<ID3D12Resource> depthBuff = nullptr;
 	result = device->CreateCommittedResource(
 		&depthHeapProp,
 		D3D12_HEAP_FLAG_NONE,
@@ -366,7 +372,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	///DirectInPut
 	//初期化 (他入力方法追加でもこのオブジェクトは一つのみ)
-	IDirectInput8* directInput = nullptr;
+	ComPtr<IDirectInput8> directInput = nullptr;
 	result = DirectInput8Create(
 		w.hInstance, 
 		DIRECTINPUT_VERSION, 
@@ -377,7 +383,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	assert(SUCCEEDED(result));
 
 	//キーボードデバイスの生成 (GUID_Joystick (ジョイステック)、 GUID_SysMouse (マウス))
-	IDirectInputDevice8* keyboard = nullptr;
+	ComPtr<IDirectInputDevice8> keyboard = nullptr;
 	result = directInput->CreateDevice(
 		GUID_SysKeyboard,
 		&keyboard,
@@ -512,7 +518,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	resDesc.SampleDesc.Count = 1;
 	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 	//生成
-	ComPtr<ID3D12Resource> vertBuff;
+	ComPtr<ID3D12Resource> vertBuff = nullptr;
 	result = device->CreateCommittedResource(
 		&heapProp,				//ヒープ設定
 		D3D12_HEAP_FLAG_NONE,
@@ -564,7 +570,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
 	//生成
-	ComPtr<ID3D12Resource> indexBuff;
+	ComPtr<ID3D12Resource> indexBuff = nullptr;
 	result = device->CreateCommittedResource(
 		&heapProp,				//ヒープ設定
 		D3D12_HEAP_FLAG_NONE,
@@ -687,7 +693,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	///定数バッファ Color
 	//GPUリソースポインタ
-	ComPtr<ID3D12Resource> constBufferMaterial ;
+	ComPtr<ID3D12Resource> constBufferMaterial = nullptr;
 	//マッピング用ポインタ
 	ConstBufferDataMaterial* constMapMaterial = nullptr;
 	{
@@ -814,7 +820,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		textureResourceDesc2.SampleDesc.Count = 1;
 
 		//テクスチャバッファの生成
-		ComPtr<ID3D12Resource> texBuff ;
+		ComPtr<ID3D12Resource> texBuff = nullptr;
 		result = device->CreateCommittedResource(
 			&textureHandleProp,
 			D3D12_HEAP_FLAG_NONE,
@@ -824,7 +830,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 			IID_PPV_ARGS(&texBuff)
 		);
 		assert(SUCCEEDED(result));
-		ComPtr<ID3D12Resource> texBuff2 ;
+		ComPtr<ID3D12Resource> texBuff2 = nullptr;
 		result = device->CreateCommittedResource(
 			&textureHandleProp,
 			D3D12_HEAP_FLAG_NONE,
@@ -1132,7 +1138,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// </summary>
 
 		///キーボード情報の取得開始
-		InputUpdate(keyboard, key, oldkeys, sizeof(key));
+		InputUpdate(keyboard.Get(), key, oldkeys, sizeof(key));
 
 		if(IsInKeyTrigger(key, oldkeys, DIK_SPACE))
 		{
