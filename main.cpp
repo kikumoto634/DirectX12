@@ -98,13 +98,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	/// </summary>
 
 	///デバックレイヤー
-//#ifdef _DEBUG
-//	//デバックレイヤーをオンに
-//	ID3D12Debug* debugController;
-//	if(SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))){
-//		debugController->EnableDebugLayer();
-//	}
-//#endif // _DEBUG
+#ifdef _DEBUG
+	//デバックレイヤーをオンに
+	ID3D12Debug* debugController;
+	if(SUCCEEDED(D3D12GetDebugInterface(IID_PPV_ARGS(&debugController)))){
+		debugController->EnableDebugLayer();
+	}
+#endif // _DEBUG
 
 
 	/// <summary>
@@ -543,7 +543,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		D3D12_RESOURCE_BARRIER barrierDesc{};
 		barrierDesc.Transition.pResource = backBuffers[bbIndex];					//バックバッファを指定
 		barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_PRESENT;			//表示状態から
-		barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;	//描画状態へ
+		barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_RENDER_TARGET;	//描画状態へ
 		commandList->ResourceBarrier(1, &barrierDesc);
 
 
