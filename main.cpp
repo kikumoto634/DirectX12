@@ -272,7 +272,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	swapChainDesc.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;
 	//生成
 	//IDXGISwapChain1のComPtr用意
-	ComPtr<IDXGISwapChain1> swapchain1;
+	ComPtr<IDXGISwapChain1> swapchain1 = nullptr;
 	result = dxgiFactory->CreateSwapChainForHwnd(
 		commandQueue.Get(),
 		hwnd,
@@ -1307,7 +1307,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_RENDER_TARGET;	//描画状態から
 		barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_PRESENT;			//表示状態へ
 		commandList->ResourceBarrier(1, &barrierDesc);
-
+	
 
 		///コマンドのフラッシュ
 		//命令クローズ
