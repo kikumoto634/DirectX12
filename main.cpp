@@ -167,7 +167,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	ComPtr<IDXGIFactory7> dxgiFactory= nullptr;
 	ComPtr<IDXGISwapChain4> swapChain = nullptr;
 	ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
-	ID3D12GraphicsCommandList* commandList = nullptr;
+	ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
 	ComPtr<ID3D12CommandQueue> commandQueue = nullptr;
 	ID3D12DescriptorHeap* rtvHeap = nullptr;
 
@@ -1289,7 +1289,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		//全オブジェクトについて処理
 		for(size_t i = 0; i < _countof(object3ds); i++)
 		{
-			DrawObject3d(&object3ds[i], commandList, vbView, ibView, _countof(indices));
+			DrawObject3d(&object3ds[i], commandList.Get(), vbView, ibView, _countof(indices));
 		}
 
 
@@ -1307,7 +1307,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		result = commandList->Close();
 		assert(SUCCEEDED(result));
 		//コマンドリストの実行
-		ID3D12CommandList* commandLists[] = {commandList};
+		ID3D12CommandList* commandLists[] = {commandList.Get()};
 		commandQueue->ExecuteCommandLists(1, commandLists);
 		
 		//画面に表示するバッファをフリップ(表裏の入れ替え)
