@@ -19,9 +19,9 @@ using namespace DirectX;
 #include <d3dcompiler.h>
 #pragma comment(lib, "d3dcompiler.lib")
 
-//キーボード入力
-#define DIRECTINPUT_VERSION 0x0800	//DirectInputのバージョン指定
-#include <dinput.h>
+////キーボード入力
+#include "Input.h"
+
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
@@ -32,7 +32,7 @@ using namespace DirectX;
 #include <wrl.h>
 using namespace Microsoft::WRL;
 
-//ヘルパー構造体
+//CD3DX12ヘルパー構造体
 #include <d3dx12.h>
 
 
@@ -70,17 +70,6 @@ struct Object3d
 	//親オブジェクトへのポインタ
 	Object3d* parent = nullptr;
 };
-
-
-
-/// <summary>
-/// 入力
-/// </summary>
-void InputUpdate(IDirectInputDevice8* devkeyboard, BYTE key[], BYTE oldkey[], int arraysize);
-bool Input(const BYTE key[], int KeysName);
-bool Output(const BYTE key[], int KeysName);
-bool IsInKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName);
-bool IsOutKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName);
 
 //3Dオブジェクト初期化
 void InitializeObject3d(Object3d* object, ID3D12Device* device);
@@ -368,42 +357,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	result = device->CreateFence(fenceVal, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&fence));
 	assert(SUCCEEDED(result));
 
+
 	///DirectInPut
-	//初期化 (他入力方法追加でもこのオブジェクトは一つのみ)
-	IDirectInput8* directInput = nullptr;
-	result = DirectInput8Create(
-		w.hInstance, 
-		DIRECTINPUT_VERSION, 
-		IID_IDirectInput8,
-		(void**)&directInput, 
-		nullptr
-	);
-	assert(SUCCEEDED(result));
-
-	//キーボードデバイスの生成 (GUID_Joystick (ジョイステック)、 GUID_SysMouse (マウス))
-	IDirectInputDevice8* keyboard = nullptr;
-	result = directInput->CreateDevice(
-		GUID_SysKeyboard,
-		&keyboard,
-		NULL
-	);
-	assert(SUCCEEDED(result));
-
-	//入力データ形式のセット (入力デバイスの種類によって、あらかじめ何種類か用意する)
-	result = keyboard->SetDataFormat(&c_dfDIKeyboard);	//標準形式
-	assert(SUCCEEDED(result));
-
-	//排他的制御レベルのセット
-	//DISCL_FOREGROUND		画面が手前にある場合のみ入力を受け付ける
-	//DISCL_NONEXCLUSIVE	デバイスをこのアプリだけで専有しない
-	//DISCL_NOWINKEY		Windowsキーを無効にする
-	result = keyboard->SetCooperativeLevel(
-		hwnd,
-		DISCL_FOREGROUND | DISCL_NONEXCLUSIVE | DISCL_NOWINKEY
-	);
-	assert(SUCCEEDED(result));
-
-
+	Input* input = new Input();
+	//初期化
+	input->Initialize(hwnd);
 
 
 	/// <summary>
@@ -1074,11 +1032,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	float angle = 0.0f;//カメラの回転角
 	bool IsTexture = false;
 
-	//全キーの入力状態を取得する
-	const int KeyNum = 256;
-	BYTE key[KeyNum] = {};
-	BYTE oldkeys[KeyNum] = {};
-
 	/// <summary>
 	/// ゲームループ
 	/// </summary>
@@ -1103,9 +1056,21 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// </summary>
 
 		///キーボード情報の取得開始
-		InputUpdate(keyboard, key, oldkeys, sizeof(key));
+		input->Update();
 
-		if(IsInKeyTrigger(key, oldkeys, DIK_SPACE))
+		//入力check
+		if(input->Push(DIK_D) || input->Push(DIK_A))
+		{
+			if(input->Push(DIK_D))angle += XMConvertToRadians(1.0f);
+			else if(input->Push(DIK_A))angle -= XMConvertToRadians(1.0f);
+
+			//angleラジアンだけy軸まわりに回転、半径は-100
+			eye.x = -100 * sinf(angle);
+			eye.z = -100 * cosf(angle);
+			matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+		}
+
+		if(input->Trigger(DIK_SPACE))
 		{
 			if(!IsTexture)
 			{
@@ -1117,33 +1082,23 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 			}
 		}
 
-		if(key[DIK_D] || key[DIK_A])
-		{
-			if(key[DIK_D])		{angle += XMConvertToRadians(1.0f);}
-			else if(key[DIK_A])	{angle -= XMConvertToRadians(1.0f);}
 
-			//angleラジアンだけy軸まわりに回転、半径は-100
-			eye.x = -100 * sinf(angle);
-			eye.z = -100 * cosf(angle);
-			matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
-		}
-
-		if(key[DIK_UP] || key[DIK_DOWN] || key[DIK_LEFT] || key[DIK_RIGHT])
+		if(input->Push(DIK_UP) || input->Push(DIK_DOWN) || input->Push(DIK_LEFT) || input->Push(DIK_RIGHT))
 		{
-			if(key[DIK_UP])
+			if(input->Push(DIK_UP))
 			{
 				object3ds[0].position.y += 1.0f;
 			}
-			else if(key[DIK_DOWN])
+			else if(input->Push(DIK_DOWN))
 			{
 				object3ds[0].position.y -= 1.0f;
 			}
 
-			if(key[DIK_LEFT])
+			if(input->Push(DIK_LEFT))
 			{
 				object3ds[0].position.x -= 1.0f;
 			}
-			else if(key[DIK_RIGHT])
+			else if(input->Push(DIK_RIGHT))
 			{
 				object3ds[0].position.x += 1.0f;
 			}
@@ -1339,51 +1294,14 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// </summary>
 
 	}
+	delete input;
+
 	///ウィンドウクラスを登録解除
 	UnregisterClass(w.lpszClassName, w.hInstance);
 
 	return 0;
 }
 
-void InputUpdate(IDirectInputDevice8* devkeyboard, BYTE key[], BYTE oldkey[], int arraysize)
-{
-	devkeyboard->Acquire();
-	for(int i = 0; i < arraysize; ++i) oldkey[i] = key[i];
-
-	devkeyboard->GetDeviceState(sizeof(BYTE) * arraysize, key);
-}
-bool Input(const BYTE key[], int KeysName)
-{
-	if(key[KeysName])
-	{
-		return true;
-	}
-	return false;
-}
-bool Output(const BYTE key[], int KeysName)
-{
-	if(!key[KeysName])
-	{
-		return true;
-	}
-	return false;
-}
-bool IsInKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName)
-{
-	if(key[KeysName] && !oldkey[KeysName])
-	{
-		return true;
-	}
-	return false;
-}
-bool IsOutKeyTrigger(const BYTE key[], const BYTE oldkey[], int KeysName)
-{
-	if(!key[KeysName] && oldkey[KeysName])
-	{
-		return true;
-	}
-	return false;
-}
 
 void InitializeObject3d(Object3d *object, ID3D12Device* device)
 {
