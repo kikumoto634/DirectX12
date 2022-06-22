@@ -144,19 +144,14 @@ void DirectXCommon::Initialize(WinApp* winApp)
 		nullptr,
 		&swapchain1
 	);
+
+
 	//生成したIDXGISwapChain1のオブジェクトをIDXGISwapChain4に変換する
 	swapchain1.As(&swapChain);
 	if(FAILED(result))
 	{
 		assert(0);
 	}
-
-	/*DXGI_SWAP_CHAIN_DESC swcDesc = {};
-	result = swapChain->GetDesc(&swcDesc);
-	if(FAILED(result))
-	{
-		assert(0);
-	}*/
 
 	///レンダーターゲットビュー(バックバッファを描画キャンバスとして扱うオブジェクト)
 	//デスクリプタヒープ生成(レンダーターゲットビューはデスクリプタヒープに生成するので準備)
@@ -198,7 +193,6 @@ void DirectXCommon::Initialize(WinApp* winApp)
 
 	///深度バッファのリソース(テクスチャの一種)
 	//リソース設定
-	ComPtr<ID3D12Resource> depthBuff;
 	CD3DX12_RESOURCE_DESC depthReourceDesc = CD3DX12_RESOURCE_DESC::Tex2D
 		(
 			DXGI_FORMAT_D32_FLOAT,
@@ -256,7 +250,7 @@ void DirectXCommon::BeginDraw()
 {
 	//リソースバリア01
 	//バックバッファの番号を取得(ダブルバッファなので 0 or 1)
-	bbIndex = swapChain->GetCurrentBackBufferIndex();
+	UINT bbIndex = swapChain->GetCurrentBackBufferIndex();
 		
 	//1. リソースバリアで書き込み可能に変更
 	commandList->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(backBuffers[bbIndex].Get(),
@@ -314,10 +308,21 @@ void DirectXCommon::BeginDraw()
 		0,
 		nullptr
 	);
+
+	///ビューポート
+	//設定コマンド
+	commandList->RSSetViewports(1, &CD3DX12_VIEWPORT(0.0f, 0.0f, WinApp::window_width,WinApp::window_height));
+		 
+	///シザー矩形
+	//設定
+	commandList->RSSetScissorRects(1, &CD3DX12_RECT(0, 0, WinApp::window_width, WinApp::window_height));
+
 }
 
 void DirectXCommon::EndDraw()
 {
+	UINT bbIndex = swapChain->GetCurrentBackBufferIndex();
+
 	///リソースバリア02
 	//5. リソースバリアを戻す
 	commandList->ResourceBarrier(1,&CD3DX12_RESOURCE_BARRIER::Transition(backBuffers[bbIndex].Get(),
@@ -331,9 +336,6 @@ void DirectXCommon::EndDraw()
 	ID3D12CommandList* commandLists[] = {commandList.Get()};
 	commandQueue->ExecuteCommandLists(1, commandLists);
 		
-	//画面に表示するバッファをフリップ(表裏の入れ替え)
-	swapChain->Present(1, 0);
-
 
 	///コマンド完了待ち
 	//コマンドの実行完了を待つ
@@ -350,4 +352,7 @@ void DirectXCommon::EndDraw()
 	commandAllocator->Reset();
 	//再びコマンドリストを溜める準備
 	commandList->Reset(commandAllocator.Get(), nullptr);
+
+	//画面に表示するバッファをフリップ(表裏の入れ替え)
+	swapChain->Present(1, 0);
 }

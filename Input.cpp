@@ -1,5 +1,7 @@
 #include "Input.h"
 
+#pragma comment(lib, "dinput8.lib")
+
 #include <cassert>
 
 Input::Input()
