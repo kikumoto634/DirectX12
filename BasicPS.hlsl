@@ -10,11 +10,12 @@ float4 main(VSOutput input) : SV_TARGET
 	float brightness = diffuse + 0.3f;	//アンビエント光を0.3として計算
 	float4 texcolor = float4(tex.Sample(smp,input.uv));
 
-	return float4(texcolor.rgb * brightness, texcolor.a)*color * float4(1.0f,1.0f,1.0f, 1.0f);
+	//テクスチャレンダリング
+	return float4(texcolor.rgb * brightness, texcolor.a)*color;
 
 	//テクスチャマッピング
-	//return float4(input.normal, 1);
+	//return float4(brightness, brightness, brightness, 1);
 
 	//色指定
-	//return float4(1.0f, 1.0f, 1.0f, 1.0f);
+	//return color;
 }
