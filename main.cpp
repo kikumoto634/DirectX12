@@ -379,7 +379,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	ScratchImage scratchImg{};
 	//WICテクスチャデータのロード
 	result = LoadFromWICFile(
-		L"Resources/Texture.jpg",
+		L"Resources/white1x1.png",
 		WIC_FLAGS_NONE,
 		&metadata, scratchImg);
 	assert(SUCCEEDED(result));
@@ -502,43 +502,42 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	const size_t kObjectCount = 2;
 	//3dオブジェクトの配列
 	Object3d object3ds[kObjectCount];
-	
-	{		
-		//配列内の全オブジェクトに対して
-		for(size_t i = 0; i < _countof(object3ds); i++)
+		
+	//配列内の全オブジェクトに対して
+	for(size_t i = 0; i < _countof(object3ds); i++)
+	{
+		//初期化
+		object3ds[0].color = {0.8f, 0.8f, 0.8f, 1.0f};
+		object3ds[1].color = {0.2f, 0.2f, 0.2f, 1.0f};
+		InitializeObject3d(&object3ds[i], dxCommon->GetDevice());
+
+		//親子構造体
+		//先頭以外
+		if(i > 0)
 		{
-			//初期化
-			object3ds[0].color = {0.f, 0.f, 1.f, 1.f};
-			InitializeObject3d(&object3ds[i], dxCommon->GetDevice());
+			//一つ前のオブジェクトを親とする
+			object3ds[i].parent = &object3ds[i - 1];
 
-			//親子構造体
-			//先頭以外
-			if(i > 0)
-			{
-				//一つ前のオブジェクトを親とする
-				//object3ds[i].parent = &object3ds[i - 1];
-
-				//Scale
-				object3ds[i].scale = {0.9f, 0.9f, 0.9f};
-				//rotation
-				object3ds[i].rotation = {0.0f, 0.0f, XMConvertToRadians(30.0f)};
-				//position
-				object3ds[i].position = {0.0f, 0.0f, 8.0f};
-			}
+			//Scale
+			object3ds[i].scale = {1.5f, 1.5f, 1.5f};
+			//rotation
+			object3ds[i].rotation = {0.0f, 0.0f, XMConvertToRadians(45.0f)};
+			//position
+			object3ds[i].position = {0.0f, 0.0f, 4.0f};
 		}
+	}
 
 	
 
-		//透視投影
-		matProjection = XMMatrixPerspectiveFovLH(
-			XMConvertToRadians(45.0f),	//上下画角45°
-			(float)WinApp::window_width / WinApp::window_height,			//aspect比(画面横幅/画面縦幅)
-			0.1f, 1000.0f				//前端、奥端
-		);
+	//透視投影
+	matProjection = XMMatrixPerspectiveFovLH(
+		XMConvertToRadians(45.0f),	//上下画角45°
+		(float)WinApp::window_width / WinApp::window_height,			//aspect比(画面横幅/画面縦幅)
+		0.1f, 1000.0f				//前端、奥端
+	);
 
-		//ビュー変換行列
-		matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));	
-	}
+	//ビュー変換行列
+	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));	
 
 
 
