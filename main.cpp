@@ -700,12 +700,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 
-
-
-
-		///描画コマンド
+		//DirectXCommon前処理
 		dxCommon->BeginDraw();
-		//描画コマンド ここから
 
 		///パイプラインステートとルートシグネチャの設定コマンド
 		dxCommon->GetCommandList()->SetPipelineState(pipelineState.Get());
@@ -737,7 +733,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		}
 
 
-		//描画コマンド ここまで
+		//DirectXCommon描画後処理
 		dxCommon->EndDraw();
 		
 		/// <summary>
@@ -746,9 +742,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	}
 	delete input;
-
 	delete dxCommon;
-
 	//ゲームウィンドウ破棄
 	delete winApp;
 

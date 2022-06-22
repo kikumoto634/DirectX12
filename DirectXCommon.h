@@ -51,16 +51,27 @@ public://メンバ関数
 private://メンバ変数
 	WinApp* winApp = nullptr;
 
+	//DXGIファクトリー
 	ComPtr<IDXGIFactory7> dxgiFactory= nullptr;
+	//デバイス
 	ComPtr<ID3D12Device> device = nullptr;
+	//グラフィックスコマンドリスト
 	ComPtr<ID3D12GraphicsCommandList> commandList = nullptr;
+	//コマンドアロケータ
 	ComPtr<ID3D12CommandAllocator> commandAllocator = nullptr;
+	//コマンドキュー
 	ComPtr<ID3D12CommandQueue> commandQueue = nullptr;
+	//スワップチェーン
 	ComPtr<IDXGISwapChain4> swapChain = nullptr;
+	//バックバッファ
 	std::vector<ComPtr<ID3D12Resource>> backBuffers;
+	//深度バッファ
 	ComPtr<ID3D12Resource> depthBuff = nullptr;
+	//深度ステンシルビュー
 	ComPtr<ID3D12DescriptorHeap> dsvHeap = nullptr;
+	//レンダーターゲットビュー
 	ComPtr<ID3D12DescriptorHeap> rtvHeap = nullptr;
+	//フェンス
 	ComPtr<ID3D12Fence> fence;
 	UINT64 fenceVal = 0;
 };
