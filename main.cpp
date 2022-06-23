@@ -28,6 +28,7 @@ using namespace Microsoft::WRL;
 //#include <d3dx12.h>
 
 
+
 //頂点データ構造体
 struct Vertex
 {
@@ -35,6 +36,8 @@ struct Vertex
 	XMFLOAT3 normal;//法線ベクトル
 	XMFLOAT2 uv;	//uv座標
 };
+
+
 
 //定数バッファ用データ構造体(マテリアル)
 struct ConstBufferDataMaterial{
@@ -104,6 +107,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	/// </summary>
 	HRESULT result;
 	ComPtr<ID3D12DescriptorHeap> srvHeap = nullptr;
+	//テクスチャバッファの生成
+	ComPtr<ID3D12Resource> texBuff01 ;
 
 
 	///DirectInPut
@@ -379,7 +384,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	ScratchImage scratchImg{};
 	//WICテクスチャデータのロード
 	result = LoadFromWICFile(
-		L"Resources/white1x1.png",
+		L"Resources/Texture.jpg",
 		WIC_FLAGS_NONE,
 		&metadata, scratchImg);
 	assert(SUCCEEDED(result));
@@ -424,7 +429,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		);
 
 	//テクスチャバッファの生成
-	ComPtr<ID3D12Resource> texBuff01 ;
 	result= dxCommon->GetDevice()->CreateCommittedResource
 		(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0),
@@ -738,7 +742,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// <summary>
 		/// DirectX12 毎フレーム処理 ここまで
 		/// </summary>
-
 	}
 	delete input;
 	delete dxCommon;
