@@ -45,32 +45,29 @@ struct VertexPosUv
 };
 
 
-//定数バッファ用データ構造体(マテリアル)
-struct ConstBufferDataMaterial{
-	XMFLOAT4 color;	//色(RGBA)
-};
+
 
 //定数バッファ用データ構造体(3D変換行列
-struct ConstBufferDataTransform{
+struct ConstBufferData{
 	XMMATRIX mat;	//3D変換行列
+	XMFLOAT4 color;	//色(RGBA)
 };
 
 //3Dオブジェクト型
 struct Object3d
 {
+	//マッピング用ポインタ
+	ConstBufferData* constBuffer = nullptr;
+
 	///定数バッファ Color
 	//GPUリソースポインタ
 	ComPtr<ID3D12Resource> constBufferMaterial = nullptr;
-	//マッピング用ポインタ
-	ConstBufferDataMaterial* constMapMaterial = nullptr;
 
 	//色
 	XMFLOAT4 color = {1.0f, 1.0f, 1.0f, 1.0f};
 
 	//定数バッファ(行列用)
 	ComPtr<ID3D12Resource> constBuffTransform = nullptr;
-	//定数バッファマップ(行列用)
-	ConstBufferDataTransform* constMapTransform = nullptr;
 	//アフィン変換
 	XMFLOAT3 scale = {1.0f, 1.0f, 1.0f};
 	XMFLOAT3 rotation = {0.0f, 0.0f, 0.0f};
@@ -693,13 +690,13 @@ PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device)
 
 	//設定
 	////定数バッファ 0番
-	CD3DX12_ROOT_PARAMETER rootParam[3] = {};
+	CD3DX12_ROOT_PARAMETER rootParam[2] = {};
 	////定数　0番 material
 	rootParam[0].InitAsConstantBufferView(0);
 	////テクスチャレジスタ 0番
 	rootParam[1].InitAsDescriptorTable(1, &descRangeSRV);
 	////定数バッファ 1番 transform
-	rootParam[2].InitAsConstantBufferView(1);
+	//rootParam[2].InitAsConstantBufferView(1);
 
 	///<summmary>
 	///グラフィックスパイプライン
@@ -862,13 +859,13 @@ PipelineSet Object2dCreateGraphicsPipeline(ID3D12Device* device)
 
 	//設定
 	////定数バッファ 0番
-	CD3DX12_ROOT_PARAMETER rootParam[3] = {};
+	CD3DX12_ROOT_PARAMETER rootParam[2] = {};
 	////定数　0番 material
 	rootParam[0].InitAsConstantBufferView(0);
 	////テクスチャレジスタ 0番
 	rootParam[1].InitAsDescriptorTable(1, &descRangeSRV);
 	////定数バッファ 1番 transform
-	rootParam[2].InitAsConstantBufferView(1);
+	//rootParam[2].InitAsConstantBufferView(1);
 
 	///<summmary>
 	///グラフィックスパイプライン
@@ -952,35 +949,13 @@ void InitializeObject3d(Object3d *object, ID3D12Device* device)
 	//定数バッファのリソース設定
 	D3D12_RESOURCE_DESC resDesc{};
 	resDesc.Dimension = D3D12_RESOURCE_DIMENSION_BUFFER;
-	resDesc.Width = (sizeof(ConstBufferDataMaterial) + 0xff) & ~0xff;	//256バイトアライメント
+	resDesc.Width = (sizeof(ConstBufferData) + 0xff) & ~0xff;	//256バイトアライメント
 	resDesc.Height = 1;
 	resDesc.DepthOrArraySize = 1;
 	resDesc.MipLevels = 1;
 	resDesc.SampleDesc.Count = 1;
 	resDesc.Layout = D3D12_TEXTURE_LAYOUT_ROW_MAJOR;
 
-	//生成
-	result = device->CreateCommittedResource(
-		&heapProp,			//ヒープ設定
-		D3D12_HEAP_FLAG_NONE,
-		&resDesc,		//リソース設定
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&object->constBufferMaterial)
-	);
-	assert(SUCCEEDED(result));
-
-	///定数バッファのマッピング(GPUのVRAMが、CPUのメインメモリに連動)
-	result = object->constBufferMaterial->Map(0, nullptr, (void**)&object->constMapMaterial);
-	assert(SUCCEEDED(result));
-	
-	///定数バッファへのデータ転送
-	//値を書き込むと自動的に転送される
-	object->constMapMaterial->color = object->color;
-
-
-
-	resDesc.Width = (sizeof(ConstBufferDataTransform)+ 0xff) & ~0xff;
 	//生成
 	result = device->CreateCommittedResource(
 		&heapProp,
@@ -992,8 +967,11 @@ void InitializeObject3d(Object3d *object, ID3D12Device* device)
 	assert(SUCCEEDED(result));
 
 	//定数バッファのマッピング
-	result = object->constBuffTransform->Map(0,nullptr, (void**)&object->constMapTransform);
+	result = object->constBuffTransform->Map(0,nullptr, (void**)&object->constBuffer);
 	assert(SUCCEEDED(result));
+
+	////値を書き込むと自動的に転送される(色の初期化)
+	//object->constBuffer->color = object->color;
 }
 
 void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection)
@@ -1021,23 +999,22 @@ void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection
 		object->matWorld *= object->parent->matWorld;
 	}
 
+
 	//定数バッファへのデータ転送
-	object->constMapTransform->mat = object->matWorld * matView *matProjection;
+	//値を書き込むと自動的に転送される
+	object->constBuffer->color = object->color;
+	object->constBuffer->mat = object->matWorld * matView *matProjection;
 }
 
 void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW &vbView, D3D12_INDEX_BUFFER_VIEW &ibView, ID3D12DescriptorHeap* srvHeap,UINT numIndices)
 {
-
-	///定数バッファビュー
-	//定数バッファビュー(CBV)の設定コマンド	//0番目はCBV
-	commandList->SetGraphicsRootConstantBufferView(0, object->constBufferMaterial->GetGPUVirtualAddress());
 
 	//頂点バッファの設定
 	commandList->IASetVertexBuffers(0, 1, &vbView);
 	//インデックスバッファの設定
 	commandList->IASetIndexBuffer(&ibView);
 	//定数バッファビュー(CBVの設定コマンド)
-	commandList->SetGraphicsRootConstantBufferView(2, object->constBuffTransform->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootConstantBufferView(0, object->constBuffTransform->GetGPUVirtualAddress());
 	//シェーダリソースビューをセット
 	dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable
 		(
