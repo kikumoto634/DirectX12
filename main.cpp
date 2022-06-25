@@ -29,7 +29,7 @@ using namespace Microsoft::WRL;
 
 
 
-//頂点データ構造体
+//頂点データ構造体(3D)
 struct Vertex
 {
 	XMFLOAT3 pos;	//xyz座標
@@ -37,14 +37,12 @@ struct Vertex
 	XMFLOAT2 uv;	//uv座標
 };
 
-
+//頂点データ構造体(2D)
 struct VertexPosUv
 {
 	XMFLOAT3 pos;
 	XMFLOAT2 uv;
 };
-
-
 
 
 //定数バッファ用データ構造体(3D変換行列
@@ -78,6 +76,21 @@ struct Object3d
 	Object3d* parent = nullptr;
 };
 
+
+//スプライト一枚分のデータ
+struct Sprite
+{
+	///頂点バッファ
+	ComPtr<ID3D12Resource> vertBuff = nullptr;
+	///頂点バッファビュー
+	D3D12_VERTEX_BUFFER_VIEW vbView{};
+	////定数バッファ
+	ComPtr<ID3D12Resource> constBuffer = nullptr;
+};
+
+//スプライト生成
+Sprite SpriteCreate(ID3D12Device* device, int window_width, int window_height);
+
 //パイプラインセット
 struct PipelineSet
 {
@@ -92,6 +105,13 @@ PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device);
 
 //2Dオブジェクト用パイプライン生成
 PipelineSet Object2dCreateGraphicsPipeline(ID3D12Device* device);
+
+
+//スプライト共通グラフィックスコマンドのセット
+void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet, ID3D12DescriptorHeap* descHeap);
+
+//スプライト単体描画
+void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList);
 
 //3Dオブジェクト初期化
 void InitializeObject3d(Object3d* object, ID3D12Device* device);
@@ -124,6 +144,19 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	/// 初期化変数
 	/// </summary>
 	HRESULT result;
+
+	////3DObject変数
+	///頂点バッファ
+	ComPtr<ID3D12Resource> vertBuff;
+	///頂点バッファビュー
+	D3D12_VERTEX_BUFFER_VIEW vbView{};
+	///インデックスバッファ
+	ComPtr<ID3D12Resource> indexBuff;
+	///インデックスバッファビュー
+	D3D12_INDEX_BUFFER_VIEW ibView{};
+
+
+	////テクスチャ変数
 	ComPtr<ID3D12DescriptorHeap> srvHeap = nullptr;
 	//テクスチャバッファの生成
 	ComPtr<ID3D12Resource> texBuff01 ;
@@ -233,7 +266,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	///頂点バッファの確保
 	//生成
-	ComPtr<ID3D12Resource> vertBuff;
 	result = dxCommon->GetDevice()->CreateCommittedResource
 		(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -261,7 +293,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	///頂点バッファビューの作成(GPUに頂点バッファを教えるオブジェクト)
 	//作成
-	D3D12_VERTEX_BUFFER_VIEW vbView{};
 	//GPU仮想アドレス
 	vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();
 	//頂点バッファのサイズ
@@ -276,7 +307,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	///インデックスバッファの生成
 	//生成
-	ComPtr<ID3D12Resource> indexBuff;
 	result = dxCommon->GetDevice()->CreateCommittedResource
 		(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -303,7 +333,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 	///インデックスバッファビューの作成(GPUにインデックスバッファを教えるオブジェクト)
-	D3D12_INDEX_BUFFER_VIEW ibView{};
 	ibView.BufferLocation = indexBuff->GetGPUVirtualAddress();
 	ibView.Format = DXGI_FORMAT_R16_UINT;
 	ibView.SizeInBytes = sizeIB;
@@ -480,7 +509,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));	
 
 
-
+	//スプライト
+	Sprite sprite;
+	sprite = SpriteCreate(dxCommon->GetDevice(), (float)WinApp::window_width, (float)WinApp::window_height);
 
 
 	/// <summary>
@@ -575,6 +606,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 			DrawObject3d(&object3ds[i], dxCommon->GetCommandList(), vbView, ibView, srvHeap.Get(), _countof(indices));
 		}
 
+		//sprite
+		//スプライト共通コマンド
+		SpriteCommonBeginDraw(dxCommon->GetCommandList(), spritePipelineSet, srvHeap.Get());
+		//スプライト描画
+		SpriteDraw(sprite, dxCommon->GetCommandList());
+
 
 		//DirectXCommon描画後処理
 		dxCommon->EndDraw();
@@ -589,6 +626,91 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	delete winApp;
 
 	return 0;
+}
+
+//スプライト生成
+Sprite SpriteCreate(ID3D12Device* device, int window_width, int window_height)
+{
+	HRESULT result = S_FALSE;
+
+	//スプライトを作る
+	Sprite sprite{};
+
+	//頂点データ
+	VertexPosUv vertices[] = 
+	{
+		{{  +0.0f, +100.0f, 0.0f}, {0.0f, 1.0f}},	//左下
+		{{  +0.0f,   +0.0f, 0.0f}, {0.0f, 0.0f}},	//左上
+		{{+100.0f, +100.0f, 0.0f}, {1.0f, 1.0f}},	//右下
+		{{+100.0f,   +0.0f, 0.0f}, {1.0f, 0.0f}},	//右上
+	};
+
+	//頂点バッファの生成
+	result = device->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer(sizeof(vertices)),
+		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, IID_PPV_ARGS(&sprite.vertBuff)
+	);
+	assert(SUCCEEDED(result));
+
+	//頂点バッファへのデータ転送
+	VertexPosUv* vertMap = nullptr;
+	result = sprite.vertBuff->Map(0, nullptr, (void**)&vertMap);
+	assert(SUCCEEDED(result));
+	memcpy(vertMap, vertices, sizeof(vertices));
+	sprite.vertBuff->Unmap(0, nullptr);
+
+	//頂点バッファビューの作成
+	sprite.vbView.BufferLocation = sprite.vertBuff->GetGPUVirtualAddress();
+	sprite.vbView.SizeInBytes = sizeof(vertices);
+	sprite.vbView.StrideInBytes = sizeof(vertices[0]);
+
+	//定数バッファの生成
+	result = device->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferData) + 0xff)&~0xff),
+		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
+		IID_PPV_ARGS(&sprite.constBuffer)
+	);
+
+	//定数バッファにデータ転送
+	ConstBufferData* constMap = nullptr;
+	result = sprite.constBuffer->Map(0, nullptr, (void**)&constMap);
+	constMap->color = XMFLOAT4(1, 1, 1, 1);	//色指定
+	//平行投影行列
+	constMap->mat = XMMatrixOrthographicOffCenterLH(
+		0.0f, window_width, window_height, 0.0f, 0.0f, 1.0f);
+	sprite.constBuffer->Unmap(0, nullptr);
+
+	return sprite;
+}
+
+//スプライト共通グラフィックスコマンドのセット
+void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet, ID3D12DescriptorHeap* descHeap)
+{
+	//パイプラインステートの設定
+	commandList->SetPipelineState(pipelineSet.pipelinestate.Get());
+	//ルートシグネチャの設定
+	commandList->SetGraphicsRootSignature(pipelineSet.rootsignature.Get());
+	//プリミティブ形状を設定
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+	//テクスチャ用デスクリプタヒープの設定
+	ID3D12DescriptorHeap* ppHeaps[] = {descHeap};
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+}
+
+//スプライト単体描画
+void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList)
+{
+	//頂点バッファをセット
+	commandList->IASetVertexBuffers(0, 1, &sprite.vbView);
+	//定数バッファをセット
+	commandList->SetGraphicsRootConstantBufferView(0, sprite.constBuffer->GetGPUVirtualAddress());
+	//ポリゴンの描画(4頂点で四角形)
+	commandList->DrawInstanced(4, 1, 0, 0);
 }
 
 //3Dオブジェクト用パイプラインセット
@@ -695,8 +817,7 @@ PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device)
 	rootParam[0].InitAsConstantBufferView(0);
 	////テクスチャレジスタ 0番
 	rootParam[1].InitAsDescriptorTable(1, &descRangeSRV);
-	////定数バッファ 1番 transform
-	//rootParam[2].InitAsConstantBufferView(1);
+
 
 	///<summmary>
 	///グラフィックスパイプライン
@@ -747,7 +868,7 @@ PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device)
 	PipelineSet pipelineSet;
 
 
-	//ルートシグネチャ (テクスチャ、点数バッファなどシェーダーに渡すリソース情報をまとめたオブジェクト)
+	//ルートシグネチャ (テクスチャ、定数バッファなどシェーダーに渡すリソース情報をまとめたオブジェクト)
 	//設定
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Init_1_0(_countof(rootParam), rootParam,1, &samplerDesc,D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
@@ -864,8 +985,6 @@ PipelineSet Object2dCreateGraphicsPipeline(ID3D12Device* device)
 	rootParam[0].InitAsConstantBufferView(0);
 	////テクスチャレジスタ 0番
 	rootParam[1].InitAsDescriptorTable(1, &descRangeSRV);
-	////定数バッファ 1番 transform
-	//rootParam[2].InitAsConstantBufferView(1);
 
 	///<summmary>
 	///グラフィックスパイプライン
@@ -918,7 +1037,7 @@ PipelineSet Object2dCreateGraphicsPipeline(ID3D12Device* device)
 	PipelineSet pipelineSet;
 
 
-	//ルートシグネチャ (テクスチャ、点数バッファなどシェーダーに渡すリソース情報をまとめたオブジェクト)
+	//ルートシグネチャ (テクスチャ、定数バッファなどシェーダーに渡すリソース情報をまとめたオブジェクト)
 	//設定
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
 	rootSignatureDesc.Init_1_0(_countof(rootParam), rootParam,1, &samplerDesc,D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
