@@ -76,6 +76,11 @@ struct Object3d
 	Object3d* parent = nullptr;
 };
 
+//定数バッファ用データ構造体(3D変換行列
+struct ConstBufferDataSprite{
+	XMMATRIX mat;	//3D変換行列
+	XMFLOAT4 color;	//色(RGBA)
+};
 
 //スプライト一枚分のデータ
 struct Sprite
@@ -539,72 +544,72 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// DirectX12 毎フレーム処理 ここから
 		/// </summary>
 
-		///キーボード情報の取得開始
-		input->Update();
+		/////キーボード情報の取得開始
+		//input->Update();
 
-		//入力check
-		if(input->Push(DIK_D) || input->Push(DIK_A))
-		{
-			if(input->Push(DIK_D))angle += XMConvertToRadians(1.0f);
-			else if(input->Push(DIK_A))angle -= XMConvertToRadians(1.0f);
+		////入力check
+		//if(input->Push(DIK_D) || input->Push(DIK_A))
+		//{
+		//	if(input->Push(DIK_D))angle += XMConvertToRadians(1.0f);
+		//	else if(input->Push(DIK_A))angle -= XMConvertToRadians(1.0f);
 
-			//angleラジアンだけy軸まわりに回転、半径は-100
-			eye.x = -100 * sinf(angle);
-			eye.z = -100 * cosf(angle);
-			matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
-		}
+		//	//angleラジアンだけy軸まわりに回転、半径は-100
+		//	eye.x = -100 * sinf(angle);
+		//	eye.z = -100 * cosf(angle);
+		//	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+		//}
 
 
 
-		if(input->Push(DIK_UP) || input->Push(DIK_DOWN) || input->Push(DIK_LEFT) || input->Push(DIK_RIGHT))
-		{
-			if(input->Push(DIK_UP))
-			{
-				object3ds[0].position.y += 1.0f;
-			}
-			else if(input->Push(DIK_DOWN))
-			{
-				object3ds[0].position.y -= 1.0f;
-			}
+		//if(input->Push(DIK_UP) || input->Push(DIK_DOWN) || input->Push(DIK_LEFT) || input->Push(DIK_RIGHT))
+		//{
+		//	if(input->Push(DIK_UP))
+		//	{
+		//		object3ds[0].position.y += 1.0f;
+		//	}
+		//	else if(input->Push(DIK_DOWN))
+		//	{
+		//		object3ds[0].position.y -= 1.0f;
+		//	}
 
-			if(input->Push(DIK_LEFT))
-			{
-				object3ds[0].position.x -= 1.0f;
-			}
-			else if(input->Push(DIK_RIGHT))
-			{
-				object3ds[0].position.x += 1.0f;
-			}
-		}
+		//	if(input->Push(DIK_LEFT))
+		//	{
+		//		object3ds[0].position.x -= 1.0f;
+		//	}
+		//	else if(input->Push(DIK_RIGHT))
+		//	{
+		//		object3ds[0].position.x += 1.0f;
+		//	}
+		//}
 
-		//更新処理
-		for(size_t i = 0; i < _countof(object3ds); i++)
-		{
-			UpdateObject3d(&object3ds[i], matView, matProjection);
-		}
+		////更新処理
+		//for(size_t i = 0; i < _countof(object3ds); i++)
+		//{
+		//	UpdateObject3d(&object3ds[i], matView, matProjection);
+		//}
 
 
 
 		//DirectXCommon前処理
 		dxCommon->BeginDraw();
 
-		///パイプラインステートとルートシグネチャの設定コマンド
-		dxCommon->GetCommandList()->SetPipelineState(object3dPipelineSet.pipelinestate.Get());
-		dxCommon->GetCommandList()->SetGraphicsRootSignature(object3dPipelineSet.rootsignature.Get());
+		/////パイプラインステートとルートシグネチャの設定コマンド
+		//dxCommon->GetCommandList()->SetPipelineState(object3dPipelineSet.pipelinestate.Get());
+		//dxCommon->GetCommandList()->SetGraphicsRootSignature(object3dPipelineSet.rootsignature.Get());
 
-		///プリミティブ形状
-		//プリミティブ形状の設定コマンド
-		dxCommon->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		/////プリミティブ形状
+		////プリミティブ形状の設定コマンド
+		//dxCommon->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		//SRVヒープの設定コマンド	//１番目はSV
-		ID3D12DescriptorHeap* ppHeaps[] = {srvHeap.Get()};
-		dxCommon->GetCommandList()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+		////SRVヒープの設定コマンド	//１番目はSV
+		//ID3D12DescriptorHeap* ppHeaps[] = {srvHeap.Get()};
+		//dxCommon->GetCommandList()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
-		//全オブジェクトについて処理
-		for(size_t i = 0; i < _countof(object3ds); i++)
-		{
-			DrawObject3d(&object3ds[i], dxCommon->GetCommandList(), vbView, ibView, srvHeap.Get(), _countof(indices));
-		}
+		////全オブジェクトについて処理
+		//for(size_t i = 0; i < _countof(object3ds); i++)
+		//{
+		//	DrawObject3d(&object3ds[i], dxCommon->GetCommandList(), vbView, ibView, srvHeap.Get(), _countof(indices));
+		//}
 
 		//sprite
 		//スプライト共通コマンド
@@ -670,18 +675,20 @@ Sprite SpriteCreate(ID3D12Device* device, int window_width, int window_height)
 	result = device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferData) + 0xff)&~0xff),
+		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferDataSprite) + 0xff)&~0xff),
 		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
 		IID_PPV_ARGS(&sprite.constBuffer)
 	);
+	assert(SUCCEEDED(result));
 
 	//定数バッファにデータ転送
-	ConstBufferData* constMap = nullptr;
+	ConstBufferDataSprite* constMap = nullptr;
 	result = sprite.constBuffer->Map(0, nullptr, (void**)&constMap);
-	constMap->color = XMFLOAT4(1, 1, 1, 1);	//色指定
+	assert(SUCCEEDED(result));
+	constMap->color = XMFLOAT4(1, 0, 1, 1);	//色指定
 	//平行投影行列
 	constMap->mat = XMMatrixOrthographicOffCenterLH(
-		0.0f, window_width, window_height, 0.0f, 0.0f, 1.0f);
+		0.0f, (float)window_width, (float)window_height, 0.0f, 0.0f, 1.0f);
 	sprite.constBuffer->Unmap(0, nullptr);
 
 	return sprite;
@@ -1025,6 +1032,7 @@ PipelineSet Object2dCreateGraphicsPipeline(ID3D12Device* device)
 	pipelineDesc.SampleDesc.Count = 1;	//1ピクセルにつき1回サンプリング
 	//デプスステンシルステートの設定	(深度テストを行う、書き込み許可、深度がちいさければ許可)
 	pipelineDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
+	pipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 	pipelineDesc.DepthStencilState.DepthEnable = false;//深度テストしない
 	pipelineDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;	//深度値フォーマット
 

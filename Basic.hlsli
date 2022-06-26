@@ -1,10 +1,4 @@
 
-////マテリアル
-//cbuffer ConstBufferDataMaterial : register(b0)
-//{
-//	float4 color;	//色(RGBA)　定数バッファ情報
-//};
-
 //3D変換行列
 cbuffer ConstBufferData : register(b0)
 {
