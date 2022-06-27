@@ -57,15 +57,11 @@ struct Object3d
 	//マッピング用ポインタ
 	ConstBufferData* constBuffer = nullptr;
 
-	///定数バッファ Color
-	//GPUリソースポインタ
-	ComPtr<ID3D12Resource> constBufferMaterial = nullptr;
-
 	//色
 	XMFLOAT4 color = {1.0f, 1.0f, 1.0f, 1.0f};
 
 	//定数バッファ(行列用)
-	ComPtr<ID3D12Resource> constBuffTransform = nullptr;
+	ComPtr<ID3D12Resource> constBuffData = nullptr;
 	//アフィン変換
 	XMFLOAT3 scale = {1.0f, 1.0f, 1.0f};
 	XMFLOAT3 rotation = {0.0f, 0.0f, 0.0f};
@@ -76,12 +72,6 @@ struct Object3d
 	Object3d* parent = nullptr;
 };
 
-//定数バッファ用データ構造体(3D変換行列
-struct ConstBufferDataSprite{
-	XMMATRIX mat;	//3D変換行列
-	XMFLOAT4 color;	//色(RGBA)
-};
-
 //スプライト一枚分のデータ
 struct Sprite
 {
@@ -90,7 +80,7 @@ struct Sprite
 	///頂点バッファビュー
 	D3D12_VERTEX_BUFFER_VIEW vbView{};
 	////定数バッファ
-	ComPtr<ID3D12Resource> constBuffer = nullptr;
+	ComPtr<ID3D12Resource> constBufferData = nullptr;
 };
 
 //スプライト生成
@@ -112,11 +102,14 @@ PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device);
 PipelineSet Object2dCreateGraphicsPipeline(ID3D12Device* device);
 
 
+//3D共通グラフィックスコマンドのセット
+void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet, ID3D12DescriptorHeap* descHeap);
+
 //スプライト共通グラフィックスコマンドのセット
 void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet, ID3D12DescriptorHeap* descHeap);
 
 //スプライト単体描画
-void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList);
+void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList, ID3D12DescriptorHeap* srvHeap);
 
 //3Dオブジェクト初期化
 void InitializeObject3d(Object3d* object, ID3D12Device* device);
@@ -509,6 +502,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		(float)WinApp::window_width / WinApp::window_height,			//aspect比(画面横幅/画面縦幅)
 		0.1f, 1000.0f				//前端、奥端
 	);
+	//平行投影行列
+	/*matProjection = XMMatrixOrthographicOffCenterLH(
+		0.0f, (float)WinApp::window_width,
+		(float)WinApp::window_height, 0.0f,
+		0.0f, 1000.0f);*/
 
 	//ビュー変換行列
 	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));	
@@ -516,7 +514,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	//スプライト
 	Sprite sprite;
-	sprite = SpriteCreate(dxCommon->GetDevice(), (float)WinApp::window_width, (float)WinApp::window_height);
+	sprite = SpriteCreate(dxCommon->GetDevice(), WinApp::window_width, WinApp::window_height);
 
 
 	/// <summary>
@@ -544,79 +542,70 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// DirectX12 毎フレーム処理 ここから
 		/// </summary>
 
-		/////キーボード情報の取得開始
-		//input->Update();
+		///キーボード情報の取得開始
+		input->Update();
 
-		////入力check
-		//if(input->Push(DIK_D) || input->Push(DIK_A))
-		//{
-		//	if(input->Push(DIK_D))angle += XMConvertToRadians(1.0f);
-		//	else if(input->Push(DIK_A))angle -= XMConvertToRadians(1.0f);
+		//入力check
+		if(input->Push(DIK_D) || input->Push(DIK_A))
+		{
+			if(input->Push(DIK_D))angle += XMConvertToRadians(1.0f);
+			else if(input->Push(DIK_A))angle -= XMConvertToRadians(1.0f);
 
-		//	//angleラジアンだけy軸まわりに回転、半径は-100
-		//	eye.x = -100 * sinf(angle);
-		//	eye.z = -100 * cosf(angle);
-		//	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
-		//}
+			//angleラジアンだけy軸まわりに回転、半径は-100
+			eye.x = -100 * sinf(angle);
+			eye.z = -100 * cosf(angle);
+			matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+		}
 
 
 
-		//if(input->Push(DIK_UP) || input->Push(DIK_DOWN) || input->Push(DIK_LEFT) || input->Push(DIK_RIGHT))
-		//{
-		//	if(input->Push(DIK_UP))
-		//	{
-		//		object3ds[0].position.y += 1.0f;
-		//	}
-		//	else if(input->Push(DIK_DOWN))
-		//	{
-		//		object3ds[0].position.y -= 1.0f;
-		//	}
+		if(input->Push(DIK_UP) || input->Push(DIK_DOWN) || input->Push(DIK_LEFT) || input->Push(DIK_RIGHT))
+		{
+			if(input->Push(DIK_UP))
+			{
+				object3ds[0].position.y += 1.0f;
+			}
+			else if(input->Push(DIK_DOWN))
+			{
+				object3ds[0].position.y -= 1.0f;
+			}
 
-		//	if(input->Push(DIK_LEFT))
-		//	{
-		//		object3ds[0].position.x -= 1.0f;
-		//	}
-		//	else if(input->Push(DIK_RIGHT))
-		//	{
-		//		object3ds[0].position.x += 1.0f;
-		//	}
-		//}
+			if(input->Push(DIK_LEFT))
+			{
+				object3ds[0].position.x -= 1.0f;
+			}
+			else if(input->Push(DIK_RIGHT))
+			{
+				object3ds[0].position.x += 1.0f;
+			}
+		}
 
-		////更新処理
-		//for(size_t i = 0; i < _countof(object3ds); i++)
-		//{
-		//	UpdateObject3d(&object3ds[i], matView, matProjection);
-		//}
-
+		//更新処理
+		for(size_t i = 0; i < _countof(object3ds); i++)
+		{
+			UpdateObject3d(&object3ds[i], matView, matProjection);
+		}
 
 
 		//DirectXCommon前処理
 		dxCommon->BeginDraw();
 
-		/////パイプラインステートとルートシグネチャの設定コマンド
-		//dxCommon->GetCommandList()->SetPipelineState(object3dPipelineSet.pipelinestate.Get());
-		//dxCommon->GetCommandList()->SetGraphicsRootSignature(object3dPipelineSet.rootsignature.Get());
 
-		/////プリミティブ形状
-		////プリミティブ形状の設定コマンド
-		//dxCommon->GetCommandList()->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+		//3Dobject
+		Object3DCommonBeginDraw(dxCommon->GetCommandList(), object3dPipelineSet, srvHeap.Get());
 
-		////SRVヒープの設定コマンド	//１番目はSV
-		//ID3D12DescriptorHeap* ppHeaps[] = {srvHeap.Get()};
-		//dxCommon->GetCommandList()->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+		//全オブジェクトについて処理
+		for(size_t i = 0; i < _countof(object3ds); i++)
+		{
+			DrawObject3d(&object3ds[i], dxCommon->GetCommandList(), vbView, ibView, srvHeap.Get(), _countof(indices));
+		}
 
-		////全オブジェクトについて処理
-		//for(size_t i = 0; i < _countof(object3ds); i++)
-		//{
-		//	DrawObject3d(&object3ds[i], dxCommon->GetCommandList(), vbView, ibView, srvHeap.Get(), _countof(indices));
-		//}
 
 		//sprite
 		//スプライト共通コマンド
 		SpriteCommonBeginDraw(dxCommon->GetCommandList(), spritePipelineSet, srvHeap.Get());
 		//スプライト描画
-		SpriteDraw(sprite, dxCommon->GetCommandList());
-
+		SpriteDraw(sprite, dxCommon->GetCommandList(), srvHeap.Get());
 
 		//DirectXCommon描画後処理
 		dxCommon->EndDraw();
@@ -644,10 +633,10 @@ Sprite SpriteCreate(ID3D12Device* device, int window_width, int window_height)
 	//頂点データ
 	VertexPosUv vertices[] = 
 	{
-		{{  +0.0f, +100.0f, 0.0f}, {0.0f, 1.0f}},	//左下
-		{{  +0.0f,   +0.0f, 0.0f}, {0.0f, 0.0f}},	//左上
-		{{+100.0f, +100.0f, 0.0f}, {1.0f, 1.0f}},	//右下
-		{{+100.0f,   +0.0f, 0.0f}, {1.0f, 0.0f}},	//右上
+		{{+100.0f, +200.0f, 0.0f}, {0.0f, 1.0f}},	//左下
+		{{+100.0f, +100.0f, 0.0f}, {0.0f, 0.0f}},	//左上
+		{{+200.0f, +200.0f, 0.0f}, {1.0f, 1.0f}},	//右下
+		{{+200.0f, +100.0f, 0.0f}, {1.0f, 0.0f}},	//右上
 	};
 
 	//頂点バッファの生成
@@ -675,23 +664,42 @@ Sprite SpriteCreate(ID3D12Device* device, int window_width, int window_height)
 	result = device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferDataSprite) + 0xff)&~0xff),
+		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferData) + 0xff) & ~0xff),
 		D3D12_RESOURCE_STATE_GENERIC_READ, nullptr,
-		IID_PPV_ARGS(&sprite.constBuffer)
+		IID_PPV_ARGS(&sprite.constBufferData)
 	);
 	assert(SUCCEEDED(result));
 
 	//定数バッファにデータ転送
-	ConstBufferDataSprite* constMap = nullptr;
-	result = sprite.constBuffer->Map(0, nullptr, (void**)&constMap);
+	ConstBufferData* constMap = nullptr;
+	result = sprite.constBufferData->Map(0, nullptr, (void**)&constMap);
 	assert(SUCCEEDED(result));
-	constMap->color = XMFLOAT4(1, 0, 1, 1);	//色指定
+	constMap->color = XMFLOAT4(1, 1, 1, 1);	//色指定
+
 	//平行投影行列
 	constMap->mat = XMMatrixOrthographicOffCenterLH(
-		0.0f, (float)window_width, (float)window_height, 0.0f, 0.0f, 1.0f);
-	sprite.constBuffer->Unmap(0, nullptr);
+		0.0f, (float)window_width, 
+		(float)window_height, 0.0f, 
+		0.0f, 1.0f);
+
+	sprite.constBufferData->Unmap(0, nullptr);
 
 	return sprite;
+}
+
+//3DObject共通グラフィックスコマンドのセット
+void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet, ID3D12DescriptorHeap* descHeap)
+{
+	//パイプラインステートの設定
+	commandList->SetPipelineState(pipelineSet.pipelinestate.Get());
+	//ルートシグネチャの設定
+	commandList->SetGraphicsRootSignature(pipelineSet.rootsignature.Get());
+	//プリミティブ形状を設定
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+
+	//テクスチャ用デスクリプタヒープの設定
+	ID3D12DescriptorHeap* ppHeaps[] = {descHeap};
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 }
 
 //スプライト共通グラフィックスコマンドのセット
@@ -710,12 +718,23 @@ void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const Pipelin
 }
 
 //スプライト単体描画
-void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList)
+void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList, ID3D12DescriptorHeap* srvHeap)
 {
 	//頂点バッファをセット
 	commandList->IASetVertexBuffers(0, 1, &sprite.vbView);
 	//定数バッファをセット
-	commandList->SetGraphicsRootConstantBufferView(0, sprite.constBuffer->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootConstantBufferView(0, sprite.constBufferData->GetGPUVirtualAddress());
+	//シェーダリソースビューをセット
+	dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable
+		(
+			1, 
+			CD3DX12_GPU_DESCRIPTOR_HANDLE//SRVヒープの先頭ハンドルを取得
+			(
+				srvHeap->GetGPUDescriptorHandleForHeapStart(),
+				0,
+				dxCommon->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+			)
+		);
 	//ポリゴンの描画(4頂点で四角形)
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
@@ -915,7 +934,8 @@ PipelineSet Object2dCreateGraphicsPipeline(ID3D12Device* device)
 		"main", "vs_5_0",					//エントリーポイント名、シェーダーモデル指定
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,	//デバック用設定
 		0,
-		&vsBlob, &errorBlob);
+		&vsBlob, &errorBlob
+	);
 	//エラーなら
 	if(FAILED(result)){
 		//errorBlobからエラー内容をstring型にコピー
@@ -939,7 +959,8 @@ PipelineSet Object2dCreateGraphicsPipeline(ID3D12Device* device)
 		"main", "ps_5_0",					//エントリーポイント名、シェーダーモデル指定
 		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,	//デバック用設定
 		0,
-		&psBlob, &errorBlob);
+		&psBlob, &errorBlob
+	);
 	//エラーなら
 	if(FAILED(result)){
 		//errorBlobからエラー内容をstring型にコピー
@@ -1047,11 +1068,11 @@ PipelineSet Object2dCreateGraphicsPipeline(ID3D12Device* device)
 
 	//ルートシグネチャ (テクスチャ、定数バッファなどシェーダーに渡すリソース情報をまとめたオブジェクト)
 	//設定
-	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init_1_0(_countof(rootParam), rootParam,1, &samplerDesc,D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
+	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc{};
+	rootSignatureDesc.Init_1_0(_countof(rootParam), rootParam, 1, &samplerDesc,D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	//シリアライズ
 	ComPtr<ID3DBlob> rootSigBlob;
-	result = D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob,&errorBlob);
+	result = D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &errorBlob);
 	assert(SUCCEEDED(result));
 	result = dxCommon->GetDevice()->CreateRootSignature(0,rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(),IID_PPV_ARGS(&pipelineSet.rootsignature));
 	assert(SUCCEEDED(result));
@@ -1090,11 +1111,11 @@ void InitializeObject3d(Object3d *object, ID3D12Device* device)
 		&resDesc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-		IID_PPV_ARGS(&object->constBuffTransform));
+		IID_PPV_ARGS(&object->constBuffData));
 	assert(SUCCEEDED(result));
 
 	//定数バッファのマッピング
-	result = object->constBuffTransform->Map(0,nullptr, (void**)&object->constBuffer);
+	result = object->constBuffData->Map(0,nullptr, (void**)&object->constBuffer);
 	assert(SUCCEEDED(result));
 
 	////値を書き込むと自動的に転送される(色の初期化)
@@ -1141,7 +1162,7 @@ void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList, D3D1
 	//インデックスバッファの設定
 	commandList->IASetIndexBuffer(&ibView);
 	//定数バッファビュー(CBVの設定コマンド)
-	commandList->SetGraphicsRootConstantBufferView(0, object->constBuffTransform->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootConstantBufferView(0, object->constBuffData->GetGPUVirtualAddress());
 	//シェーダリソースビューをセット
 	dxCommon->GetCommandList()->SetGraphicsRootDescriptorTable
 		(
