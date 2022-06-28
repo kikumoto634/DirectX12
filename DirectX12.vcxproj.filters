@@ -40,8 +40,8 @@
   <ItemGroup>
     <FxCompile Include="BasicVS.hlsl" />
     <FxCompile Include="BasicPS.hlsl" />
-    <FxCompile Include="SpritePS.hlsl" />
     <FxCompile Include="SpriteVS.hlsl" />
+    <FxCompile Include="SpritePS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Basic.hlsli" />
