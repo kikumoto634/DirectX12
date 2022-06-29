@@ -73,7 +73,7 @@ struct Object3d
 };
 
 
-//Spriteオブジェクト型
+//Spriteオブジェクト型(個別)
 struct Sprite
 {
 	///頂点バッファ
@@ -82,6 +82,12 @@ struct Sprite
 	D3D12_VERTEX_BUFFER_VIEW vbView{};
 	//定数バッファ
 	ID3D12Resource* constBuffData;
+	//Z軸周りの回転角
+	float rotation = 0.f;
+	//座標
+	XMFLOAT3 position = {0, 0, 0};
+	//ワールド行列
+	XMMATRIX matWorld;
 };
 
 
@@ -94,6 +100,18 @@ struct PipelineSet
 	ComPtr<ID3D12RootSignature> rootsignature;
 };
 
+//Spriteオブジェクト(共通)
+struct SpriteCommon
+{
+	//パイプラインセット
+	PipelineSet pipelineSet;
+	//射影行列
+	XMMATRIX matProjection{};
+};
+
+//スプライト共通データ生成
+SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int window_height);
+
 //スプライト生成
 Sprite SpriteCreate(ID3D12Device* device, int window_width, int window_height);
 
@@ -105,13 +123,18 @@ PipelineSet SpriteCreateGraphicsPipeline(ID3D12Device* device);
 //3D共通グラフィックスコマンドのセット
 void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet, ID3D12DescriptorHeap* descHeap);
 //sprite共通グラフィックスコマンドのセット
-void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet, ID3D12DescriptorHeap* descHeap);
+void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon, ID3D12DescriptorHeap* descHeap);
 
 //3Dオブジェクト初期化
 void InitializeObject3d(Object3d* object, ID3D12Device* device);
-void UpdateObject3d(Object3d* object, XMMATRIX& matView, XMMATRIX& matProjection);
-void DrawObject3d(Object3d* object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW& vbView, D3D12_INDEX_BUFFER_VIEW& ibView, ID3D12DescriptorHeap* srvHeap, UINT numIndices);
 
+//更新
+void UpdateObject3d(Object3d* object, XMMATRIX& matView, XMMATRIX& matProjection);
+//スプライト単体更新
+void SpriteUpdate(Sprite& sprite, const SpriteCommon& spriteCommon);
+
+//描画
+void DrawObject3d(Object3d* object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW& vbView, D3D12_INDEX_BUFFER_VIEW& ibView, ID3D12DescriptorHeap* srvHeap, UINT numIndices);
 //スプライト単体描画
 void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList);
 
@@ -335,6 +358,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	ibView.SizeInBytes = sizeIB;
 
 
+
+	//スプライト共通データ
+	SpriteCommon spriteCommon;
+	//スプライト共通データ生成
+	spriteCommon = SpriteCommonCreate(dxCommon->GetDevice());
+
+
 	//スプライト
 	Sprite sprite;
 	//生成
@@ -345,8 +375,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	//3Dオブジェクト用パイプライン生成
 	PipelineSet object3dPipelineSet = Object3dCreateGraphicsPipeline(dxCommon->GetDevice());
 
-	//スプライト用パイプライン生成
-	PipelineSet spritePipelineSet = SpriteCreateGraphicsPipeline(dxCommon->GetDevice());
 
 
 	
@@ -602,7 +630,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 		//スプライト
-		SpriteCommonBeginDraw(dxCommon->GetCommandList(), spritePipelineSet, srvHeap.Get());
+		SpriteCommonBeginDraw(dxCommon->GetCommandList(), spriteCommon, srvHeap.Get());
 
 		SpriteDraw(sprite, dxCommon->GetCommandList());
 
@@ -620,6 +648,29 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	delete winApp;
 
 	return 0;
+}
+
+//スプライト共通データ生成
+SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int window_height)
+{
+	HRESULT result;
+
+	//新たなスプライト共通データの生成
+	SpriteCommon spriteCommon{};
+
+	//スプライト用パイプライン生成
+	spriteCommon.pipelineSet = SpriteCreateGraphicsPipeline(device);
+
+	//並行投影の射影行列生成
+	spriteCommon.matProjection = XMMatrixOrthographicOffCenterLH
+		(
+			0.f, window_width,
+			window_height, 0.f,
+			0.f, 1.f
+		);
+
+	//生成したスプライト共通データを渡す
+	return spriteCommon;
 }
 
 //スプライト生成
@@ -1047,12 +1098,12 @@ void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const Pipel
 }
 
 //sprite共通グラフィックスコマンドのセット
-void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet, ID3D12DescriptorHeap* descHeap)
+void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon, ID3D12DescriptorHeap* descHeap)
 {
 	//パイプラインステートの設定
-	commandList->SetPipelineState(pipelineSet.pipelinestate.Get());
+	commandList->SetPipelineState(spriteCommon.pipelineSet.pipelinestate.Get());
 	//ルートシグネチャの設定
-	commandList->SetGraphicsRootSignature(pipelineSet.rootsignature.Get());
+	commandList->SetGraphicsRootSignature(spriteCommon.pipelineSet.rootsignature.Get());
 	//プリミティブ形状を設定
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
@@ -1084,6 +1135,8 @@ void InitializeObject3d(Object3d *object, ID3D12Device* device)
 	//object->constBuffer->color = object->color;
 }
 
+
+//更新
 void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection)
 {
 	XMMATRIX matScale, matRot, matTrans;
@@ -1115,6 +1168,19 @@ void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection
 	object->constBuffer->color = object->color;
 	object->constBuffer->mat = object->matWorld * matView *matProjection;
 }
+
+//スプライト単体更新
+void SpriteUpdate(Sprite& sprite, const SpriteCommon& spriteCommon)
+{
+	//ワールド行列の更新
+
+	//Z軸回転
+
+	//平行移動
+
+	//定数バッファの転送
+}
+
 
 void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW &vbView, D3D12_INDEX_BUFFER_VIEW &ibView, ID3D12DescriptorHeap* srvHeap,UINT numIndices)
 {
