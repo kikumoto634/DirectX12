@@ -88,6 +88,8 @@ struct Sprite
 	XMFLOAT3 position = {0, 0, 0};
 	//ワールド行列
 	XMMATRIX matWorld;
+	//色
+	XMFLOAT4 color = {1, 1, 0, 1};
 };
 
 
@@ -100,6 +102,9 @@ struct PipelineSet
 	ComPtr<ID3D12RootSignature> rootsignature;
 };
 
+//テクスチャの最大枚数
+const int spriteSRVCount = 512;
+
 //Spriteオブジェクト(共通)
 struct SpriteCommon
 {
@@ -107,13 +112,20 @@ struct SpriteCommon
 	PipelineSet pipelineSet;
 	//射影行列
 	XMMATRIX matProjection{};
+	//テクスチャ用デスクリプタヒープの生成
+	ComPtr<ID3D12DescriptorHeap> descHeap;
+	//テクスチャリソース(テクスチャバッファ)の配列
+	ComPtr<ID3D12Resource> texBuffer[spriteSRVCount];
 };
 
 //スプライト共通データ生成
 SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int window_height);
 
+//スプライト共通テクスチャ読込
+void SpriteCommonLoadTexture(SpriteCommon& spriteCommon, UINT texnumber, const wchar_t* filename, ID3D12Device* device);
+
 //スプライト生成
-Sprite SpriteCreate(ID3D12Device* device, int window_width, int window_height);
+Sprite SpriteCreate(ID3D12Device* device);
 
 //3Dオブジェクト用パイプライン生成
 PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device);
@@ -362,13 +374,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	//スプライト共通データ
 	SpriteCommon spriteCommon;
 	//スプライト共通データ生成
-	spriteCommon = SpriteCommonCreate(dxCommon->GetDevice());
+	spriteCommon = SpriteCommonCreate(dxCommon->GetDevice(), WinApp::window_width, WinApp::window_height);
 
 
 	//スプライト
 	Sprite sprite;
 	//生成
-	sprite = SpriteCreate(dxCommon->GetDevice(), WinApp::window_width, WinApp::window_height);
+	sprite = SpriteCreate(dxCommon->GetDevice());
 
 
 
@@ -553,6 +565,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	float angle = 0.0f;//カメラの回転角
 
 
+	sprite.rotation =45;
+	sprite.position = {1280/2, 720/2,0};
+
 	/// <summary>
 	/// ゲームループ
 	/// </summary>
@@ -614,6 +629,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 			UpdateObject3d(&object3ds[i], matView, matProjection);
 		}
 
+		//スプライト更新
+		SpriteUpdate(sprite, spriteCommon);
+
 
 		//DirectXCommon前処理
 		dxCommon->BeginDraw();
@@ -669,12 +687,30 @@ SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int wind
 			0.f, 1.f
 		);
 
+	//デスクリプタヒープの生成
+	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc= {};
+	descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	descHeapDesc.NumDescriptors= spriteSRVCount;
+	result = device->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(&spriteCommon.descHeap));
+
 	//生成したスプライト共通データを渡す
 	return spriteCommon;
 }
 
+//スプライト共通テクスチャ読込
+void SpriteCommonLoadTexture(SpriteCommon& spriteCommon, UINT texnumber, const wchar_t* filename, ID3D12Device* device)
+{
+	//異常な番号の指定を検出
+	assert(texnumber <= spriteSRVCount - 1);
+
+	HRESULT result;
+
+	
+}
+
 //スプライト生成
-Sprite SpriteCreate(ID3D12Device* device, int window_width, int window_height)
+Sprite SpriteCreate(ID3D12Device* device)
 {
 	HRESULT result;
 
@@ -724,11 +760,6 @@ Sprite SpriteCreate(ID3D12Device* device, int window_width, int window_height)
 	result = sprite.constBuffData->Map(0, nullptr, (void**)&constMap);
 	constMap->color = XMFLOAT4(1.f, 1.f, 1.f, 1.f);
 
-	constMap->mat = XMMatrixOrthographicOffCenterLH(
-		0.0f, window_width,
-		window_height, 0.0f,
-		0.0f, 1000.0f
-	);
 	sprite.constBuffData->Unmap(0, nullptr);
 
 	return sprite;
@@ -1173,12 +1204,20 @@ void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection
 void SpriteUpdate(Sprite& sprite, const SpriteCommon& spriteCommon)
 {
 	//ワールド行列の更新
+	sprite.matWorld = XMMatrixIdentity();
 
 	//Z軸回転
+	sprite.matWorld *= XMMatrixRotationZ(XMConvertToRadians(sprite.rotation));
 
 	//平行移動
+	sprite.matWorld *= XMMatrixTranslation(sprite.position.x, sprite.position.y, sprite.position.z);
 
 	//定数バッファの転送
+	ConstBufferData* constMap = nullptr;
+	HRESULT result = sprite.constBuffData->Map(0,nullptr, (void**)&constMap);
+	constMap->mat = sprite.matWorld * spriteCommon.matProjection;
+	constMap->color = sprite.color;
+	sprite.constBuffData->Unmap(0, nullptr);
 }
 
 
