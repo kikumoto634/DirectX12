@@ -90,6 +90,22 @@ struct Sprite
 	XMMATRIX matWorld;
 	//色
 	XMFLOAT4 color = {1, 1, 0, 1};
+	//テクスチャ番号
+	UINT texNumber = 0;
+	//大きさ
+	XMFLOAT2 size = {100, 100};
+	//アンカーポイント
+	XMFLOAT2 anchorpoint = {0.5f, 0.5f};
+	//左右反転
+	bool IsFlipX = false;
+	//上下反転
+	bool IsFlipY = false;
+	//テクスチャ左上座標
+	XMFLOAT2 texLeftTop = {0,0};
+	//テクスチャ切り出しサイズ
+	XMFLOAT2 texSize = {400, 400};
+	//非表示
+	bool IsInvisible = false;
 };
 
 
@@ -124,8 +140,11 @@ SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int wind
 //スプライト共通テクスチャ読込
 void SpriteCommonLoadTexture(SpriteCommon& spriteCommon, UINT texnumber, const wchar_t* filename, ID3D12Device* device);
 
+//スプライト単体頂点バッファの転送
+void SpriteTransferVertexBuffer(const Sprite& sprite, const SpriteCommon& spriteCommon);
+
 //スプライト生成
-Sprite SpriteCreate(ID3D12Device* device);
+Sprite SpriteCreate(ID3D12Device* device, UINT texNumber, const SpriteCommon& spriteCommon, XMFLOAT2 anchorpoint = {0.5f, 0.5f}, bool isFlipX = false, bool IsFlipY = false);
 
 //3Dオブジェクト用パイプライン生成
 PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device);
@@ -148,7 +167,7 @@ void SpriteUpdate(Sprite& sprite, const SpriteCommon& spriteCommon);
 //描画
 void DrawObject3d(Object3d* object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW& vbView, D3D12_INDEX_BUFFER_VIEW& ibView, ID3D12DescriptorHeap* srvHeap, UINT numIndices);
 //スプライト単体描画
-void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList);
+void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon, ID3D12Device* device);
 
 //WindowsAPIオブジェクト
 WinApp* winApp = nullptr;
@@ -377,10 +396,18 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	spriteCommon = SpriteCommonCreate(dxCommon->GetDevice(), WinApp::window_width, WinApp::window_height);
 
 
+	//スプライト共通テクスチャ読込
+	SpriteCommonLoadTexture(spriteCommon, 0, L"Resources/Texture.jpg",dxCommon->GetDevice());
+	SpriteCommonLoadTexture(spriteCommon, 1, L"Resources/Texture2.jpg", dxCommon->GetDevice());
+
 	//スプライト
-	Sprite sprite;
+	const int TextureNum = 2;
+	Sprite sprite[TextureNum];
 	//生成
-	sprite = SpriteCreate(dxCommon->GetDevice());
+	for(int i = 0; i < TextureNum; i++)
+	{
+		sprite[i] = SpriteCreate(dxCommon->GetDevice(), sprite->texNumber, spriteCommon);
+	}
 
 
 
@@ -564,9 +591,17 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	float angle = 0.0f;//カメラの回転角
 
+	for(int i = 0; i < TextureNum; i++)
+	{
+		sprite[i].position = {i*200.f, 720/2, 0};
+		sprite[i].rotation = i*45;
+		sprite[i].size = {100.f + 300* i, 100.f};
+		sprite[i].texNumber = i;
 
-	sprite.rotation =45;
-	sprite.position = {1280/2, 720/2,0};
+		sprite[i].IsFlipX = i%2;
+
+		SpriteTransferVertexBuffer(sprite[i], spriteCommon);
+	}
 
 	/// <summary>
 	/// ゲームループ
@@ -630,7 +665,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		}
 
 		//スプライト更新
-		SpriteUpdate(sprite, spriteCommon);
+		for(int i = 0; i <TextureNum; i++)
+		{
+			SpriteUpdate(sprite[i], spriteCommon);
+		}
 
 
 		//DirectXCommon前処理
@@ -650,8 +688,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		//スプライト
 		SpriteCommonBeginDraw(dxCommon->GetCommandList(), spriteCommon, srvHeap.Get());
 
-		SpriteDraw(sprite, dxCommon->GetCommandList());
-
+		for(int i = 0; i <TextureNum; i++)
+		{
+			SpriteDraw(sprite[i], dxCommon->GetCommandList(), spriteCommon, dxCommon->GetDevice());
+		}
 
 		//DirectXCommon描画後処理
 		dxCommon->EndDraw();
@@ -706,11 +746,171 @@ void SpriteCommonLoadTexture(SpriteCommon& spriteCommon, UINT texnumber, const w
 
 	HRESULT result;
 
+	///画像ファイルの用意
+	TexMetadata metadata{};
+	ScratchImage scratchImg{};
+	//WICテクスチャデータのロード
+	result = LoadFromWICFile(
+		filename,
+		WIC_FLAGS_NONE,
+		&metadata, scratchImg);
+	assert(SUCCEEDED(result));
+
+
+	//ミップマップの生成
+	ScratchImage mipChain{};
+	//生成
+	result = GenerateMipMaps(
+		scratchImg.GetImages(), 
+		scratchImg.GetImageCount(), 
+		scratchImg.GetMetadata(),
+		TEX_FILTER_DEFAULT, 
+		0, 
+		mipChain
+	);
+	if(SUCCEEDED(result))
+	{
+		scratchImg = std::move(mipChain);
+		metadata = scratchImg.GetMetadata();
+	}
+
+	//フォーマットを書き換える
+	//読み込んだディフューズテクスチャをSRGBとして扱う
+	metadata.format = MakeSRGB(metadata.format);
+
+
+	///テクスチャバッファ設定
+	//ヒープ設定
+	D3D12_HEAP_PROPERTIES textureHandleProp{};
+	textureHandleProp.Type = D3D12_HEAP_TYPE_CUSTOM;
+	textureHandleProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
+	textureHandleProp.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
+	//リソース設定
+	CD3DX12_RESOURCE_DESC textureResourceDesc01 = CD3DX12_RESOURCE_DESC::Tex2D
+		(
+			metadata.format,
+			metadata.width,
+			(UINT)metadata.height,
+			(UINT16)metadata.arraySize,
+			(UINT16)metadata.mipLevels
+		);
+
+	//テクスチャバッファの生成
+	result= dxCommon->GetDevice()->CreateCommittedResource
+		(
+			&CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0),
+			D3D12_HEAP_FLAG_NONE,
+			&textureResourceDesc01,
+			D3D12_RESOURCE_STATE_GENERIC_READ,
+			nullptr,
+			IID_PPV_ARGS(&spriteCommon.texBuffer[texnumber])
+		);
+	assert(SUCCEEDED(result));
+
+
+	//テクスチャバッファへのデータ転送
+	//全ミップマップについて
+	for(size_t i = 0; i < metadata.mipLevels; i++)
+	{
+		//ミップマップレベルを指定してイメージを取得
+		const Image* img = scratchImg.GetImage(i, 0, 0);
+		//テクスチャバッファにデータ転送
+		result = spriteCommon.texBuffer[texnumber]->WriteToSubresource(
+			(UINT)i,				
+			nullptr,				//全領域へコピー
+			img->pixels,			//元データアドレス
+			(UINT)img->rowPitch,	//一ラインサイズ
+			(UINT)img->slicePitch	//一枚サイズ
+		);
+		assert(SUCCEEDED(result));
+	}
+
+	///シェーダリソースビューの作成
+	//設定
+	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};	//設定構造体
+	srvDesc.Format = textureResourceDesc01.Format;
+	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;	//2Dテクスチャ
+	srvDesc.Texture2D.MipLevels = textureResourceDesc01.MipLevels;
+
+	//ハンドルの指す位置にシェーダーリソースビューの作成
+	dxCommon->GetDevice()->CreateShaderResourceView
+	(
+		spriteCommon.texBuffer[texnumber].Get(),
+		&srvDesc,
+		CD3DX12_CPU_DESCRIPTOR_HANDLE//SRVヒープの先頭ハンドルを取得
+			(
+				spriteCommon.descHeap->GetCPUDescriptorHandleForHeapStart(),
+				texnumber,
+				dxCommon->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+			)
+	);
+}
+
+//スプライト単体頂点バッファの転送
+void SpriteTransferVertexBuffer(const Sprite& sprite, const SpriteCommon& spriteCommon)
+{
+	HRESULT result = S_FALSE;
+
+	//頂点データ
+	VertexPosUv vertices[] = 
+	{
+		{{}, {0.f, 1.f}},
+		{{}, {0.f, 0.f}},
+		{{}, {1.f, 1.f}},
+		{{}, {1.f, 0.f}},
+	};
+
+	enum {LB, LT, RB, RT};
+
+	float left = (0.f - sprite.anchorpoint.x)* sprite.size.x;
+	float right = (1.f - sprite.anchorpoint.x)* sprite.size.x;
+	float top = (0.f - sprite.anchorpoint.y)* sprite.size.y;
+	float bottom = (1.f - sprite.anchorpoint.y)* sprite.size.y;
+
+	if(sprite.IsFlipX)
+	{//左右入れ替え
+		left = -left;
+		right = -right;
+	}
+	if(sprite.IsFlipY)
+	{//上下反転
+		top = -top;
+		bottom = -bottom;
+	}
+
+	vertices[LB].pos = {left, bottom, 0.f};
+	vertices[LT].pos = {left, top, 0.f};
+	vertices[RB].pos = {right, bottom, 0.f};
+	vertices[RT].pos = {right, top, 0.f};
+
+	//UV計算
+	//指定番号の画像が読込済みなら
+	if(spriteCommon.texBuffer[sprite.texNumber])
+	{
+		//テクスチャ情報取得
+		D3D12_RESOURCE_DESC resDesc = spriteCommon.texBuffer[sprite.texNumber]->GetDesc();
+
+		float tex_left = sprite.texLeftTop.x / resDesc.Width;
+		float tex_right = (sprite.texLeftTop.x + sprite.texSize.x) / resDesc.Width;
+		float tex_top = sprite.texLeftTop.y / resDesc.Height;
+		float tex_bottom = (sprite.texLeftTop.x + sprite.texSize.y) / resDesc.Height;
 	
+		vertices[LB].uv = {tex_left, tex_bottom};
+		vertices[LT].uv = {tex_left, tex_top};
+		vertices[RB].uv = {tex_right, tex_bottom};
+		vertices[RT].uv = {tex_right, tex_top};
+	}
+
+	//頂点バッファのデータ転送
+	VertexPosUv* vertMap = nullptr;
+	result = sprite.vertBuff->Map(0, nullptr, (void**)&vertMap);
+	memcpy(vertMap, vertices,sizeof(vertices));
+	sprite.vertBuff->Unmap(0,nullptr);
 }
 
 //スプライト生成
-Sprite SpriteCreate(ID3D12Device* device)
+Sprite SpriteCreate(ID3D12Device* device, UINT texNumber, const SpriteCommon& spriteCommon, XMFLOAT2 anchorpoint, bool isFlipX, bool isFlipY)
 {
 	HRESULT result;
 
@@ -724,6 +924,9 @@ Sprite SpriteCreate(ID3D12Device* device)
 		{{100.f,   0.f, 0.f}, {1.f, 0.f}},
 	};
 
+	//テクスチャ番号コピー
+	sprite.texNumber = texNumber;
+
 	//頂点バッファ生成
 	result = device->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -734,11 +937,25 @@ Sprite SpriteCreate(ID3D12Device* device)
 		IID_PPV_ARGS(&sprite.vertBuff)
 	);
 
+	//指定番号の画像が読込落ちなら
+	if(spriteCommon.texBuffer[sprite.texNumber])
+	{
+		//テクスチャ情報取得
+		D3D12_RESOURCE_DESC resDesc= spriteCommon.texBuffer[sprite.texNumber]->GetDesc();
+
+		//スプライトの大きさを画像の解像度に合わせる
+		sprite.size = {(float)resDesc.Width, (float)resDesc.Height};
+	}
+
+	//アンカーポイントをコピー
+	sprite.anchorpoint = anchorpoint;
+
+	//反転フラグをコピー
+	sprite.IsFlipX = isFlipX;
+	sprite.IsFlipY = isFlipY;
+
 	//頂点バッファへのデータ転送
-	VertexPosUv* vertMap = nullptr;
-	result = sprite.vertBuff->Map(0, nullptr, (void**)&vertMap);
-	memcpy(vertMap, vertices, sizeof(vertices));
-	sprite.vertBuff->Unmap(0, nullptr);
+	SpriteTransferVertexBuffer(sprite, spriteCommon);
 
 	//頂点バッファビューの作成
 	sprite.vbView.BufferLocation = sprite.vertBuff->GetGPUVirtualAddress();
@@ -1139,7 +1356,7 @@ void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const SpriteC
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	//テスクチャ用デスクリプタヒープの設定
-	ID3D12DescriptorHeap* ppHeaps[] = {descHeap};
+	ID3D12DescriptorHeap* ppHeaps[] = {spriteCommon.descHeap.Get()};
 	commandList->SetDescriptorHeaps(_countof(ppHeaps),ppHeaps);
 }
 
@@ -1247,12 +1464,28 @@ void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList, D3D1
 }
 
 //スプライト単体描画
-void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList)
+void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon, ID3D12Device* device)
 {
+	if(sprite.IsInvisible)
+	{
+		return ;
+	}
+
 	//頂点バッファのセット
 	commandList->IASetVertexBuffers(0,1,&sprite.vbView);
 	//定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(0, sprite.constBuffData->GetGPUVirtualAddress());
+	//シェーダーリソースビューをセット
+	commandList->SetGraphicsRootDescriptorTable
+	(
+		1, 
+		CD3DX12_GPU_DESCRIPTOR_HANDLE
+		(
+			spriteCommon.descHeap->GetGPUDescriptorHandleForHeapStart(),
+			sprite.texNumber,
+			device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
+		)
+	);
 	//ポリゴンの描画
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
