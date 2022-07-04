@@ -84,7 +84,6 @@
     <ClCompile Include="DirectXCommon.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="TextureManager.cpp" />
     <ClCompile Include="WinApp.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -125,7 +124,6 @@
   <ItemGroup>
     <ClInclude Include="DirectXCommon.h" />
     <ClInclude Include="Input.h" />
-    <ClInclude Include="TextureManager.h" />
     <ClInclude Include="WinApp.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
