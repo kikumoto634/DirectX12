@@ -134,6 +134,8 @@ struct SpriteCommon
 	ComPtr<ID3D12Resource> texBuffer[spriteSRVCount];
 };
 
+
+
 //スプライト共通データ生成
 SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int window_height);
 
@@ -707,6 +709,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	return 0;
 }
+
 
 //スプライト共通データ生成
 SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int window_height)
@@ -1360,7 +1363,7 @@ void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const SpriteC
 	commandList->SetDescriptorHeaps(_countof(ppHeaps),ppHeaps);
 }
 
-
+//初期化
 void InitializeObject3d(Object3d *object, ID3D12Device* device)
 {
 	HRESULT result;
