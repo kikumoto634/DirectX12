@@ -137,7 +137,7 @@ struct SpriteCommon
 SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int window_height);
 
 //スプライト単体頂点バッファの転送
-void SpriteTransferVertexBuffer(const Sprite& sprite, const SpriteCommon& spriteCommon);
+void SpriteTransferVertexBuffer(const Sprite& sprite);
 
 //スプライト生成
 Sprite SpriteCreate(ID3D12Device* device, UINT texNumber, const SpriteCommon& spriteCommon, XMFLOAT2 anchorpoint = {0.5f, 0.5f}, bool isFlipX = false, bool IsFlipY = false);
@@ -150,7 +150,7 @@ PipelineSet SpriteCreateGraphicsPipeline(ID3D12Device* device);
 //3D共通グラフィックスコマンドのセット
 void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet, ID3D12DescriptorHeap* descHeap);
 //sprite共通グラフィックスコマンドのセット
-void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon, ID3D12DescriptorHeap* descHeap);
+void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon);
 
 //3Dオブジェクト初期化
 void InitializeObject3d(Object3d* object, ID3D12Device* device);
@@ -163,7 +163,7 @@ void SpriteUpdate(Sprite& sprite, const SpriteCommon& spriteCommon);
 //描画
 void DrawObject3d(Object3d* object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW& vbView, D3D12_INDEX_BUFFER_VIEW& ibView, ID3D12DescriptorHeap* srvHeap, UINT numIndices);
 //スプライト単体描画
-void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon, ID3D12Device* device);
+void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList);
 
 //WindowsAPIオブジェクト
 WinApp* winApp = nullptr;
@@ -603,7 +603,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 		sprite[i].IsFlipX = i%2;
 
-		SpriteTransferVertexBuffer(sprite[i], spriteCommon);
+		SpriteTransferVertexBuffer(sprite[i]);
 	}
 
 	/// <summary>
@@ -689,11 +689,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 		//スプライト
-		SpriteCommonBeginDraw(dxCommon->GetCommandList(), spriteCommon, srvHeap.Get());
+		SpriteCommonBeginDraw(dxCommon->GetCommandList(), spriteCommon);
 
 		for(int i = 0; i <TextureNum; i++)
 		{
-			SpriteDraw(sprite[i], dxCommon->GetCommandList(), spriteCommon, dxCommon->GetDevice());
+			SpriteDraw(sprite[i], dxCommon->GetCommandList());
 		}
 
 		//DirectXCommon描画後処理
@@ -713,7 +713,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 }
 
 
-//スプライト共通データ生成
+//テクスチャ共通データ生成
 SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int window_height)
 {
 	//HRESULT result;
@@ -737,7 +737,7 @@ SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int wind
 }
 
 //スプライト単体頂点バッファの転送
-void SpriteTransferVertexBuffer(const Sprite& sprite, const SpriteCommon& spriteCommon)
+void SpriteTransferVertexBuffer(const Sprite& sprite)
 {
 	HRESULT result = S_FALSE;
 
@@ -844,7 +844,7 @@ Sprite SpriteCreate(ID3D12Device* device, UINT texNumber, const SpriteCommon& sp
 	sprite.IsFlipY = isFlipY;
 
 	//頂点バッファへのデータ転送
-	SpriteTransferVertexBuffer(sprite, spriteCommon);
+	SpriteTransferVertexBuffer(sprite);
 
 	//頂点バッファビューの作成
 	sprite.vbView.BufferLocation = sprite.vertBuff->GetGPUVirtualAddress();
@@ -1234,8 +1234,8 @@ void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const Pipel
 	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 }
 
-//sprite共通グラフィックスコマンドのセット
-void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon, ID3D12DescriptorHeap* descHeap)
+//テクスチャグラフィックスコマンドのセット
+void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon)
 {
 	//パイプラインステートの設定
 	commandList->SetPipelineState(spriteCommon.pipelineSet.pipelinestate.Get());
@@ -1270,7 +1270,6 @@ void InitializeObject3d(Object3d *object, ID3D12Device* device)
 	////値を書き込むと自動的に転送される(色の初期化)
 	//object->constBuffer->color = object->color;
 }
-
 
 //更新
 void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection)
@@ -1352,7 +1351,7 @@ void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList, D3D1
 }
 
 //スプライト単体描画
-void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon, ID3D12Device* device)
+void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList)
 {
 	if(sprite.IsInvisible)
 	{
