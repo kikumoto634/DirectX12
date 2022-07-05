@@ -16,6 +16,8 @@
 //DirectXTex導入
 #include "DirectXTex.h"
 
+#include "TextureManager.h"
+
 //ComPtrスマートポインタ
 #include <wrl.h>
 
@@ -118,9 +120,8 @@ struct PipelineSet
 	ComPtr<ID3D12RootSignature> rootsignature;
 };
 
-//テクスチャの最大枚数
-const int spriteSRVCount = 512;
-
+////テクスチャの最大枚数
+//const int spriteSRVCount = 2056;
 //Spriteオブジェクト(共通)
 struct SpriteCommon
 {
@@ -128,19 +129,12 @@ struct SpriteCommon
 	PipelineSet pipelineSet;
 	//射影行列
 	XMMATRIX matProjection{};
-	//テクスチャ用デスクリプタヒープの生成
-	ComPtr<ID3D12DescriptorHeap> descHeap;
-	//テクスチャリソース(テクスチャバッファ)の配列
-	ComPtr<ID3D12Resource> texBuffer[spriteSRVCount];
 };
 
 
 
 //スプライト共通データ生成
 SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int window_height);
-
-//スプライト共通テクスチャ読込
-void SpriteCommonLoadTexture(SpriteCommon& spriteCommon, UINT texnumber, const wchar_t* filename, ID3D12Device* device);
 
 //スプライト単体頂点バッファの転送
 void SpriteTransferVertexBuffer(const Sprite& sprite, const SpriteCommon& spriteCommon);
@@ -175,6 +169,8 @@ void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList, co
 WinApp* winApp = nullptr;
 //DirectXオブジェクト
 DirectXCommon* dxCommon = nullptr;
+//テクスチャマネージャー
+TextureManager* textureManager = nullptr;
 
 /// Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
@@ -188,6 +184,11 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	dxCommon = new DirectXCommon();
 	//初期化
 	dxCommon->Initialize(winApp);
+
+	//テクスチャマネージャー
+	textureManager = new TextureManager();
+	//初期化
+	textureManager->Inithalize(dxCommon);
 
 	/// <summary>
 	/// DirectX12 初期化処理 ここから
@@ -399,8 +400,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 	//スプライト共通テクスチャ読込
-	SpriteCommonLoadTexture(spriteCommon, 0, L"Resources/Texture.jpg",dxCommon->GetDevice());
-	SpriteCommonLoadTexture(spriteCommon, 1, L"Resources/Texture2.jpg", dxCommon->GetDevice());
+	textureManager->LoadTexture(0, L"Resources/Texture.jpg");
+	textureManager->LoadTexture(1, L"Resources/Texture2.jpg");
 
 	//スプライト
 	const int TextureNum = 2;
@@ -703,6 +704,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// </summary>
 	}
 	delete input;
+	delete textureManager;
 	delete dxCommon;
 	//ゲームウィンドウ破棄
 	delete winApp;
@@ -714,7 +716,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 //スプライト共通データ生成
 SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int window_height)
 {
-	HRESULT result;
+	//HRESULT result;
 
 	//新たなスプライト共通データの生成
 	SpriteCommon spriteCommon{};
@@ -730,124 +732,8 @@ SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int wind
 			0.f, 1.f
 		);
 
-	//デスクリプタヒープの生成
-	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc= {};
-	descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-	descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-	descHeapDesc.NumDescriptors= spriteSRVCount;
-	result = device->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(&spriteCommon.descHeap));
-
 	//生成したスプライト共通データを渡す
 	return spriteCommon;
-}
-
-//スプライト共通テクスチャ読込
-void SpriteCommonLoadTexture(SpriteCommon& spriteCommon, UINT texnumber, const wchar_t* filename, ID3D12Device* device)
-{
-	//異常な番号の指定を検出
-	assert(texnumber <= spriteSRVCount - 1);
-
-	HRESULT result;
-
-	///画像ファイルの用意
-	TexMetadata metadata{};
-	ScratchImage scratchImg{};
-	//WICテクスチャデータのロード
-	result = LoadFromWICFile(
-		filename,
-		WIC_FLAGS_NONE,
-		&metadata, scratchImg);
-	assert(SUCCEEDED(result));
-
-
-	//ミップマップの生成
-	ScratchImage mipChain{};
-	//生成
-	result = GenerateMipMaps(
-		scratchImg.GetImages(), 
-		scratchImg.GetImageCount(), 
-		scratchImg.GetMetadata(),
-		TEX_FILTER_DEFAULT, 
-		0, 
-		mipChain
-	);
-	if(SUCCEEDED(result))
-	{
-		scratchImg = std::move(mipChain);
-		metadata = scratchImg.GetMetadata();
-	}
-
-	//フォーマットを書き換える
-	//読み込んだディフューズテクスチャをSRGBとして扱う
-	metadata.format = MakeSRGB(metadata.format);
-
-
-	///テクスチャバッファ設定
-	//ヒープ設定
-	D3D12_HEAP_PROPERTIES textureHandleProp{};
-	textureHandleProp.Type = D3D12_HEAP_TYPE_CUSTOM;
-	textureHandleProp.CPUPageProperty = D3D12_CPU_PAGE_PROPERTY_WRITE_BACK;
-	textureHandleProp.MemoryPoolPreference = D3D12_MEMORY_POOL_L0;
-	//リソース設定
-	CD3DX12_RESOURCE_DESC textureResourceDesc01 = CD3DX12_RESOURCE_DESC::Tex2D
-		(
-			metadata.format,
-			metadata.width,
-			(UINT)metadata.height,
-			(UINT16)metadata.arraySize,
-			(UINT16)metadata.mipLevels
-		);
-
-	//テクスチャバッファの生成
-	result= dxCommon->GetDevice()->CreateCommittedResource
-		(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_CPU_PAGE_PROPERTY_WRITE_BACK, D3D12_MEMORY_POOL_L0),
-			D3D12_HEAP_FLAG_NONE,
-			&textureResourceDesc01,
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(&spriteCommon.texBuffer[texnumber])
-		);
-	assert(SUCCEEDED(result));
-
-
-	//テクスチャバッファへのデータ転送
-	//全ミップマップについて
-	for(size_t i = 0; i < metadata.mipLevels; i++)
-	{
-		//ミップマップレベルを指定してイメージを取得
-		const Image* img = scratchImg.GetImage(i, 0, 0);
-		//テクスチャバッファにデータ転送
-		result = spriteCommon.texBuffer[texnumber]->WriteToSubresource(
-			(UINT)i,				
-			nullptr,				//全領域へコピー
-			img->pixels,			//元データアドレス
-			(UINT)img->rowPitch,	//一ラインサイズ
-			(UINT)img->slicePitch	//一枚サイズ
-		);
-		assert(SUCCEEDED(result));
-	}
-
-	///シェーダリソースビューの作成
-	//設定
-	D3D12_SHADER_RESOURCE_VIEW_DESC srvDesc{};	//設定構造体
-	srvDesc.Format = textureResourceDesc01.Format;
-	srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-	srvDesc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;	//2Dテクスチャ
-	srvDesc.Texture2D.MipLevels = textureResourceDesc01.MipLevels;
-
-	//ハンドルの指す位置にシェーダーリソースビューの作成
-	dxCommon->GetDevice()->CreateShaderResourceView
-	(
-		spriteCommon.texBuffer[texnumber].Get(),
-		&srvDesc,
-		CD3DX12_CPU_DESCRIPTOR_HANDLE//SRVヒープの先頭ハンドルを取得
-			(
-				spriteCommon.descHeap->GetCPUDescriptorHandleForHeapStart(),
-				texnumber,
-				dxCommon->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
-			)
-	);
 }
 
 //スプライト単体頂点バッファの転送
@@ -889,10 +775,10 @@ void SpriteTransferVertexBuffer(const Sprite& sprite, const SpriteCommon& sprite
 
 	//UV計算
 	//指定番号の画像が読込済みなら
-	if(spriteCommon.texBuffer[sprite.texNumber])
+	if(textureManager->GetSpriteTexBuffer(sprite.texNumber))
 	{
 		//テクスチャ情報取得
-		D3D12_RESOURCE_DESC resDesc = spriteCommon.texBuffer[sprite.texNumber]->GetDesc();
+		D3D12_RESOURCE_DESC resDesc = textureManager->GetSpriteTexBuffer(sprite.texNumber)->GetDesc();
 
 		float tex_left = sprite.texLeftTop.x / resDesc.Width;
 		float tex_right = (sprite.texLeftTop.x + sprite.texSize.x) / resDesc.Width;
@@ -941,10 +827,10 @@ Sprite SpriteCreate(ID3D12Device* device, UINT texNumber, const SpriteCommon& sp
 	);
 
 	//指定番号の画像が読込落ちなら
-	if(spriteCommon.texBuffer[sprite.texNumber])
+	if(textureManager->GetSpriteTexBuffer(sprite.texNumber))
 	{
 		//テクスチャ情報取得
-		D3D12_RESOURCE_DESC resDesc= spriteCommon.texBuffer[sprite.texNumber]->GetDesc();
+		D3D12_RESOURCE_DESC resDesc= textureManager->GetSpriteTexBuffer(sprite.texNumber)->GetDesc();
 
 		//スプライトの大きさを画像の解像度に合わせる
 		sprite.size = {(float)resDesc.Width, (float)resDesc.Height};
@@ -1359,8 +1245,7 @@ void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const SpriteC
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
 	//テスクチャ用デスクリプタヒープの設定
-	ID3D12DescriptorHeap* ppHeaps[] = {spriteCommon.descHeap.Get()};
-	commandList->SetDescriptorHeaps(_countof(ppHeaps),ppHeaps);
+	textureManager->SetDescriptorHeaps(commandList);
 }
 
 //初期化
@@ -1479,16 +1364,7 @@ void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList, co
 	//定数バッファをセット
 	commandList->SetGraphicsRootConstantBufferView(0, sprite.constBuffData->GetGPUVirtualAddress());
 	//シェーダーリソースビューをセット
-	commandList->SetGraphicsRootDescriptorTable
-	(
-		1, 
-		CD3DX12_GPU_DESCRIPTOR_HANDLE
-		(
-			spriteCommon.descHeap->GetGPUDescriptorHandleForHeapStart(),
-			sprite.texNumber,
-			device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)
-		)
-	);
+	textureManager->SetShaderResourceView(commandList, 1, sprite.texNumber);
 	//ポリゴンの描画
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
