@@ -21,6 +21,8 @@
 //ComPtrスマートポインタ
 #include <wrl.h>
 
+#include "Sprite.h"
+
 #pragma comment(lib, "d3dcompiler.lib")
 
 using namespace DirectX;
@@ -37,13 +39,6 @@ struct Vertex
 	XMFLOAT3 pos;	//xyz座標
 	XMFLOAT3 normal;//法線ベクトル
 	XMFLOAT2 uv;	//uv座標
-};
-
-//スプライトデータ構造
-struct VertexPosUv
-{
-	XMFLOAT3 pos;
-	XMFLOAT2 uv;
 };
 
 
@@ -75,41 +70,6 @@ struct Object3d
 };
 
 
-//Spriteオブジェクト型(個別)
-struct Sprite
-{
-	///頂点バッファ
-	ID3D12Resource* vertBuff;
-	///頂点バッファビュー
-	D3D12_VERTEX_BUFFER_VIEW vbView{};
-	//定数バッファ
-	ID3D12Resource* constBuffData;
-	//Z軸周りの回転角
-	float rotation = 0.f;
-	//座標
-	XMFLOAT3 position = {0, 0, 0};
-	//ワールド行列
-	XMMATRIX matWorld;
-	//色
-	XMFLOAT4 color = {1, 1, 0, 1};
-	//テクスチャ番号
-	UINT texNumber = 0;
-	//大きさ
-	XMFLOAT2 size = {100, 100};
-	//アンカーポイント
-	XMFLOAT2 anchorpoint = {0.5f, 0.5f};
-	//左右反転
-	bool IsFlipX = false;
-	//上下反転
-	bool IsFlipY = false;
-	//テクスチャ左上座標
-	XMFLOAT2 texLeftTop = {0,0};
-	//テクスチャ切り出しサイズ
-	XMFLOAT2 texSize = {400, 400};
-	//非表示
-	bool IsInvisible = false;
-};
-
 
 //パイプラインセット
 struct PipelineSet
@@ -120,37 +80,11 @@ struct PipelineSet
 	ComPtr<ID3D12RootSignature> rootsignature;
 };
 
-////テクスチャの最大枚数
-//const int spriteSRVCount = 2056;
-//Spriteオブジェクト(共通)
-struct SpriteCommon
-{
-	//パイプラインセット
-	PipelineSet pipelineSet;
-	//射影行列
-	XMMATRIX matProjection{};
-};
-
-
-
-//スプライト共通データ生成
-SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int window_height);
-
-//スプライト単体頂点バッファの転送
-void SpriteTransferVertexBuffer(const Sprite& sprite);
-
-//スプライト生成
-Sprite SpriteCreate(ID3D12Device* device, UINT texNumber, const SpriteCommon& spriteCommon, XMFLOAT2 anchorpoint = {0.5f, 0.5f}, bool isFlipX = false, bool IsFlipY = false);
-
 //3Dオブジェクト用パイプライン生成
 PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device);
-//Sprite用パイプライン生成
-PipelineSet SpriteCreateGraphicsPipeline(ID3D12Device* device);
 
 //3D共通グラフィックスコマンドのセット
 void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet, ID3D12DescriptorHeap* descHeap);
-//sprite共通グラフィックスコマンドのセット
-void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon);
 
 //3Dオブジェクト初期化
 void InitializeObject3d(Object3d* object, ID3D12Device* device);
@@ -158,12 +92,10 @@ void InitializeObject3d(Object3d* object, ID3D12Device* device);
 //更新
 void UpdateObject3d(Object3d* object, XMMATRIX& matView, XMMATRIX& matProjection);
 //スプライト単体更新
-void SpriteUpdate(Sprite& sprite, const SpriteCommon& spriteCommon);
+//void SpriteUpdate(Sprite& sprite, const SpriteCommon& spriteCommon);
 
 //描画
 void DrawObject3d(Object3d* object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW& vbView, D3D12_INDEX_BUFFER_VIEW& ibView, ID3D12DescriptorHeap* srvHeap, UINT numIndices);
-//スプライト単体描画
-void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList);
 
 //WindowsAPIオブジェクト
 WinApp* winApp = nullptr;
@@ -171,6 +103,8 @@ WinApp* winApp = nullptr;
 DirectXCommon* dxCommon = nullptr;
 //テクスチャマネージャー
 TextureManager* textureManager = nullptr;
+const int TextureNum = 2;
+Sprite* sprite = nullptr;
 
 /// Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
@@ -393,24 +327,16 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 
-	//スプライト共通データ
-	SpriteCommon spriteCommon;
-	//スプライト共通データ生成
-	spriteCommon = SpriteCommonCreate(dxCommon->GetDevice(), WinApp::window_width, WinApp::window_height);
-
+	////スプライト共通データ生成
+	Sprite::StaticInithalize(dxCommon, textureManager);
 
 	//スプライト共通テクスチャ読込
 	textureManager->LoadTexture(0, L"Resources/Texture.jpg");
 	textureManager->LoadTexture(1, L"Resources/Texture2.jpg");
 
-	//スプライト
-	const int TextureNum = 2;
-	Sprite sprite[TextureNum];
-	//生成
-	for(int i = 0; i < TextureNum; i++)
-	{
-		sprite[i] = SpriteCreate(dxCommon->GetDevice(), sprite->texNumber, spriteCommon);
-	}
+	//スプライト生成
+	sprite = new Sprite();
+	sprite->Inithalize(0);
 
 
 
@@ -594,7 +520,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	float angle = 0.0f;//カメラの回転角
 
-	for(int i = 0; i < TextureNum; i++)
+	/*for(int i = 0; i < TextureNum; i++)
 	{
 		sprite[i].position = {i*200.f, 720/2, 0};
 		sprite[i].rotation = i*45;
@@ -604,7 +530,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		sprite[i].IsFlipX = i%2;
 
 		SpriteTransferVertexBuffer(sprite[i]);
-	}
+	}*/
 
 	/// <summary>
 	/// ゲームループ
@@ -668,10 +594,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		}
 
 		//スプライト更新
-		for(int i = 0; i <TextureNum; i++)
+		/*for(int i = 0; i <TextureNum; i++)
 		{
 			SpriteUpdate(sprite[i], spriteCommon);
-		}
+		}*/
 
 
 		//DirectXCommon前処理
@@ -689,12 +615,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 		//スプライト
-		SpriteCommonBeginDraw(dxCommon->GetCommandList(), spriteCommon);
-
-		for(int i = 0; i <TextureNum; i++)
-		{
-			SpriteDraw(sprite[i], dxCommon->GetCommandList());
-		}
+		Sprite::SetPipelineState(dxCommon->GetCommandList());
+		sprite->Draw(dxCommon->GetCommandList());
 
 		//DirectXCommon描画後処理
 		dxCommon->EndDraw();
@@ -703,7 +625,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// DirectX12 毎フレーム処理 ここまで
 		/// </summary>
 	}
+
+	Sprite::StaticFinalize();
 	delete input;
+	delete sprite;
 	delete textureManager;
 	delete dxCommon;
 	//ゲームウィンドウ破棄
@@ -713,163 +638,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 }
 
 
-//テクスチャ共通データ生成
-SpriteCommon SpriteCommonCreate(ID3D12Device* device, int window_width, int window_height)
-{
-	//HRESULT result;
 
-	//新たなスプライト共通データの生成
-	SpriteCommon spriteCommon{};
-
-	//スプライト用パイプライン生成
-	spriteCommon.pipelineSet = SpriteCreateGraphicsPipeline(device);
-
-	//並行投影の射影行列生成
-	spriteCommon.matProjection = XMMatrixOrthographicOffCenterLH
-		(
-			0.f, window_width,
-			window_height, 0.f,
-			0.f, 1.f
-		);
-
-	//生成したスプライト共通データを渡す
-	return spriteCommon;
-}
-
-//スプライト単体頂点バッファの転送
-void SpriteTransferVertexBuffer(const Sprite& sprite)
-{
-	HRESULT result = S_FALSE;
-
-	//頂点データ
-	VertexPosUv vertices[] = 
-	{
-		{{}, {0.f, 1.f}},
-		{{}, {0.f, 0.f}},
-		{{}, {1.f, 1.f}},
-		{{}, {1.f, 0.f}},
-	};
-
-	enum {LB, LT, RB, RT};
-
-	float left = (0.f - sprite.anchorpoint.x)* sprite.size.x;
-	float right = (1.f - sprite.anchorpoint.x)* sprite.size.x;
-	float top = (0.f - sprite.anchorpoint.y)* sprite.size.y;
-	float bottom = (1.f - sprite.anchorpoint.y)* sprite.size.y;
-
-	if(sprite.IsFlipX)
-	{//左右入れ替え
-		left = -left;
-		right = -right;
-	}
-	if(sprite.IsFlipY)
-	{//上下反転
-		top = -top;
-		bottom = -bottom;
-	}
-
-	vertices[LB].pos = {left, bottom, 0.f};
-	vertices[LT].pos = {left, top, 0.f};
-	vertices[RB].pos = {right, bottom, 0.f};
-	vertices[RT].pos = {right, top, 0.f};
-
-	//UV計算
-	//指定番号の画像が読込済みなら
-	if(textureManager->GetSpriteTexBuffer(sprite.texNumber))
-	{
-		//テクスチャ情報取得
-		D3D12_RESOURCE_DESC resDesc = textureManager->GetSpriteTexBuffer(sprite.texNumber)->GetDesc();
-
-		float tex_left = sprite.texLeftTop.x / resDesc.Width;
-		float tex_right = (sprite.texLeftTop.x + sprite.texSize.x) / resDesc.Width;
-		float tex_top = sprite.texLeftTop.y / resDesc.Height;
-		float tex_bottom = (sprite.texLeftTop.x + sprite.texSize.y) / resDesc.Height;
-	
-		vertices[LB].uv = {tex_left, tex_bottom};
-		vertices[LT].uv = {tex_left, tex_top};
-		vertices[RB].uv = {tex_right, tex_bottom};
-		vertices[RT].uv = {tex_right, tex_top};
-	}
-
-	//頂点バッファのデータ転送
-	VertexPosUv* vertMap = nullptr;
-	result = sprite.vertBuff->Map(0, nullptr, (void**)&vertMap);
-	memcpy(vertMap, vertices,sizeof(vertices));
-	sprite.vertBuff->Unmap(0,nullptr);
-}
-
-//スプライト生成
-Sprite SpriteCreate(ID3D12Device* device, UINT texNumber, const SpriteCommon& spriteCommon, XMFLOAT2 anchorpoint, bool isFlipX, bool isFlipY)
-{
-	HRESULT result;
-
-	Sprite sprite{};
-
-	VertexPosUv vertices[] = 
-	{
-		{{  0.f, 100.f, 0.f}, {0.f, 1.f}},
-		{{  0.f,   0.f, 0.f}, {0.f, 0.f}},
-		{{100.f, 100.f, 0.f}, {1.f, 1.f}},
-		{{100.f,   0.f, 0.f}, {1.f, 0.f}},
-	};
-
-	//テクスチャ番号コピー
-	sprite.texNumber = texNumber;
-
-	//頂点バッファ生成
-	result = device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(sizeof(vertices)),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&sprite.vertBuff)
-	);
-
-	//指定番号の画像が読込落ちなら
-	if(textureManager->GetSpriteTexBuffer(sprite.texNumber))
-	{
-		//テクスチャ情報取得
-		D3D12_RESOURCE_DESC resDesc= textureManager->GetSpriteTexBuffer(sprite.texNumber)->GetDesc();
-
-		//スプライトの大きさを画像の解像度に合わせる
-		sprite.size = {(float)resDesc.Width, (float)resDesc.Height};
-	}
-
-	//アンカーポイントをコピー
-	sprite.anchorpoint = anchorpoint;
-
-	//反転フラグをコピー
-	sprite.IsFlipX = isFlipX;
-	sprite.IsFlipY = isFlipY;
-
-	//頂点バッファへのデータ転送
-	SpriteTransferVertexBuffer(sprite);
-
-	//頂点バッファビューの作成
-	sprite.vbView.BufferLocation = sprite.vertBuff->GetGPUVirtualAddress();
-	sprite.vbView.SizeInBytes = sizeof(vertices);
-	sprite.vbView.StrideInBytes = sizeof(vertices[0]);
-
-	//定数バッファの生成
-	result = device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferData) + 0xff)&~0xff),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&sprite.constBuffData)
-	);
-
-	//定数バッファのデータ転送
-	ConstBufferData* constMap = nullptr;
-	result = sprite.constBuffData->Map(0, nullptr, (void**)&constMap);
-	constMap->color = XMFLOAT4(1.f, 1.f, 1.f, 1.f);
-
-	sprite.constBuffData->Unmap(0, nullptr);
-
-	return sprite;
-}
 
 //3Dオブジェクト用パイプラインセット
 PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device)
@@ -1048,176 +817,6 @@ PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device)
 	return pipelineSet;
 }
 
-//スプライト用のパイプラインセット
-PipelineSet SpriteCreateGraphicsPipeline(ID3D12Device* device)
-{
-	HRESULT result;
-
-	///頂点シェーダーfileの読み込みとコンパイル
-	ComPtr<ID3DBlob> vsBlob ;			//頂点シェーダーオブジェクト
-	ComPtr<ID3DBlob> psBlob ;			//ピクセルシェーダーオブジェクト
-	ComPtr<ID3DBlob> errorBlob ;		//エラーオブジェクト
-
-	//頂点シェーダーの読み込みコンパイル
-	result = D3DCompileFromFile(
-		L"SpriteVS.hlsl",		//シェーダーファイル名
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,	//インクルード可能にする
-		"main", "vs_5_0",					//エントリーポイント名、シェーダーモデル指定
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,	//デバック用設定
-		0,
-		&vsBlob, &errorBlob);
-	//エラーなら
-	if(FAILED(result)){
-		//errorBlobからエラー内容をstring型にコピー
-		std::string error;
-		error.resize(errorBlob->GetBufferSize());
-
-		std::copy_n((char*)errorBlob->GetBufferPointer(),
-					errorBlob->GetBufferSize(),
-					error.begin());
-		error += "\n";
-		//エラー内容を出力ウィンドウに表示
-		OutputDebugStringA(error.c_str());
-		assert(0);
-	}
-
-	//ピクセルシェーダーの読み込みコンパイル
-	result = D3DCompileFromFile(
-		L"SpritePS.hlsl",		//シェーダーファイル名
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,	//インクルード可能にする
-		"main", "ps_5_0",					//エントリーポイント名、シェーダーモデル指定
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,	//デバック用設定
-		0,
-		&psBlob, &errorBlob);
-	//エラーなら
-	if(FAILED(result)){
-		//errorBlobからエラー内容をstring型にコピー
-		std::string error;
-		error.resize(errorBlob->GetBufferSize());
-
-		std::copy_n((char*)errorBlob->GetBufferPointer(),
-					errorBlob->GetBufferSize(),
-					error.begin());
-		error += "\n";
-		//エラー内容を出力ウィンドウに表示
-		OutputDebugStringA(error.c_str());
-		assert(0);
-	}
-
-
-	///頂点レイアウト
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-	
-		{//xyz座標
-			"POSITION",										//セマンティック名
-			0,												//同じセマンティック名が複数あるときに使うインデックス
-			DXGI_FORMAT_R32G32B32_FLOAT,					//要素数とビット数を表す (XYZの3つでfloat型なのでR32G32B32_FLOAT)
-			0,												//入力スロットインデックス
-			D3D12_APPEND_ALIGNED_ELEMENT,					//データのオフセット値 (D3D12_APPEND_ALIGNED_ELEMENTだと自動設定)
-			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,		//入力データ種別 (標準はD3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA)
-			0												//一度に描画するインスタンス数
-		},
-		{//uv座標
-			"TEXCOORD",
-			0,
-			DXGI_FORMAT_R32G32_FLOAT,
-			0,
-			D3D12_APPEND_ALIGNED_ELEMENT,
-			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-			0
-		},
-	};
-
-	///ルートパラメータ
-	//デスクリプタレンジの設定
-	CD3DX12_DESCRIPTOR_RANGE descRangeSRV;
-	descRangeSRV.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-
-
-	//設定
-	////定数バッファ 0番
-	CD3DX12_ROOT_PARAMETER rootParam[2] = {};
-	////定数　0番 material
-	rootParam[0].InitAsConstantBufferView(0);
-	////テクスチャレジスタ 0番
-	rootParam[1].InitAsDescriptorTable(1, &descRangeSRV);
-
-
-	///<summmary>
-	///グラフィックスパイプライン
-	///<summary/>
-	
-	//グラフィックスパイプライン設定
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc{};
-	//シェーダー設定
-	pipelineDesc.VS = CD3DX12_SHADER_BYTECODE(vsBlob.Get());
-	pipelineDesc.PS = CD3DX12_SHADER_BYTECODE(psBlob.Get());
-	
-	//サンプルマスク設定
-	pipelineDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;	//標準設定
-	//ラスタライザ設定 背面カリング	ポリゴン内塗りつぶし	深度クリッピング有効
-	pipelineDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-	//ブレンドステート
-	//レンダーターゲットのブレンド設定
-	D3D12_RENDER_TARGET_BLEND_DESC& blenddesc = pipelineDesc.BlendState.RenderTarget[0];
-	blenddesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;	//RGBAすべてのチャンネルを描画
-	//共通設定
-	blenddesc.BlendEnable = true;						//ブレンドを有効にする
-	blenddesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;		//加算
-	blenddesc.SrcBlendAlpha = D3D12_BLEND_ONE;			//ソースの値を100% 使う	(ソースカラー			 ： 今から描画しようとしている色)
-	blenddesc.DestBlendAlpha = D3D12_BLEND_ZERO;		//デストの値を  0% 使う	(デスティネーションカラー： 既にキャンバスに描かれている色)
-	//各種設定
-	blenddesc.BlendOp = D3D12_BLEND_OP_ADD;	//設定
-	blenddesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;			//ソースの値を 何% 使う
-	blenddesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;	//デストの値を 何% 使う
-	//頂点レイアウト設定
-	pipelineDesc.InputLayout.pInputElementDescs = inputLayout;
-	pipelineDesc.InputLayout.NumElements = _countof(inputLayout);
-	//図形の形状設定 (プリミティブトポロジー)
-	pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	//その他設定
-	pipelineDesc.NumRenderTargets = 1;		//描画対象は一つ
-	pipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;	//0~255指定のRGBA
-	pipelineDesc.SampleDesc.Count = 1;	//1ピクセルにつき1回サンプリング
-	//デプスステンシルステートの設定	(深度テストを行う、書き込み許可、深度がちいさければ許可)
-	pipelineDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	pipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-	pipelineDesc.DepthStencilState.DepthEnable = false;
-	pipelineDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;	//深度値フォーマット
-
-	///テクスチャサンプラー
-	//設定
-	CD3DX12_STATIC_SAMPLER_DESC samplerDesc = CD3DX12_STATIC_SAMPLER_DESC(0);
-
-
-	//パイプラインとルートシグネチャのセット
-	PipelineSet pipelineSet;
-
-
-	//ルートシグネチャ (テクスチャ、定数バッファなどシェーダーに渡すリソース情報をまとめたオブジェクト)
-	//設定
-	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
-	rootSignatureDesc.Init_1_0(_countof(rootParam), rootParam,1, &samplerDesc,D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	//シリアライズ
-	ComPtr<ID3DBlob> rootSigBlob;
-	result = D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob,&errorBlob);
-	assert(SUCCEEDED(result));
-	result = dxCommon->GetDevice()->CreateRootSignature(0,rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(),IID_PPV_ARGS(&pipelineSet.rootsignature));
-	assert(SUCCEEDED(result));
-	//パイプラインにルートシグネチャをセット
-	pipelineDesc.pRootSignature = pipelineSet.rootsignature.Get();
-
-	//パイプラインステート (グラフィックスパイプラインの設定をまとめたのがパイプラインステートオブジェクト(PSO))
-	//パイプラインステートの生成
-	result = dxCommon->GetDevice()->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&pipelineSet.pipelinestate));
-	assert(SUCCEEDED(result));
-
-	//パイプラインとルートシグネチャを返す
-	return pipelineSet;
-}
 
 //3DObject共通グラフィックスコマンドのセット
 void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet, ID3D12DescriptorHeap* descHeap)
@@ -1234,19 +833,7 @@ void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const Pipel
 	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 }
 
-//テクスチャグラフィックスコマンドのセット
-void SpriteCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const SpriteCommon& spriteCommon)
-{
-	//パイプラインステートの設定
-	commandList->SetPipelineState(spriteCommon.pipelineSet.pipelinestate.Get());
-	//ルートシグネチャの設定
-	commandList->SetGraphicsRootSignature(spriteCommon.pipelineSet.rootsignature.Get());
-	//プリミティブ形状を設定
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 
-	//テスクチャ用デスクリプタヒープの設定
-	textureManager->SetDescriptorHeaps(commandList);
-}
 
 //初期化
 void InitializeObject3d(Object3d *object, ID3D12Device* device)
@@ -1305,24 +892,24 @@ void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection
 }
 
 //スプライト単体更新
-void SpriteUpdate(Sprite& sprite, const SpriteCommon& spriteCommon)
-{
-	//ワールド行列の更新
-	sprite.matWorld = XMMatrixIdentity();
-
-	//Z軸回転
-	sprite.matWorld *= XMMatrixRotationZ(XMConvertToRadians(sprite.rotation));
-
-	//平行移動
-	sprite.matWorld *= XMMatrixTranslation(sprite.position.x, sprite.position.y, sprite.position.z);
-
-	//定数バッファの転送
-	ConstBufferData* constMap = nullptr;
-	HRESULT result = sprite.constBuffData->Map(0,nullptr, (void**)&constMap);
-	constMap->mat = sprite.matWorld * spriteCommon.matProjection;
-	constMap->color = sprite.color;
-	sprite.constBuffData->Unmap(0, nullptr);
-}
+//void SpriteUpdate(Sprite& sprite, const SpriteCommon& spriteCommon)
+//{
+//	////ワールド行列の更新
+//	//sprite.matWorld = XMMatrixIdentity();
+//
+//	////Z軸回転
+//	//sprite.matWorld *= XMMatrixRotationZ(XMConvertToRadians(sprite.rotation));
+//
+//	////平行移動
+//	//sprite.matWorld *= XMMatrixTranslation(sprite.position.x, sprite.position.y, sprite.position.z);
+//
+//	////定数バッファの転送
+//	//ConstBufferData* constMap = nullptr;
+//	//HRESULT result = sprite.constBuffData->Map(0,nullptr, (void**)&constMap);
+//	//constMap->mat = sprite.matWorld * spriteCommon.matProjection;
+//	//constMap->color = sprite.color;
+//	//sprite.constBuffData->Unmap(0, nullptr);
+//}
 
 
 void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW &vbView, D3D12_INDEX_BUFFER_VIEW &ibView, ID3D12DescriptorHeap* srvHeap,UINT numIndices)
@@ -1350,20 +937,3 @@ void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList, D3D1
 	commandList->DrawIndexedInstanced(numIndices,1, 0, 0, 0);
 }
 
-//スプライト単体描画
-void SpriteDraw(const Sprite& sprite, ID3D12GraphicsCommandList* commandList)
-{
-	if(sprite.IsInvisible)
-	{
-		return ;
-	}
-
-	//頂点バッファのセット
-	commandList->IASetVertexBuffers(0,1,&sprite.vbView);
-	//定数バッファをセット
-	commandList->SetGraphicsRootConstantBufferView(0, sprite.constBuffData->GetGPUVirtualAddress());
-	//シェーダーリソースビューをセット
-	textureManager->SetShaderResourceView(commandList, 1, sprite.texNumber);
-	//ポリゴンの描画
-	commandList->DrawInstanced(4, 1, 0, 0);
-}
