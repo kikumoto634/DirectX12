@@ -211,6 +211,46 @@ void Sprite::Draw(ID3D12GraphicsCommandList *commandList)
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
 
+void Sprite::SetPosition(float x, float y)
+{
+	this->position.x = x;
+	this->position.y = y;
+
+	//頂点情報の転送
+	SpriteTransferVertexBuffer();
+}
+
+void Sprite::SetSize(float width, float height)
+{
+	this->size.x = width;
+	this->size.y = height;
+	
+	//頂点情報の転送
+	SpriteTransferVertexBuffer();
+}
+
+void Sprite::SetAnchorpoint(float x, float y)
+{
+	this->anchorpoint.x = x;
+	this->anchorpoint.y = y;
+
+	SpriteTransferVertexBuffer();
+}
+
+void Sprite::SetIsFlipX(bool IsFlipX)
+{
+	this->IsFlipX = IsFlipX;
+
+	SpriteTransferVertexBuffer();
+}
+
+void Sprite::SetIsFlipY(bool IsFlipY)
+{
+	this->IsFlipY = IsFlipY;
+
+	SpriteTransferVertexBuffer();
+}
+
 void Sprite::Common::InitializeGraphicsPipeline()
 {
 	HRESULT result;

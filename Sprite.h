@@ -90,6 +90,34 @@ public://メンバ関数
 	void SpriteTransferVertexBuffer();
 
 
+	/// <summary>
+	/// 座標設定
+	/// </summary>
+	void SetPosition(float x, float y);
+
+	/// <summary>
+	/// サイズ設定
+	/// </summary>
+	/// <param name="width"></param>
+	/// <param name="height"></param>
+	void SetSize(float width, float height);
+
+	/// <summary>
+	/// アンカーポイント設定
+	/// </summary>
+	void SetAnchorpoint(float x, float y);
+
+	/// <summary>
+	/// 左右反転設定
+	/// </summary>
+	void SetIsFlipX(bool IsFlipX);
+
+	/// <summary>
+	/// 上下反転設定
+	/// </summary>
+	/// <param name="IsFlipY"></param>
+	void SetIsFlipY(bool IsFlipY);
+
 private://メンバ変数
 	///頂点バッファ
 	ComPtr<ID3D12Resource> vertBuff;

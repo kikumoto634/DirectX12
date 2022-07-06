@@ -103,6 +103,7 @@ WinApp* winApp = nullptr;
 DirectXCommon* dxCommon = nullptr;
 //テクスチャマネージャー
 TextureManager* textureManager = nullptr;
+//スプライト
 const int TextureNum = 2;
 Sprite* sprite = nullptr;
 
@@ -337,8 +338,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	//スプライト生成
 	sprite = new Sprite();
 	sprite->Inithalize(0);
-
-
+	sprite->SetPosition(100, 100);
+	sprite->SetSize(100,50);
+	sprite->SetAnchorpoint(0.5f,0.5f);
 
 	//3Dオブジェクト用パイプライン生成
 	PipelineSet object3dPipelineSet = Object3dCreateGraphicsPipeline(dxCommon->GetDevice());
