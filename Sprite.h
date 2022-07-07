@@ -14,11 +14,6 @@ class Sprite
 public://エイリアス
 	template <class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-	using XMFLOAT3 = DirectX::XMFLOAT3;
-	using XMMATRIX = DirectX::XMMATRIX;
-	using XMFLOAT4 = DirectX::XMFLOAT4;
-	using XMFLOAT2 = DirectX::XMFLOAT2;
-
 public://サブクラス
 	class Common{
 		friend class Sprite;
@@ -91,21 +86,29 @@ public://メンバ関数
 
 
 	/// <summary>
+	/// 座標取得
+	/// </summary>
+	XMFLOAT2 GetPosition();
+
+	/// <summary>
 	/// 座標設定
 	/// </summary>
-	void SetPosition(float x, float y);
+	void SetPosition(XMFLOAT2 pos);
+
+	/// <summary>
+	/// サイズ取得
+	/// </summary>
+	XMFLOAT2 GetSize();
 
 	/// <summary>
 	/// サイズ設定
 	/// </summary>
-	/// <param name="width"></param>
-	/// <param name="height"></param>
-	void SetSize(float width, float height);
+	void SetSize(XMFLOAT2 size);
 
 	/// <summary>
 	/// アンカーポイント設定
 	/// </summary>
-	void SetAnchorpoint(float x, float y);
+	void SetAnchorpoint(XMFLOAT2 pos);
 
 	/// <summary>
 	/// 左右反転設定
@@ -115,7 +118,6 @@ public://メンバ関数
 	/// <summary>
 	/// 上下反転設定
 	/// </summary>
-	/// <param name="IsFlipY"></param>
 	void SetIsFlipY(bool IsFlipY);
 
 private://メンバ変数
@@ -128,7 +130,7 @@ private://メンバ変数
 	//Z軸周りの回転角
 	float rotation = 0.f;
 	//座標
-	XMFLOAT3 position = {0, 0, 0};
+	XMVECTOR position = {0, 0, 0};
 	//ワールド行列
 	XMMATRIX matWorld;
 	//色

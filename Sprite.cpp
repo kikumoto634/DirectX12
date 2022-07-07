@@ -185,7 +185,7 @@ void Sprite::Draw(ID3D12GraphicsCommandList *commandList)
 	this->matWorld *= XMMatrixRotationZ(XMConvertToRadians(this->rotation));
 
 	//平行移動
-	this->matWorld *= XMMatrixTranslation(this->position.x, this->position.y, this->position.z);
+	this->matWorld *= XMMatrixTranslation(this->position.m128_f32[0], this->position.m128_f32[1], this->position.m128_f32[2]);
 
 	//定数バッファの転送
 	ConstBufferData* constMap = nullptr;
@@ -211,28 +211,38 @@ void Sprite::Draw(ID3D12GraphicsCommandList *commandList)
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
 
-void Sprite::SetPosition(float x, float y)
+XMFLOAT2 Sprite::GetPosition()
 {
-	this->position.x = x;
-	this->position.y = y;
+	return XMFLOAT2(position.m128_f32[0], position.m128_f32[1]);
+}
+
+void Sprite::SetPosition(XMFLOAT2 pos)
+{
+	this->position.m128_f32[0] = pos.x;
+	this->position.m128_f32[1] = pos.y;
 
 	//頂点情報の転送
 	SpriteTransferVertexBuffer();
 }
 
-void Sprite::SetSize(float width, float height)
+XMFLOAT2 Sprite::GetSize()
 {
-	this->size.x = width;
-	this->size.y = height;
+	return XMFLOAT2(size.x, size.y);
+}
+
+void Sprite::SetSize(XMFLOAT2 size)
+{
+	this->size.x = size.x;
+	this->size.y = size.y;
 	
 	//頂点情報の転送
 	SpriteTransferVertexBuffer();
 }
 
-void Sprite::SetAnchorpoint(float x, float y)
+void Sprite::SetAnchorpoint(XMFLOAT2 pos)
 {
-	this->anchorpoint.x = x;
-	this->anchorpoint.y = y;
+	this->anchorpoint.x = pos.x;
+	this->anchorpoint.y = pos.y;
 
 	SpriteTransferVertexBuffer();
 }

@@ -69,8 +69,6 @@ struct Object3d
 	Object3d* parent = nullptr;
 };
 
-
-
 //パイプラインセット
 struct PipelineSet
 {
@@ -78,6 +76,21 @@ struct PipelineSet
 	ComPtr<ID3D12PipelineState> pipelinestate;
 	//ルートシグネチャ
 	ComPtr<ID3D12RootSignature> rootsignature;
+};
+
+//デバック用文字列クラスの定義
+class DebugText
+{
+public:
+
+	static const int maxCharCount = 256;
+	static const int fontWidth = 9;
+	static const int fontHeight = 18;
+	static const int fontLineCount = 14;
+
+private:
+	Sprite sprite[maxCharCount];
+	int spriteIndex = 0;
 };
 
 //3Dオブジェクト用パイプライン生成
@@ -338,9 +351,9 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	//スプライト生成
 	sprite = new Sprite();
 	sprite->Inithalize(0);
-	sprite->SetPosition(100, 100);
-	sprite->SetSize(100,50);
-	sprite->SetAnchorpoint(0.5f,0.5f);
+	sprite->SetPosition({100, 100});
+	sprite->SetSize({100,50});
+	sprite->SetAnchorpoint({0.5f,0.5f});
 
 	//3Dオブジェクト用パイプライン生成
 	PipelineSet object3dPipelineSet = Object3dCreateGraphicsPipeline(dxCommon->GetDevice());
@@ -522,17 +535,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	float angle = 0.0f;//カメラの回転角
 
-	/*for(int i = 0; i < TextureNum; i++)
-	{
-		sprite[i].position = {i*200.f, 720/2, 0};
-		sprite[i].rotation = i*45;
-		sprite[i].size = {100.f + 300* i, 100.f};
-		sprite[i].texNumber = i;
-
-		sprite[i].IsFlipX = i%2;
-
-		SpriteTransferVertexBuffer(sprite[i]);
-	}*/
 
 	/// <summary>
 	/// ゲームループ
@@ -553,6 +555,20 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 		///キーボード情報の取得開始
 		input->Update();
+
+		if(input->Push(DIK_1) || input->Push(DIK_2)){
+			XMFLOAT2 pos = sprite->GetPosition();
+			
+			if(input->Push(DIK_1)){
+				pos.x -= 2.0f;
+			}
+			if(input->Push(DIK_2)){
+				pos.x += 2.0f;
+			}
+			
+			sprite->SetPosition(pos);
+		}
+
 
 		//入力check
 		if(input->Push(DIK_D) || input->Push(DIK_A))
@@ -638,7 +654,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 	return 0;
 }
-
 
 
 
