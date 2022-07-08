@@ -3,27 +3,27 @@
 //基本(初期化)
 #include "DirectXCommon.h"
 #include <cassert>
-
 //図形描画
 #include <DirectXMath.h>
-
 //D3Dコンパイラのインクルード
 #include <d3dcompiler.h>
-
-////キーボード入力
+//キーボード入力
 #include "Input.h"
-
 //DirectXTex導入
 #include "DirectXTex.h"
-
+//テクスチャマネージャー
 #include "TextureManager.h"
-
 //ComPtrスマートポインタ
 #include <wrl.h>
-
+//スプライト
 #include "Sprite.h"
+//サウンド
+#include <xaudio2.h>
+//ファイル読み込み
+#include <fstream>
 
 #pragma comment(lib, "d3dcompiler.lib")
+#pragma comment(lib, "xaudio2.lib")
 
 using namespace DirectX;
 using namespace Microsoft::WRL;
@@ -53,10 +53,8 @@ struct Object3d
 {
 	//マッピング用ポインタ
 	ConstBufferData* constBuffer = nullptr;
-
 	//色
 	XMFLOAT4 color = {1.0f, 1.0f, 1.0f, 1.0f};
-
 	//定数バッファ(行列用)
 	ComPtr<ID3D12Resource> constBuffData = nullptr;
 	//アフィン変換
@@ -93,6 +91,37 @@ private:
 	int spriteIndex = 0;
 };
 
+//オーディオ
+//チャンクヘッダー
+struct ChunkHeader
+{
+	char id[4];//チャンク毎のID
+	int32_t size;	//チャンクサイズ
+};
+//RIFFヘッダチェック
+struct RiffHeader
+{
+	ChunkHeader chunk;	//"RIFF"
+	char type[4];	//"WAVE"
+};
+//FMTチェック
+struct FormatChunk
+{
+	ChunkHeader chunk;	//"fmt"
+	WAVEFORMATEX fmt;	//波形フォーマット
+};
+//音声データ
+struct SoundData
+{
+	//波形フォーマット
+	WAVEFORMATEX wfex;
+	//バッファの先頭アドレス
+	BYTE* pBuffer;
+	//バッファのサイズ
+	unsigned int bufferSIze;
+};
+
+
 //3Dオブジェクト用パイプライン生成
 PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device);
 
@@ -104,11 +133,17 @@ void InitializeObject3d(Object3d* object, ID3D12Device* device);
 
 //更新
 void UpdateObject3d(Object3d* object, XMMATRIX& matView, XMMATRIX& matProjection);
-//スプライト単体更新
-//void SpriteUpdate(Sprite& sprite, const SpriteCommon& spriteCommon);
 
 //描画
 void DrawObject3d(Object3d* object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW& vbView, D3D12_INDEX_BUFFER_VIEW& ibView, ID3D12DescriptorHeap* srvHeap, UINT numIndices);
+
+
+//サウンドロード
+SoundData SoundLoadWave(const char* filename);
+//音声データの解放
+void SoundUnload(SoundData* soundData);
+//音声再生
+void SoundPlayWave(IXAudio2* xAudio2, const SoundData& soundData);
 
 //WindowsAPIオブジェクト
 WinApp* winApp = nullptr;
@@ -163,6 +198,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	//テクスチャバッファの生成
 	ComPtr<ID3D12Resource> texBuff01 ;
 
+	//サウンド
+	ComPtr<IXAudio2> xAudio2;
+	IXAudio2MasteringVoice* masterVoice;
+	//XAudioエンジンのインスタンスを生成
+	result = XAudio2Create(&xAudio2, 0, XAUDIO2_DEFAULT_PROCESSOR);
+	//マスターボイスを生成
+	result = xAudio2->CreateMasteringVoice(&masterVoice);
 
 	///DirectInPut
 	Input* input = new Input();
@@ -505,7 +547,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 			object3ds[i].parent = &object3ds[i - 1];
 
 			//Scale
-			object3ds[i].scale = {1.5f, 1.5f, 1.5f};
+			object3ds[i].scale = {1.f, 1.f, 1.f};
 			//rotation
 			object3ds[i].rotation = {0.0f, 0.0f, XMConvertToRadians(45.0f)};
 			//position
@@ -526,7 +568,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));	
 
 
+	//音声
+	//読み込み
+	SoundData soundData1 = SoundLoadWave("Resources/fanfare.wav");
 
+	//再生
+	SoundPlayWave(xAudio2.Get(),soundData1);
 
 	/// <summary>
 	/// DirectX12 描画初期化処理 ここまで
@@ -611,13 +658,6 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 			UpdateObject3d(&object3ds[i], matView, matProjection);
 		}
 
-		//スプライト更新
-		/*for(int i = 0; i <TextureNum; i++)
-		{
-			SpriteUpdate(sprite[i], spriteCommon);
-		}*/
-
-
 		//DirectXCommon前処理
 		dxCommon->BeginDraw();
 
@@ -644,6 +684,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// </summary>
 	}
 
+	//XAudio2の解放
+	xAudio2.Reset();
+	//音声データの開放
+	SoundUnload(&soundData1);
 	Sprite::StaticFinalize();
 	delete input;
 	delete sprite;
@@ -908,27 +952,6 @@ void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection
 	object->constBuffer->mat = object->matWorld * matView *matProjection;
 }
 
-//スプライト単体更新
-//void SpriteUpdate(Sprite& sprite, const SpriteCommon& spriteCommon)
-//{
-//	////ワールド行列の更新
-//	//sprite.matWorld = XMMatrixIdentity();
-//
-//	////Z軸回転
-//	//sprite.matWorld *= XMMatrixRotationZ(XMConvertToRadians(sprite.rotation));
-//
-//	////平行移動
-//	//sprite.matWorld *= XMMatrixTranslation(sprite.position.x, sprite.position.y, sprite.position.z);
-//
-//	////定数バッファの転送
-//	//ConstBufferData* constMap = nullptr;
-//	//HRESULT result = sprite.constBuffData->Map(0,nullptr, (void**)&constMap);
-//	//constMap->mat = sprite.matWorld * spriteCommon.matProjection;
-//	//constMap->color = sprite.color;
-//	//sprite.constBuffData->Unmap(0, nullptr);
-//}
-
-
 void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList, D3D12_VERTEX_BUFFER_VIEW &vbView, D3D12_INDEX_BUFFER_VIEW &ibView, ID3D12DescriptorHeap* srvHeap,UINT numIndices)
 {
 
@@ -954,3 +977,103 @@ void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList, D3D1
 	commandList->DrawIndexedInstanced(numIndices,1, 0, 0, 0);
 }
 
+SoundData SoundLoadWave(const char* filename)
+{
+	HRESULT result = S_FALSE;
+
+	////ファイルオープン
+	//ファイル入力ストリームのインスタンス
+	std::ifstream file;
+	//.wavファイルをバイナリーモードで開く
+	file.open(filename, std::ios_base::binary);
+	//ファイルオープン失敗を検出する
+	assert(file.is_open());
+
+	////.wavデータ読み込み
+	//RIFFヘッダーの読み込み
+	RiffHeader riff;
+	file.read((char*)&riff, sizeof(riff));
+	//ファイルがRIFFかチェック
+	if(strncmp(riff.chunk.id, "RIFF",4) != 0)
+	{
+		assert(0);
+	}
+	//タイプがWAVEかチェック
+	if(strncmp(riff.type, "WAVE",4) != 0)
+	{
+		assert(0);
+	}
+
+	//Formatチャンクの読み込み
+	FormatChunk format = {};
+	//チャンクヘッダーの確認
+	file.read((char*)&format, sizeof(ChunkHeader));
+	if(strncmp(format.chunk.id, "fmt ", 4) != 0)
+	{
+		assert(0);
+	}
+	//読み込んだ音声データをreturn
+	assert(format.chunk.size <= sizeof(format.fmt));
+	file.read((char*)&format.fmt, format.chunk.size);
+	//Dataチャンク読み込み
+	ChunkHeader data;
+	file.read((char*)&data, sizeof(data));
+	//JUNKチャンクを検出した場合
+	if(strncmp(data.id, "JUNK ", 4) == 0)
+	{
+		//読み込み1をJUNKチャンクの終わりまで進める
+		file.seekg(data.size, std::ios_base::cur);
+		//再読み込み
+		file.read((char*)&data,sizeof(data));
+	}
+	if(strncmp(data.id, "data ", 4) != 0)
+	{
+		assert(0);
+	}
+	//Dataチャンクのデータ部(波形データ)の読み込み
+	char* pBuffer =new char[data.size];
+	file.read(pBuffer, data.size);
+
+	//Waveファイルを閉じる
+	file.close();
+
+	////読み込んだ音声データをreturn
+	//returnするための音声データ
+	SoundData soundData = {};
+	soundData.wfex = format.fmt;
+	soundData.pBuffer= reinterpret_cast<BYTE*>(pBuffer);
+	soundData.bufferSIze = data.size;
+
+	return soundData;
+}
+
+//音声データの解放
+void SoundUnload(SoundData* soundData)
+{
+	//バッファのメモリを解放
+	delete[] soundData->pBuffer;
+	soundData->pBuffer= 0;
+	soundData->bufferSIze = 0;
+	soundData->wfex = {};
+}
+
+//音声再生
+void SoundPlayWave(IXAudio2* xAudio2, const SoundData& soundData)
+{
+	HRESULT result = S_FALSE;
+
+	//波形フォーマットをもとにSourceVoiceの生成
+	IXAudio2SourceVoice* pSourceVoice= nullptr;
+	result = xAudio2->CreateSourceVoice(&pSourceVoice,&soundData.wfex);
+	assert(SUCCEEDED(result));
+
+	//再生する波形データの設定
+	XAUDIO2_BUFFER buf{};
+	buf.pAudioData = soundData.pBuffer;
+	buf.AudioBytes = soundData.bufferSIze;
+	buf.Flags = XAUDIO2_END_OF_STREAM;
+
+	//波形データの再生
+	result = pSourceVoice->SubmitSourceBuffer(&buf);
+	result = pSourceVoice->Start();
+}
