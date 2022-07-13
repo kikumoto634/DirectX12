@@ -8,7 +8,7 @@ using namespace DirectX;
 
 Sprite::Common* Sprite::common = nullptr;
 
-void Sprite::StaticInithalize(DirectXCommon* dxCommon, TextureManager* texManager)
+void Sprite::StaticInitialize(DirectXCommon* dxCommon, TextureManager* texManager)
 {
 	common = new Common();
 
@@ -47,7 +47,7 @@ void Sprite::SetPipelineState(ID3D12GraphicsCommandList *commandList)
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
 }
 
-void Sprite::Inithalize(UINT texNumber)
+void Sprite::Initialize(UINT texNumber)
 {
 	HRESULT result;
 

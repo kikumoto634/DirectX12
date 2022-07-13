@@ -1,7 +1,7 @@
 #include "TextureManager.h"
 #include <assert.h>
 
-void TextureManager::Inithalize(DirectXCommon* dxCommon)
+void TextureManager::Initialize(DirectXCommon* dxCommon)
 {
 	HRESULT result;
 

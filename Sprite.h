@@ -50,7 +50,7 @@ public://静的メンバ関数
 	/// <summary>
 	/// 静的メンバの初期化
 	/// </summary>
-	static void StaticInithalize(DirectXCommon* dxCommon, TextureManager* texManager);
+	static void StaticInitialize(DirectXCommon* dxCommon, TextureManager* texManager);
 
 	/// <summary>
 	/// 静的メンバの解放
@@ -74,7 +74,7 @@ public://メンバ関数
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	void Inithalize(UINT texNumber);
+	void Initialize(UINT texNumber);
 
 	/// <summary>
 	/// 描画

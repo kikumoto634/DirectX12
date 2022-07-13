@@ -24,7 +24,7 @@ public:	//メンバ関数
 	/// 初期化
 	/// </summary>
 	/// <param name="dxCommon">DirectXCommon->device.Get()</param>
-	void Inithalize(DirectXCommon* dxCommon);
+	void Initialize(DirectXCommon* dxCommon);
 
 	/// <summary>
 	/// テクスチャ読み込み
