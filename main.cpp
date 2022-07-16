@@ -18,14 +18,12 @@
 //スプライト
 #include "Sprite.h"
 //サウンド
-//#include <xaudio2.h>
 #include "SoundManager.h"
-//ファイル読み込み
-//#include <fstream>
+//デバックテキスト
+#include "DebugText.h"
 
 //音声
 #pragma comment(lib, "d3dcompiler.lib")
-//#pragma comment(lib, "xaudio2.lib")
 
 using namespace DirectX;
 using namespace Microsoft::WRL;
@@ -78,95 +76,6 @@ struct PipelineSet
 	ComPtr<ID3D12RootSignature> rootsignature;
 };
 
-//デバック用文字列クラスの定義
-class DebugText
-{
-public:
-
-	static const int maxCharCount = 256;	//最大文字数
-	static const int fontWidth = 9;			//フォント画像内1文字内の横幅
-	static const int fontHeight = 18;		//フォント画像内1文字内の縦幅
-	static const int fontLineCount = 14;	//フォント画像内1行分の文字数
-
-	~DebugText();
-
-	void Initialize(UINT texnumber);
-
-	void Print(const std::string& text, float x, float y, float scale);
-
-	void DrawAll(ID3D12GraphicsCommandList* commandList);
-
-private:
-	Sprite* sprites[maxCharCount];
-	int spriteIndex = 0;
-};
-
-DebugText::~DebugText()
-{
-	for(int i = 0; i < _countof(sprites); i++)
-	{
-		//スプライトを解放
-		delete sprites[i];
-		sprites[i] = nullptr;
-	}
-}
-
-void DebugText::Initialize(UINT texnumber)
-{
-	for(int i = 0; i < _countof(sprites); i++)
-	{
-		//スプライト生成
-		sprites[i] = new Sprite();
-		//スプライトを初期化する
-		sprites[i]->Initialize(texnumber);
-	}
-}
-
-//一文字追加
-void DebugText::Print(const std::string& text, float x, float y, float scale = 1.0f)
-{
-	//すべての文字について
-	for(int i = 0; i < text.size(); i++)
-	{
-		//最大文字数
-		if(spriteIndex >= maxCharCount)
-		{
-			break;
-		}
-
-		//一文字取り出す(※ASCIIコードでしか成り立たない)
-		const unsigned char& character = text[i];
-
-		int fontIndex = character - 32;
-		if(character >= 0x7f)
-		{
-			fontIndex = 0;
-		}
-
-		int fontIndexY = fontIndex / fontLineCount;
-		int fontIndexX = fontIndex % fontLineCount;
-
-		//座標計算
-		sprites[spriteIndex]->SetPosition({x + fontWidth * scale * i, y});
-		sprites[spriteIndex]->SetTextureRect((float)fontIndexX * fontWidth, (float)fontIndexY * fontHeight, (float)fontWidth, (float)fontHeight);
-		sprites[spriteIndex]->SetSize({fontWidth * scale, fontHeight * scale});
-
-		//文字を一つ進める
-		spriteIndex++;
-	}
-}
-
-void DebugText::DrawAll(ID3D12GraphicsCommandList* commandList)
-{
-	//すべての文字のスプライトについて
-	for(int i = 0; i < spriteIndex; i++)
-	{
-		//スプライト描画
-		sprites[i]->Draw(commandList);
-	}
-	spriteIndex = 0;
-}
-
 
 //3Dオブジェクト用パイプライン生成
 PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device);
@@ -196,7 +105,7 @@ Sprite* sprite = nullptr;
 Sprite* sprite2 = nullptr;
 
 //デバック
-DebugText debugText;
+DebugText* debugText = nullptr;
 
 //サウンドマネージャー
 SoundManager* soundManager = nullptr;
@@ -440,7 +349,8 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	textureManager->LoadTexture(debugTextTexNumber, L"Resources/texfont.png");
 
 	//デバックテキスト初期化
-	debugText.Initialize(debugTextTexNumber);
+	debugText = new DebugText();
+	debugText->Initialize(debugTextTexNumber);
 
 
 	//スプライト生成
@@ -720,7 +630,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 		//デバックテキスト
-		debugText.Print("t", 200, 200, 2.0f);
+		debugText->Print("t", 200, 200, 4.0f);
 
 
 		//DirectXCommon前処理
@@ -742,7 +652,7 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		sprite->Draw(dxCommon->GetCommandList());
 		sprite2->Draw(dxCommon->GetCommandList());
 
-		debugText.DrawAll(dxCommon->GetCommandList());
+		debugText->DrawAll(dxCommon->GetCommandList());
 
 		//DirectXCommon描画後処理
 		dxCommon->EndDraw();
@@ -751,11 +661,12 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// DirectX12 毎フレーム処理 ここまで
 		/// </summary>
 	}
+	delete debugText;
+	delete sprite;
+	delete sprite2;
 	Sprite::StaticFinalize();
 	delete input;
 	delete soundManager;
-	delete sprite;
-	delete sprite2;
 	delete textureManager;
 	delete dxCommon;
 	//ゲームウィンドウ破棄
