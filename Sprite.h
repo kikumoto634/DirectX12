@@ -110,6 +110,9 @@ public://メンバ関数
 	/// </summary>
 	void SetAnchorpoint(XMFLOAT2 pos);
 
+
+	void SetTextureRect(float tex_x, float tex_y, float tex_width, float tex_height);
+
 	/// <summary>
 	/// 左右反転設定
 	/// </summary>
@@ -148,7 +151,7 @@ private://メンバ変数
 	//テクスチャ左上座標
 	XMFLOAT2 texLeftTop = {0,0};
 	//テクスチャ切り出しサイズ
-	XMFLOAT2 texSize = {400, 400};
+	XMFLOAT2 texSize = {100, 100};
 	//非表示
 	bool IsInvisible = false;
 };

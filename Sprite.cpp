@@ -247,6 +247,14 @@ void Sprite::SetAnchorpoint(XMFLOAT2 pos)
 	SpriteTransferVertexBuffer();
 }
 
+void Sprite::SetTextureRect(float tex_x, float tex_y, float tex_width, float tex_height)
+{
+	this->texLeftTop = {tex_x, tex_y};
+	this->texSize = {tex_width, tex_height};
+
+	SpriteTransferVertexBuffer();
+}
+
 void Sprite::SetIsFlipX(bool IsFlipX)
 {
 	this->IsFlipX = IsFlipX;
@@ -344,7 +352,7 @@ void Sprite::Common::InitializeGraphicsPipeline()
 
 	///ルートパラメータ
 	//デスクリプタレンジの設定
-	CD3DX12_DESCRIPTOR_RANGE descRangeSRV;
+	CD3DX12_DESCRIPTOR_RANGE descRangeSRV{};
 	descRangeSRV.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
 
 
@@ -407,7 +415,7 @@ void Sprite::Common::InitializeGraphicsPipeline()
 
 	//ルートシグネチャ (テクスチャ、定数バッファなどシェーダーに渡すリソース情報をまとめたオブジェクト)
 	//設定
-	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc{};
 	rootSignatureDesc.Init_1_0(_countof(rootParam), rootParam,1, &samplerDesc,D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
 	//シリアライズ
 	ComPtr<ID3DBlob> rootSigBlob;
