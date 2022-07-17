@@ -83,6 +83,7 @@
   <ItemGroup>
     <ClCompile Include="DebugText.cpp" />
     <ClCompile Include="DirectXCommon.cpp" />
+    <ClCompile Include="GeometryModel.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SoundManager.cpp" />
@@ -128,6 +129,7 @@
   <ItemGroup>
     <ClInclude Include="DebugText.h" />
     <ClInclude Include="DirectXCommon.h" />
+    <ClInclude Include="GeometryModel.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="SoundManager.h" />
     <ClInclude Include="Sprite.h" />
