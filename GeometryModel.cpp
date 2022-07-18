@@ -4,11 +4,14 @@
 
 using namespace DirectX;
 
-void GeometryModel::Initialize(DirectXCommon* dxCommon)
+void GeometryModel::Initialize(DirectXCommon* dxCommon, TextureManager* textureManager, UINT texNumber)
 {
+	this->textureManager = textureManager;
+	this->texNumber = texNumber;
+
 	HRESULT result = S_FALSE;
 
-	///頂点データ
+	//頂点データ
 	Vertex vertices[] = 
 	{
 		//前
@@ -42,6 +45,10 @@ void GeometryModel::Initialize(DirectXCommon* dxCommon)
 		{{-5.0f, +5.0f, +5.0f}, {}, {1.0f, 1.0f}},
 		{{+5.0f, +5.0f, +5.0f}, {}, {1.0f, 0.0f}},
 	};
+	for(int i = 0; i < _countof(vertices); i++)
+	{
+		this->vertices[i] = vertices[i];
+	}
 
 	///インデックスデータ
 	uint16_t indices[] = 
@@ -65,6 +72,10 @@ void GeometryModel::Initialize(DirectXCommon* dxCommon)
 		21, 20, 22,
 		21, 22, 23,
 	};
+	for(int i = 0; i < _countof(indices); i++)
+	{
+		this->indices[i] = indices[i];
+	}
 
 	///法線計算
 	for(int i = 0; i < _countof(indices)/3; i++)
@@ -165,4 +176,21 @@ void GeometryModel::Initialize(DirectXCommon* dxCommon)
 	ibView.BufferLocation = indexBuff->GetGPUVirtualAddress();
 	ibView.Format = DXGI_FORMAT_R16_UINT;
 	ibView.SizeInBytes = sizeIB;
+}
+
+void GeometryModel::Draw(ID3D12GraphicsCommandList* commandList)
+{
+	//デスクリプタヒープの配列
+	textureManager->SetDescriptorHeaps(commandList);
+
+	//頂点バッファの設定
+	commandList->IASetVertexBuffers(0, 1, &vbView);
+	//インデックスバッファの設定
+	commandList->IASetIndexBuffer(&ibView);
+
+	//シェーダリソースビューをセット
+	textureManager->SetShaderResourceView(commandList, 1, texNumber);
+
+	//描画コマンド
+	commandList->DrawIndexedInstanced(_countof(indices),1, 0, 0, 0);
 }

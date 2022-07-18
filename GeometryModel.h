@@ -1,14 +1,19 @@
 ﻿#pragma once
 #include <DirectXMath.h>
 #include <d3d12.h>
+#include <wrl.h>
 
 #include "DirectXCommon.h"
+#include "TextureManager.h"
 
 /// <summary>
 /// 幾何学モデル
 /// </summary>
 class GeometryModel
 {
+public://エイリアス
+	template <class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
+
 /// <summary>
 /// インナークラス
 /// </summary>
@@ -29,6 +34,46 @@ public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	void Initialize(DirectXCommon* dxCommon);
+	/// <param name="dxCommon">DirectX12べーズ</param>
+	/// <param name="textureManager">テクスチャマネージャー</param>
+	/// <param name="texNuber">テクスチャ番号</param>
+	void Initialize(DirectXCommon* dxCommon, TextureManager* textureManager, UINT texNuber);
+
+	/// <summary>
+	/// 描画
+	/// </summary>
+	/// <param name="commandList">グラフィックスコマンド</param>
+	void Draw(ID3D12GraphicsCommandList* commandList);
+
+	//getter
+	const D3D12_VERTEX_BUFFER_VIEW& GetVbView() {return vbView;}
+	const D3D12_INDEX_BUFFER_VIEW& GetIbView()	{return ibView;}
+
+
+/// <summary>
+/// メンバ変数
+/// </summary>
+private:
+	//テクスチャマネージャー
+	TextureManager* textureManager = nullptr;
+
+	//テクスチャナンバー
+	UINT texNumber;
+
+	///頂点バッファ
+	ComPtr<ID3D12Resource> vertBuff;
+	///インデックスバッファ
+	ComPtr<ID3D12Resource> indexBuff;
+
+	///頂点バッファビュー
+	D3D12_VERTEX_BUFFER_VIEW vbView{};
+	///インデックスバッファビュー
+	D3D12_INDEX_BUFFER_VIEW ibView{};
+
+	/// <summary>
+	/// 頂点データ
+	/// </summary>
+	Vertex vertices[24];
+	uint16_t indices[36];
 };
 
