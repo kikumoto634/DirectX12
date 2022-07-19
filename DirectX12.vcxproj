@@ -84,6 +84,7 @@
     <ClCompile Include="DebugText.cpp" />
     <ClCompile Include="DirectXCommon.cpp" />
     <ClCompile Include="GeometryModel.cpp" />
+    <ClCompile Include="GeometryObject3D.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="SoundManager.cpp" />
@@ -130,6 +131,7 @@
     <ClInclude Include="DebugText.h" />
     <ClInclude Include="DirectXCommon.h" />
     <ClInclude Include="GeometryModel.h" />
+    <ClInclude Include="GeometryObject3D.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="SoundManager.h" />
     <ClInclude Include="Sprite.h" />

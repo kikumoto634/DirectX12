@@ -31,6 +31,12 @@
     <Filter Include="ヘッダー ファイル\2D">
       <UniqueIdentifier>{2dad1f32-74f9-4b0c-90fd-f4fe364b4082}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\3D">
+      <UniqueIdentifier>{c82fa9c5-5308-4c1a-ba47-ec17c6ad0e28}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\3D">
+      <UniqueIdentifier>{ee26d5a2-1311-4422-8987-4dc10580032d}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -58,6 +64,9 @@
       <Filter>ソース ファイル\Base</Filter>
     </ClCompile>
     <ClCompile Include="GeometryModel.cpp">
+      <Filter>ソース ファイル\3D</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryObject3D.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
@@ -94,6 +103,9 @@
       <Filter>ヘッダー ファイル\Base</Filter>
     </ClInclude>
     <ClInclude Include="GeometryModel.h">
+      <Filter>ヘッダー ファイル\3D</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryObject3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
