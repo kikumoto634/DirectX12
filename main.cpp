@@ -2,7 +2,7 @@
 
 //基本(初期化)
 #include "DirectXCommon.h"
-#include <cassert>
+//#include <cassert>
 ////図形描画
 #include "GeometryModel.h"
 #include "GeometryObject3D.h"
@@ -24,37 +24,37 @@
 ////音声
 //#pragma comment(lib, "d3dcompiler.lib")
 
-using namespace DirectX;
-using namespace Microsoft::WRL;
+//using namespace DirectX;
+//using namespace Microsoft::WRL;
 
 //CD3DX12ヘルパー構造体
 //#include <d3dx12.h>
 
 
-//定数バッファ用データ構造体(3D変換行列
-struct ConstBufferData{
-	XMMATRIX mat;	//3D変換行列
-	XMFLOAT4 color;	//色(RGBA)
-};
+////定数バッファ用データ構造体(3D変換行列
+//struct ConstBufferData{
+//	XMMATRIX mat;	//3D変換行列
+//	XMFLOAT4 color;	//色(RGBA)
+//};
 
 //3Dオブジェクト型
-struct Object3d
-{
+//struct Object3d
+//{
 	//マッピング用ポインタ
-	ConstBufferData* constBuffer = nullptr;
+	//ConstBufferData* constBuffer = nullptr;
 	//色
-	XMFLOAT4 color = {1.0f, 1.0f, 1.0f, 1.0f};
-	//定数バッファ(行列用)
-	ComPtr<ID3D12Resource> constBuffData = nullptr;
-	//アフィン変換
-	XMFLOAT3 scale = {1.0f, 1.0f, 1.0f};
-	XMFLOAT3 rotation = {0.0f, 0.0f, 0.0f};
-	XMFLOAT3 position = {0.0f, 0.0f, 0.0f};
-	//ワールド変換行列
-	XMMATRIX matWorld;
-	//親オブジェクトへのポインタ
-	Object3d* parent = nullptr;
-};
+	//XMFLOAT4 color = {1.0f, 1.0f, 1.0f, 1.0f};
+	////定数バッファ(行列用)
+	//ComPtr<ID3D12Resource> constBuffData = nullptr;
+	////アフィン変換
+	//XMFLOAT3 scale = {1.0f, 1.0f, 1.0f};
+	//XMFLOAT3 rotation = {0.0f, 0.0f, 0.0f};
+	//XMFLOAT3 position = {0.0f, 0.0f, 0.0f};
+	////ワールド変換行列
+	//XMMATRIX matWorld;
+	////親オブジェクトへのポインタ
+	//Object3d* parent = nullptr;
+//};
 
 ////パイプラインセット
 //struct PipelineSet
@@ -70,16 +70,16 @@ struct Object3d
 //PipelineSet Object3dCreateGraphicsPipeline(ID3D12Device* device);
 
 //3D共通グラフィックスコマンドのセット
-void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet);
+//void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet);
 
 //3Dオブジェクト初期化
-void InitializeObject3d(Object3d* object, ID3D12Device* device);
+//void InitializeObject3d(Object3d* object, ID3D12Device* device);
 
 //更新
-void UpdateObject3d(Object3d* object, XMMATRIX& matView, XMMATRIX& matProjection);
+//void UpdateObject3d(Object3d* object, XMMATRIX& matView, XMMATRIX& matProjection);
 
 //描画
-void DrawObject3d(Object3d* object, ID3D12GraphicsCommandList* commandList);
+//void DrawObject3d(Object3d* object, ID3D12GraphicsCommandList* commandList);
 
 
 //WindowsAPIオブジェクト
@@ -95,6 +95,9 @@ Sprite* sprite2 = nullptr;
 
 //モデル
 GeometryModel* geometryModel = nullptr;
+//オブジェクト
+GeometryObject3D* object = nullptr;
+
 
 //デバック
 DebugText* debugText = nullptr;
@@ -192,58 +195,62 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 	//3Dオブジェクト用パイプライン生成
 	//PipelineSet object3dPipelineSet = Object3dCreateGraphicsPipeline(dxCommon->GetDevice());
 
+	//オブジェクト生成
+	object = new GeometryObject3D();
+	object->Initialize();
 
-	//定数バッファ Mat	
-	//透視投影
-	XMMATRIX matProjection;
-	//ビュー変換行列
-	float angle = 0.0f;//カメラの回転角
-	float distance = -100.f;	//カメラの距離
-	XMMATRIX matView;
-	XMFLOAT3 eye = {0.0f, 0.0f, distance};	//視点座標
-	XMFLOAT3 target= {0, 0, 0};//注視点座標
-	XMFLOAT3 up = {0, 1, 0};	//上方向ベクトル
 
-	//3Dオブジェクト数
-	const size_t kObjectCount = 2;
-	//3dオブジェクトの配列
-	Object3d object3ds[kObjectCount];
-		
-	//配列内の全オブジェクトに対して
-	for(size_t i = 0; i < _countof(object3ds); i++)
-	{
-		//初期化
-		object3ds[0].color = {0.8f, 0.8f, 0.8f, 1.0f};
-		object3ds[1].color = {0.2f, 0.2f, 0.2f, 1.0f};
-		InitializeObject3d(&object3ds[i], dxCommon->GetDevice());
+	////定数バッファ Mat	
+	////透視投影
+	//XMMATRIX matProjection;
+	////ビュー変換行列
+	//float angle = 0.0f;//カメラの回転角
+	//float distance = -100.f;	//カメラの距離
+	//XMMATRIX matView;
+	//XMFLOAT3 eye = {0.0f, 0.0f, distance};	//視点座標
+	//XMFLOAT3 target= {0, 0, 0};//注視点座標
+	//XMFLOAT3 up = {0, 1, 0};	//上方向ベクトル
 
-		//親子構造体
-		//先頭以外
-		if(i > 0)
-		{
-			//一つ前のオブジェクトを親とする
-			object3ds[i].parent = &object3ds[i - 1];
+	////3Dオブジェクト数
+	//const size_t kObjectCount = 2;
+	////3dオブジェクトの配列
+	//Object3d object3ds[kObjectCount];
+	//	
+	////配列内の全オブジェクトに対して
+	//for(size_t i = 0; i < _countof(object3ds); i++)
+	//{
+	//	//初期化
+	//	object3ds[0].color = {0.8f, 0.8f, 0.8f, 1.0f};
+	//	object3ds[1].color = {0.2f, 0.2f, 0.2f, 1.0f};
+	//	//InitializeObject3d(&object3ds[i], dxCommon->GetDevice());
 
-			//Scale
-			object3ds[i].scale = {1.f, 1.f, 1.f};
-			//rotation
-			object3ds[i].rotation = {0.0f, 0.0f, XMConvertToRadians(45.0f)};
-			//position
-			object3ds[i].position = {0.0f, 0.0f, 4.0f};
-		}
-	}
+	//	//親子構造体
+	//	//先頭以外
+	//	if(i > 0)
+	//	{
+	//		//一つ前のオブジェクトを親とする
+	//		object3ds[i].parent = &object3ds[i - 1];
+
+	//		//Scale
+	//		object3ds[i].scale = {1.f, 1.f, 1.f};
+	//		//rotation
+	//		object3ds[i].rotation = {0.0f, 0.0f, XMConvertToRadians(45.0f)};
+	//		//position
+	//		object3ds[i].position = {0.0f, 0.0f, 4.0f};
+	//	}
+	//}
 
 	
 
-	//透視投影
-	matProjection = XMMatrixPerspectiveFovLH(
-		XMConvertToRadians(45.0f),	//上下画角45°
-		(float)WinApp::window_width / WinApp::window_height,			//aspect比(画面横幅/画面縦幅)
-		0.1f, 1000.0f				//前端、奥端
-	);
+	////透視投影
+	//matProjection = XMMatrixPerspectiveFovLH(
+	//	XMConvertToRadians(45.0f),	//上下画角45°
+	//	(float)WinApp::window_width / WinApp::window_height,			//aspect比(画面横幅/画面縦幅)
+	//	0.1f, 1000.0f				//前端、奥端
+	//);
 
-	//ビュー変換行列
-	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));	
+	////ビュー変換行列
+	//matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));	
 
 
 	/// <summary>
@@ -286,46 +293,48 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		}
 
 
-		//入力check
-		if(input->Push(DIK_D) || input->Push(DIK_A))
-		{
-			if(input->Push(DIK_D))angle += XMConvertToRadians(1.0f);
-			else if(input->Push(DIK_A))angle -= XMConvertToRadians(1.0f);
+		////入力check
+		//if(input->Push(DIK_D) || input->Push(DIK_A))
+		//{
+		//	if(input->Push(DIK_D))angle += XMConvertToRadians(1.0f);
+		//	else if(input->Push(DIK_A))angle -= XMConvertToRadians(1.0f);
 
-			//angleラジアンだけy軸まわりに回転、半径は-100
-			eye.x = -100 * sinf(angle);
-			eye.z = -100 * cosf(angle);
-			matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
-		}
+		//	//angleラジアンだけy軸まわりに回転、半径は-100
+		//	eye.x = -100 * sinf(angle);
+		//	eye.z = -100 * cosf(angle);
+		//	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));
+		//}
 
 
 
-		if(input->Push(DIK_UP) || input->Push(DIK_DOWN) || input->Push(DIK_LEFT) || input->Push(DIK_RIGHT))
-		{
-			if(input->Push(DIK_UP))
-			{
-				object3ds[0].position.y += 1.0f;
-			}
-			else if(input->Push(DIK_DOWN))
-			{
-				object3ds[0].position.y -= 1.0f;
-			}
+		//if(input->Push(DIK_UP) || input->Push(DIK_DOWN) || input->Push(DIK_LEFT) || input->Push(DIK_RIGHT))
+		//{
+		//	if(input->Push(DIK_UP))
+		//	{
+		//		object3ds[0].position.y += 1.0f;
+		//	}
+		//	else if(input->Push(DIK_DOWN))
+		//	{
+		//		object3ds[0].position.y -= 1.0f;
+		//	}
 
-			if(input->Push(DIK_LEFT))
-			{
-				object3ds[0].position.x -= 1.0f;
-			}
-			else if(input->Push(DIK_RIGHT))
-			{
-				object3ds[0].position.x += 1.0f;
-			}
-		}
+		//	if(input->Push(DIK_LEFT))
+		//	{
+		//		object3ds[0].position.x -= 1.0f;
+		//	}
+		//	else if(input->Push(DIK_RIGHT))
+		//	{
+		//		object3ds[0].position.x += 1.0f;
+		//	}
+		//}
 
-		//更新処理
-		for(size_t i = 0; i < _countof(object3ds); i++)
-		{
-			UpdateObject3d(&object3ds[i], matView, matProjection);
-		}
+		////更新処理
+		//for(size_t i = 0; i < _countof(object3ds); i++)
+		//{
+		//	UpdateObject3d(&object3ds[i], matView, matProjection);
+		//}
+		object->Update();
+
 
 		if(input->Push(DIK_SPACE))
 		{
@@ -343,13 +352,13 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 
 
 		//3Dobject
-		Object3DCommonBeginDraw(dxCommon->GetCommandList(), object3dPipelineSet);
+		//Object3DCommonBeginDraw(dxCommon->GetCommandList(), object3dPipelineSet);
 
-		//全オブジェクトについて処理
-		for(size_t i = 0; i < _countof(object3ds); i++)
-		{
-			DrawObject3d(&object3ds[i], dxCommon->GetCommandList());
-		}
+		////全オブジェクトについて処理
+		//for(size_t i = 0; i < _countof(object3ds); i++)
+		//{
+		//	DrawObject3d(&object3ds[i], dxCommon->GetCommandList());
+		//}
 
 
 		//スプライト
@@ -366,9 +375,10 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 		/// DirectX12 毎フレーム処理 ここまで
 		/// </summary>
 	}
-	delete debugText;
+	delete object;
 	delete sprite;
 	delete sprite2;
+	delete debugText;
 	GeometryObject3D::StaticFinalize();
 	Sprite::StaticFinalize();
 	delete input;
@@ -562,79 +572,79 @@ int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 //}
 
 
-//3DObject共通グラフィックスコマンドのセット
-void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet)
-{
-	//パイプラインステートの設定
-	commandList->SetPipelineState(pipelineSet.pipelinestate.Get());
-	//ルートシグネチャの設定
-	commandList->SetGraphicsRootSignature(pipelineSet.rootsignature.Get());
-	//プリミティブ形状を設定
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-}
+////3DObject共通グラフィックスコマンドのセット
+//void Object3DCommonBeginDraw(ID3D12GraphicsCommandList* commandList, const PipelineSet& pipelineSet)
+//{
+//	//パイプラインステートの設定
+//	commandList->SetPipelineState(pipelineSet.pipelinestate.Get());
+//	//ルートシグネチャの設定
+//	commandList->SetGraphicsRootSignature(pipelineSet.rootsignature.Get());
+//	//プリミティブ形状を設定
+//	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+//}
 
 
 
 //初期化
-void InitializeObject3d(Object3d *object, ID3D12Device* device)
-{
-	HRESULT result;
-	//定数バッファ生成
-	result = device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferData) + 0xff) & ~0xff),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&object->constBuffData)
-		);
-	assert(SUCCEEDED(result));
+//void InitializeObject3d(Object3d *object, ID3D12Device* device)
+//{
+	//HRESULT result;
+	////定数バッファ生成
+	//result = device->CreateCommittedResource(
+	//	&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+	//	D3D12_HEAP_FLAG_NONE,
+	//	&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferData) + 0xff) & ~0xff),
+	//	D3D12_RESOURCE_STATE_GENERIC_READ,
+	//	nullptr,
+	//	IID_PPV_ARGS(&object->constBuffData)
+	//	);
+	//assert(SUCCEEDED(result));
 
-	//定数バッファのマッピング
-	result = object->constBuffData->Map(0,nullptr, (void**)&object->constBuffer);
-	assert(SUCCEEDED(result));
+	////定数バッファのマッピング
+	//result = object->constBuffData->Map(0,nullptr, (void**)&object->constBuffer);
+	//assert(SUCCEEDED(result));
 
 	////値を書き込むと自動的に転送される(色の初期化)
 	//object->constBuffer->color = object->color;
-}
+//}
 
 //更新
-void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection)
-{
-	XMMATRIX matScale, matRot, matTrans;
-
-	//スケール、回転、平行移動行列の計算
-	matScale = XMMatrixScaling(object->scale.x, object->scale.y, object->scale.z);
-	matRot = XMMatrixIdentity();
-	matRot *= XMMatrixRotationZ(object->rotation.z);
-	matRot *= XMMatrixRotationX(object->rotation.x);
-	matRot *= XMMatrixRotationY(object->rotation.y);
-	matTrans = XMMatrixTranslation(object->position.x, object->position.y, object->position.z);
-
-	//ワールド行列の合成
-	object->matWorld = XMMatrixIdentity();	//変形をリセット
-	object->matWorld *= matScale;			//ワールド行列にスケーリングを反映
-	object->matWorld *= matRot;				//ワールド行列に回転を反映
-	object->matWorld *= matTrans;			//ワールド行列に平行移動を反映
-
-	//親オブジェクトの存在
-	if(object->parent != nullptr)
-	{
-		//親オブジェクトのワールド行列を掛ける
-		object->matWorld *= object->parent->matWorld;
-	}
-
-
-	//定数バッファへのデータ転送
-	//値を書き込むと自動的に転送される
-	object->constBuffer->color = object->color;
-	object->constBuffer->mat = object->matWorld * matView *matProjection;
-}
-
-void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList)
-{
-	//定数バッファビュー(CBVの設定コマンド)
-	commandList->SetGraphicsRootConstantBufferView(0, object->constBuffData->GetGPUVirtualAddress());
-	//モデル描画
-	geometryModel->Draw(commandList);
-}
+//void UpdateObject3d(Object3d *object, XMMATRIX &matView, XMMATRIX &matProjection)
+//{
+//	XMMATRIX matScale, matRot, matTrans;
+//
+//	//スケール、回転、平行移動行列の計算
+//	matScale = XMMatrixScaling(object->scale.x, object->scale.y, object->scale.z);
+//	matRot = XMMatrixIdentity();
+//	matRot *= XMMatrixRotationZ(object->rotation.z);
+//	matRot *= XMMatrixRotationX(object->rotation.x);
+//	matRot *= XMMatrixRotationY(object->rotation.y);
+//	matTrans = XMMatrixTranslation(object->position.x, object->position.y, object->position.z);
+//
+//	//ワールド行列の合成
+//	object->matWorld = XMMatrixIdentity();	//変形をリセット
+//	object->matWorld *= matScale;			//ワールド行列にスケーリングを反映
+//	object->matWorld *= matRot;				//ワールド行列に回転を反映
+//	object->matWorld *= matTrans;			//ワールド行列に平行移動を反映
+//
+//	//親オブジェクトの存在
+//	if(object->parent != nullptr)
+//	{
+//		//親オブジェクトのワールド行列を掛ける
+//		object->matWorld *= object->parent->matWorld;
+//	}
+//
+//
+//	//定数バッファへのデータ転送
+//	//値を書き込むと自動的に転送される
+//	object->constBuffer->color = object->color;
+//	object->constBuffer->mat = object->matWorld * matView *matProjection;
+//}
+//
+//void DrawObject3d(Object3d *object, ID3D12GraphicsCommandList* commandList)
+//{
+//	//定数バッファビュー(CBVの設定コマンド)
+//	commandList->SetGraphicsRootConstantBufferView(0, object->constBuffData->GetGPUVirtualAddress());
+//	//モデル描画
+//	geometryModel->Draw(commandList);
+//}

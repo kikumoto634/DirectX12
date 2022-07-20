@@ -6,6 +6,8 @@
 
 #pragma comment(lib, "d3dcompiler.lib")
 
+using namespace DirectX;
+
 
 //静的メンバ変数の実態
 GeometryObject3D::Common* GeometryObject3D::common = nullptr;
@@ -180,9 +182,41 @@ void GeometryObject3D::Common::InitializeGraphicsPipeline(DirectXCommon* dxCommo
 	assert(SUCCEEDED(result));
 }
 
+void GeometryObject3D::Common::InitializeDescriptorHeap(DirectXCommon* dxCommon)
+{
+	HRESULT result = S_FALSE;
+
+	//デスクリプタヒープの生成
+	D3D12_DESCRIPTOR_HEAP_DESC descHeapDesc= {};
+	descHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+	descHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+	descHeapDesc.NumDescriptors= maxObjectCount;	//CBV
+	result = dxCommon->GetDevice()->CreateDescriptorHeap(&descHeapDesc, IID_PPV_ARGS(&basicDescHeap));
+	assert(SUCCEEDED(result));
+}
+
+void GeometryObject3D::Common::InitializeCamera()
+{
+	eye = {0, 0, -distance};
+	target = {0, 0, 0};
+	up = {0, 1, 0};
+
+	//ビュー変換行列
+	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));	
+
+	//透視投影
+	matProjection = XMMatrixPerspectiveFovLH(
+		XMConvertToRadians(45.0f),	//上下画角45°
+		(float)WinApp::window_width / WinApp::window_height,			//aspect比(画面横幅/画面縦幅)
+		0.1f, 1000.0f				//前端、奥端
+	);
+}
+
 void GeometryObject3D::StaticInitialize(DirectXCommon* dxCommon, GeometryModel* model)
 {
 	common = new Common();
+
+	common->dxCommon = dxCommon;
 
 	/// <summary>
 	/// グラフィックスパイプラインの初期化
@@ -190,8 +224,24 @@ void GeometryObject3D::StaticInitialize(DirectXCommon* dxCommon, GeometryModel* 
 	/// <param name="dxCommon">DirectX12ベース</param>
 	common->InitializeGraphicsPipeline(dxCommon);
 
+	/// <summary>
+	/// デスクリプタヒープの初期加生成
+	/// </summary>
+	/// <param name="dxCommon">DirectX12ベース</param>
+	common->InitializeDescriptorHeap(dxCommon);
+
+	/// <summary>
+	/// カメラ初期化
+	/// </summary>
+	common->InitializeCamera();
 
 	common->model = model;
+}
+
+void GeometryObject3D::ResetDescriptorHeap()
+
+{
+	common->descHeapIndex = 0;
 }
 
 void GeometryObject3D::StaticFinalize()
@@ -202,4 +252,70 @@ void GeometryObject3D::StaticFinalize()
 
 void GeometryObject3D::Initialize()
 {
+	HRESULT result = S_FALSE;
+	//定数バッファ生成
+	result = common->dxCommon->GetDevice()->CreateCommittedResource(
+		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+		D3D12_HEAP_FLAG_NONE,
+		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferData) + 0xff) & ~0xff),
+		D3D12_RESOURCE_STATE_GENERIC_READ,
+		nullptr,
+		IID_PPV_ARGS(&constBuff)
+		);
+	assert(SUCCEEDED(result));
+
+	//定数バッファビューの生成
+	assert(common->descHeapIndex <= maxObjectCount - 1);
+
+	//デスクリプタヒープ一つ分のサイズ
+	UINT descHandleIncrementSize = common->dxCommon->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	//デスクリプタヒープないでの定数バッファビューのアドレス計算
+	cpuDescHandleCBV = CD3DX12_CPU_DESCRIPTOR_HANDLE(common->basicDescHeap->GetCPUDescriptorHandleForHeapStart(), common->descHeapIndex,descHandleIncrementSize);
+	gpuDescHandleCBV = CD3DX12_GPU_DESCRIPTOR_HANDLE(common->basicDescHeap->GetGPUDescriptorHandleForHeapStart(), common->descHeapIndex,descHandleIncrementSize);
+
+	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+	cbvDesc.BufferLocation = constBuff->GetGPUVirtualAddress();
+	cbvDesc.SizeInBytes = (UINT)constBuff->GetDesc().Width;
+	common->dxCommon->GetDevice()->CreateConstantBufferView(&cbvDesc, cpuDescHandleCBV);
+	//デスクリプタヒープの使用暗号を一つ進める
+	common->descHeapIndex++;
+}
+
+void GeometryObject3D::Update()
+{
+	HRESULT result = S_FALSE;
+
+	XMMATRIX matScale, matRot, matTrans;
+
+	//スケール、回転、平行移動行列の計算
+	matScale = XMMatrixScaling(scale.x, scale.y, scale.z);
+	matRot = XMMatrixIdentity();
+	matRot *= XMMatrixRotationZ(rotation.z);
+	matRot *= XMMatrixRotationX(rotation.x);
+	matRot *= XMMatrixRotationY(rotation.y);
+	matTrans = XMMatrixTranslation(position.x, position.y, position.z);
+
+	//ワールド行列の合成
+	matWorld = XMMatrixIdentity();	//変形をリセット
+	matWorld *= matScale;			//ワールド行列にスケーリングを反映
+	matWorld *= matRot;				//ワールド行列に回転を反映
+	matWorld *= matTrans;			//ワールド行列に平行移動を反映
+
+	//親オブジェクトの存在
+	if(parent != nullptr)
+	{
+		//親オブジェクトのワールド行列を掛ける
+		matWorld *= parent->matWorld;
+	}
+
+
+	//定数バッファへのデータ転送
+	 //定数バッファのマッピング
+	ConstBufferData* constMap = nullptr;
+	result = constBuff->Map(0,nullptr, (void**)&constMap);
+	assert(SUCCEEDED(result));
+	//値を書き込むと自動的に転送される
+	constMap->color = XMFLOAT4(1, 1, 1, 1);
+	constMap->mat = matWorld * common->matView * common->matProjection;
+	constBuff->Unmap(0, nullptr);
 }
