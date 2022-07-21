@@ -239,7 +239,6 @@ void GeometryObject3D::StaticInitialize(DirectXCommon* dxCommon, GeometryModel* 
 }
 
 void GeometryObject3D::ResetDescriptorHeap()
-
 {
 	common->descHeapIndex = 0;
 }
@@ -264,21 +263,27 @@ void GeometryObject3D::Initialize()
 		);
 	assert(SUCCEEDED(result));
 
+	//定数バッファのマッピング
+	result = constBuff->Map(0,nullptr, (void**)&constBuffer);
+	assert(SUCCEEDED(result));
+
+	constBuff->Unmap(0, nullptr);
+
 	//定数バッファビューの生成
-	assert(common->descHeapIndex <= maxObjectCount - 1);
+	/*assert(common->descHeapIndex <= maxObjectCount - 1);*/
 
-	//デスクリプタヒープ一つ分のサイズ
-	UINT descHandleIncrementSize = common->dxCommon->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	//デスクリプタヒープないでの定数バッファビューのアドレス計算
-	cpuDescHandleCBV = CD3DX12_CPU_DESCRIPTOR_HANDLE(common->basicDescHeap->GetCPUDescriptorHandleForHeapStart(), common->descHeapIndex,descHandleIncrementSize);
-	gpuDescHandleCBV = CD3DX12_GPU_DESCRIPTOR_HANDLE(common->basicDescHeap->GetGPUDescriptorHandleForHeapStart(), common->descHeapIndex,descHandleIncrementSize);
+	////デスクリプタヒープ一つ分のサイズ
+	//UINT descHandleIncrementSize = common->dxCommon->GetDevice()->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	////デスクリプタヒープないでの定数バッファビューのアドレス計算
+	//cpuDescHandleCBV = CD3DX12_CPU_DESCRIPTOR_HANDLE(common->basicDescHeap->GetCPUDescriptorHandleForHeapStart(), common->descHeapIndex, descHandleIncrementSize);
+	//gpuDescHandleCBV = CD3DX12_GPU_DESCRIPTOR_HANDLE(common->basicDescHeap->GetGPUDescriptorHandleForHeapStart(), common->descHeapIndex, descHandleIncrementSize);
 
-	D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
-	cbvDesc.BufferLocation = constBuff->GetGPUVirtualAddress();
-	cbvDesc.SizeInBytes = (UINT)constBuff->GetDesc().Width;
-	common->dxCommon->GetDevice()->CreateConstantBufferView(&cbvDesc, cpuDescHandleCBV);
-	//デスクリプタヒープの使用暗号を一つ進める
-	common->descHeapIndex++;
+	//D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc{};
+	//cbvDesc.BufferLocation = constBuff->GetGPUVirtualAddress();
+	//cbvDesc.SizeInBytes = (UINT)constBuff->GetDesc().Width;
+	//common->dxCommon->GetDevice()->CreateConstantBufferView(&cbvDesc, cpuDescHandleCBV);
+	////デスクリプタヒープの使用暗号を一つ進める
+	//common->descHeapIndex++;
 }
 
 void GeometryObject3D::Update()
@@ -308,14 +313,41 @@ void GeometryObject3D::Update()
 		matWorld *= parent->matWorld;
 	}
 
-
 	//定数バッファへのデータ転送
-	 //定数バッファのマッピング
-	ConstBufferData* constMap = nullptr;
-	result = constBuff->Map(0,nullptr, (void**)&constMap);
-	assert(SUCCEEDED(result));
 	//値を書き込むと自動的に転送される
-	constMap->color = XMFLOAT4(1, 1, 1, 1);
-	constMap->mat = matWorld * common->matView * common->matProjection;
-	constBuff->Unmap(0, nullptr);
+	constBuffer->color = color;
+	constBuffer->mat = matWorld * common->matView * common->matProjection;
+
+	////定数バッファへのデータ転送
+	// //定数バッファのマッピング
+	//ConstBufferData* constMap = nullptr;
+	//result = constBuff->Map(0,nullptr, (void**)&constMap);
+	//assert(SUCCEEDED(result));
+	////値を書き込むと自動的に転送される
+	//constMap->color = XMFLOAT4(1, 1, 1, 1);
+	//constMap->mat = matWorld * common->matView * common->matProjection;
+	//constBuff->Unmap(0, nullptr);
+}
+
+void GeometryObject3D::Draw(ID3D12GraphicsCommandList* commandList)
+{
+#pragma region 共通描画コマンド
+	//パイプラインステートの設定
+	commandList->SetPipelineState(common->pipelinestate.Get());
+	//ルートシグネチャの設定
+	commandList->SetGraphicsRootSignature(common->rootsignature.Get());
+	//プリミティブ形状を設定
+	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+#pragma endregion
+
+#pragma region 個別描画コマンド
+	//デスクリプタヒープのセット
+	ID3D12DescriptorHeap* ppHeaps[] = {common->basicDescHeap.Get()};
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+	//定数バッファビュー(CBVの設定コマンド)
+	//commandList->SetGraphicsRootDescriptorTable(0, gpuDescHandleCBV);
+	commandList->SetGraphicsRootConstantBufferView(0, constBuff->GetGPUVirtualAddress());
+	//モデル描画
+	common->model->Draw(commandList);
+#pragma endregion
 }

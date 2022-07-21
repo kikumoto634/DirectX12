@@ -5,6 +5,9 @@
 #include "DirectXCommon.h"
 #include "GeometryModel.h"
 
+//CD3DX12ヘルパー構造体
+#include <d3dx12.h>
+
 /// <summary>
 /// 数式で生成したモデル用3Dオブジェクト
 /// </summary>
@@ -124,7 +127,12 @@ public:
 	/// </summary>
 	void Initialize();
 
+	/// <summary>
+	/// 更新
+	/// </summary>
 	void Update();
+
+	void Draw(ID3D12GraphicsCommandList* commandList);
 
 /// <summary>
 /// メンバ変数
@@ -133,10 +141,15 @@ private:
 
 	//定数バッファ(行列用)
 	ComPtr<ID3D12Resource> constBuff;
-	//定数バッファビューのCPUアドレス
-	CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDescHandleCBV;
-	//定数バッファビューのGPUアドレス
-	CD3DX12_GPU_DESCRIPTOR_HANDLE gpuDescHandleCBV;
+	//マッピング用ポインタ
+	ConstBufferData* constBuffer = nullptr;
+
+	XMFLOAT4 color = {1,1,1,1};
+
+	////定数バッファビューのCPUアドレス
+	//CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDescHandleCBV;
+	////定数バッファビューのGPUアドレス
+	//CD3DX12_GPU_DESCRIPTOR_HANDLE gpuDescHandleCBV;
 
 	//トランスフォーム
 	//アフィン変換
