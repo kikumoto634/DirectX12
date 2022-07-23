@@ -132,7 +132,29 @@ public:
 	/// </summary>
 	void Update();
 
+	/// <summary>
+	/// 描画
+	/// </summary>
+	/// <param name="commandList">グラフィックスコマンド</param>
 	void Draw(ID3D12GraphicsCommandList* commandList);
+
+
+
+	//setter
+	void SetColor(const XMFLOAT4& color)	{this->color = color; }
+
+	void SetScale(const XMFLOAT3& scale)	{this->scale = scale; }
+
+	void SetRotation(const XMFLOAT3& rotation)	{this->rotation = rotation; }
+
+	void SetPosition(const XMFLOAT3& position)	{this->position = position; }
+
+
+	//getter
+	const XMFLOAT4& GetColor()	{return this->color; }
+	const XMFLOAT3& GetScale() {return this->scale; }
+	const XMFLOAT3& GetRotation()	{return this->rotation; }
+	const XMFLOAT3& GetPosition()	{return this->position; }
 
 /// <summary>
 /// メンバ変数

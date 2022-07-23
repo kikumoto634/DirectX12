@@ -83,6 +83,8 @@
   <ItemGroup>
     <ClCompile Include="DebugText.cpp" />
     <ClCompile Include="DirectXCommon.cpp" />
+    <ClCompile Include="DirectXGame.cpp" />
+    <ClCompile Include="GameBase.cpp" />
     <ClCompile Include="GeometryModel.cpp" />
     <ClCompile Include="GeometryObject3D.cpp" />
     <ClCompile Include="Input.cpp" />
@@ -130,6 +132,8 @@
   <ItemGroup>
     <ClInclude Include="DebugText.h" />
     <ClInclude Include="DirectXCommon.h" />
+    <ClInclude Include="DirectXGame.h" />
+    <ClInclude Include="GameBase.h" />
     <ClInclude Include="GeometryModel.h" />
     <ClInclude Include="GeometryObject3D.h" />
     <ClInclude Include="Input.h" />

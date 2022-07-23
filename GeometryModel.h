@@ -45,6 +45,7 @@ public:
 	/// <param name="commandList">グラフィックスコマンド</param>
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
+
 	//getter
 	const D3D12_VERTEX_BUFFER_VIEW& GetVbView() {return vbView;}
 	const D3D12_INDEX_BUFFER_VIEW& GetIbView()	{return ibView;}

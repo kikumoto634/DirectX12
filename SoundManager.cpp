@@ -40,7 +40,7 @@ void SoundManager::LoadWave(int number, const char *filename)
 
 	////.wavデータ読み込み
 	//RIFFヘッダーの読み込み
-	RiffHeader riff;
+	RiffHeader riff{};
 	file.read((char*)&riff, sizeof(riff));
 	//ファイルがRIFFかチェック
 	if(strncmp(riff.chunk.id, "RIFF",4) != 0)
@@ -65,7 +65,7 @@ void SoundManager::LoadWave(int number, const char *filename)
 	assert(format.chunk.size <= sizeof(format.fmt));
 	file.read((char*)&format.fmt, format.chunk.size);
 	//Dataチャンク読み込み
-	ChunkHeader data;
+	ChunkHeader data{};
 	file.read((char*)&data, sizeof(data));
 	//JUNKチャンクを検出した場合
 	if(strncmp(data.id, "JUNK", 4) == 0)
