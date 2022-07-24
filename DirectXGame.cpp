@@ -4,58 +4,8 @@ using namespace std;
 
 void DirectXGame::Initialize()
 {
-#pragma region Windowsアプリ初期化
-	//WindowsAPI
-	winApp = make_unique<WinApp>();
-	//WinApp初期化
-	winApp->Initialize();
-#pragma endregion
-
-#pragma region DirectX初期化ここから
-
-	//DirectX
-	dxCommon = make_unique<DirectXCommon>();
-	//初期化
-	dxCommon->Initialize(winApp.get());
-
-#pragma endregion
-
-
-#pragma region 汎用的機能の初期化
-	//テクスチャマネージャー
-	textureManager = make_unique<TextureManager>();
-	//初期化
-	textureManager->Initialize(dxCommon.get());
-
-	//モデル初期化
-	geometryModel = make_unique<GeometryModel>();
-	geometryModel->Initialize(dxCommon.get(), textureManager.get(), 0);
-
-	///DirectInPut
-	input = make_unique<Input>();
-	//初期化
-	input->Initialize(winApp->GetHwnd()); 
-
-	////サウンド
-	soundManager = make_unique<SoundManager>();
-	soundManager->Initialize();
-
-	////スプライト共通データ生成
-	Sprite::StaticInitialize(dxCommon.get(), textureManager.get());
-
-	///幾何学オブジェクト共通初期化
-	GeometryObject3D::StaticInitialize(dxCommon.get(), geometryModel.get());
-
-	//デバックテキスト世のテクスチャ番号
-	const int debugTextTexNumber = 2;
-	textureManager->LoadTexture(debugTextTexNumber, L"Resources/texfont.png");
-
-	//デバックテキスト初期化
-	debugText = make_unique<DebugText>();
-	debugText->Initialize(debugTextTexNumber);
-
-#pragma endregion
-
+	//基底クラスの初期化
+	GameBase::Initialize();
 
 #pragma region シーンの初期化
 
@@ -89,7 +39,6 @@ void DirectXGame::Initialize()
 		object[i]->SetRotation({0, 0, float(-2 + i)});
 		object[i]->SetPosition({float(-50 + i*25), 0, 0});
 	}
-
 	
 #pragma endregion
 
@@ -97,16 +46,8 @@ void DirectXGame::Initialize()
 
 void DirectXGame::Update()
 {
-	//WindowsAPI毎フレーム処理
-	bool msgExit = winApp->Update();
-	if(msgExit)
-	{
-		endFlag = true;
-	}
-
-	///キーボード情報の取得開始
-	input->Update();
-
+	//基底クラスの更新
+	GameBase::Update();
 
 	//スプライト
 	if(input->Push(DIK_1) || input->Push(DIK_2)){
@@ -157,14 +98,14 @@ void DirectXGame::Update()
 		//再生
 		soundManager->PlayWave(0);
 	}
+
+	//デバックテキスト
+	debugText->Print("t", 200, 200, 4.0f);
+
 }
 
 void DirectXGame::Draw()
 {
-	//デバックテキスト
-	debugText->Print("t", 200, 200, 4.0f);
-
-
 	//DirectXCommon前処理
 	dxCommon->BeginDraw();
 
@@ -190,7 +131,6 @@ void DirectXGame::Draw()
 
 void DirectXGame::Finalize()
 {
-	//static
-	GeometryObject3D::StaticFinalize();
-	Sprite::StaticFinalize();
+	//基底クラスの解放
+	GameBase::Finalize();
 }

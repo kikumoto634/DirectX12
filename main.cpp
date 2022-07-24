@@ -3,7 +3,6 @@
 /// Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 {
-
 	auto game = new DirectXGame();
 	//ゲーム実行
 	game->Run();
