@@ -11,9 +11,11 @@
 //スプライト
 #include "Sprite.h"
 //幾何学モデル
-#include "GeometryModel.h"
+#include "GeometryManager.h"
 //幾何学オブジェクト
 #include "GeometryObject3D.h"
+//カメラ
+#include "Camera.h"
 //デバックテキスト
 #include "DebugText.h"
 //サウンド
@@ -63,21 +65,24 @@ protected:
 	std::unique_ptr<WinApp> winApp;
 
 	//DirectXオブジェクト
-	std::unique_ptr<DirectXCommon> dxCommon = nullptr;
+	std::unique_ptr<DirectXCommon> dxCommon;
 
 	//入力
-	std::unique_ptr<Input> input = nullptr;
+	std::unique_ptr<Input> input;
 
 	//テクスチャマネージャー
-	std::unique_ptr<TextureManager> textureManager = nullptr;
+	std::unique_ptr<TextureManager> textureManager;
 
 	//モデル
-	std::unique_ptr<GeometryModel> geometryModel = nullptr;
+	std::unique_ptr<GeometryManager> geometryModel;
+
+	//カメラ
+	std::unique_ptr<Camera> camera;
 
 	//デバック
-	std::unique_ptr<DebugText> debugText = nullptr;
+	std::unique_ptr<DebugText> debugText;
 
 	//サウンドマネージャー
-	std::unique_ptr<SoundManager> soundManager = nullptr;
+	std::unique_ptr<SoundManager> soundManager;
 };
 

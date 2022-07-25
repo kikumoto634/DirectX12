@@ -81,11 +81,12 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Camera.cpp" />
     <ClCompile Include="DebugText.cpp" />
     <ClCompile Include="DirectXCommon.cpp" />
     <ClCompile Include="DirectXGame.cpp" />
     <ClCompile Include="GameBase.cpp" />
-    <ClCompile Include="GeometryModel.cpp" />
+    <ClCompile Include="GeometryManager.cpp" />
     <ClCompile Include="GeometryObject3D.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
@@ -130,11 +131,12 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Camera.h" />
     <ClInclude Include="DebugText.h" />
     <ClInclude Include="DirectXCommon.h" />
     <ClInclude Include="DirectXGame.h" />
     <ClInclude Include="GameBase.h" />
-    <ClInclude Include="GeometryModel.h" />
+    <ClInclude Include="GeometryManager.h" />
     <ClInclude Include="GeometryObject3D.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="SoundManager.h" />

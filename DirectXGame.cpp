@@ -13,15 +13,15 @@ void DirectXGame::Initialize()
 	soundManager->LoadWave(0, "Resources/fanfare.wav");
 
 	//スプライト共通テクスチャ読込
-	textureManager->LoadTexture(0, L"Resources/Texture.jpg");
-	textureManager->LoadTexture(1, L"Resources/Texture2.jpg");
+	textureManager->LoadTexture(1, L"Resources/Texture.jpg");
+	textureManager->LoadTexture(2, L"Resources/Texture2.jpg");
 
 
 	//スプライト生成
 	for(int i = 0; i < TextureNum; i++)
 	{
 		sprite[i] = make_unique<Sprite>();
-		sprite[i]->Initialize(i);
+		sprite[i]->Initialize(i+1);
 		sprite[i]->SetPosition({float(100 + i*200), float(100)});
 		sprite[i]->SetSize({100,50});
 		sprite[i]->SetAnchorpoint({0.5f,0.5f});
@@ -30,13 +30,13 @@ void DirectXGame::Initialize()
 
 
 	//オブジェクト生成
-	const double M_PI = 3.14159265;
 	for(int i = 0; i < ObjectNum; i++)
 	{
 		object[i] = make_unique<GeometryObject3D>();
 		object[i]->Initialize();
 
-		object[i]->SetRotation({0, 0, float(-2 + i)});
+		object[i]->SetTexNumber(i%2 + 1);
+		object[i]->SetRotation({0, 0, float(-0.5 + i*0.25)});
 		object[i]->SetPosition({float(-50 + i*25), 0, 0});
 	}
 	
@@ -48,6 +48,30 @@ void DirectXGame::Update()
 {
 	//基底クラスの更新
 	GameBase::Update();
+
+#pragma region シーン更新
+
+
+	//カメラ
+	if(input->Push(DIK_A) || input->Push(DIK_D))
+	{
+		XMFLOAT3 eye = camera->GetEye();
+		XMFLOAT3 target = camera->GetTarget();
+
+		if(input->Push(DIK_A))
+		{
+			eye.x -= 2.f;
+			target.x -= 2.f;
+		}
+		else if(input->Push(DIK_D))
+		{
+			eye.x += 2.f;
+			target.x += 2.f;
+		}
+
+		camera->SetEye(eye);
+		camera->SetTarget(target);
+	}
 
 	//スプライト
 	if(input->Push(DIK_1) || input->Push(DIK_2)){
@@ -86,6 +110,11 @@ void DirectXGame::Update()
 
 		object[2]->SetPosition(pos);
 	}
+
+	//カメラこうしん
+	camera->Update();
+
+	//更新
 	for(int i = 0; i < ObjectNum; i++)
 	{
 		object[i]->Update();
@@ -102,6 +131,8 @@ void DirectXGame::Update()
 	//デバックテキスト
 	debugText->Print("t", 200, 200, 4.0f);
 
+
+#pragma endregion
 }
 
 void DirectXGame::Draw()

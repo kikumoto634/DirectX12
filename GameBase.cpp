@@ -50,8 +50,12 @@ void GameBase::Initialize()
 	textureManager->Initialize(dxCommon.get());
 
 	//モデル初期化
-	geometryModel = make_unique<GeometryModel>();
-	geometryModel->Initialize(dxCommon.get(), textureManager.get(), 0);
+	geometryModel = make_unique<GeometryManager>();
+	geometryModel->Initialize(dxCommon.get(), textureManager.get());
+
+	//カメラ初期化
+	camera = make_unique<Camera>();
+	camera->Initialize();
 
 	///DirectInPut
 	input = make_unique<Input>();
@@ -66,10 +70,10 @@ void GameBase::Initialize()
 	Sprite::StaticInitialize(dxCommon.get(), textureManager.get());
 
 	///幾何学オブジェクト共通初期化
-	GeometryObject3D::StaticInitialize(dxCommon.get(), geometryModel.get());
+	GeometryObject3D::StaticInitialize(dxCommon.get(), geometryModel.get(), camera.get());
 
 	//デバックテキスト世のテクスチャ番号
-	const int debugTextTexNumber = 2;
+	const int debugTextTexNumber = 0;
 	textureManager->LoadTexture(debugTextTexNumber, L"Resources/texfont.png");
 
 	//デバックテキスト初期化

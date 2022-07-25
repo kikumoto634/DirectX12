@@ -69,9 +69,6 @@
     <ClCompile Include="SoundManager.cpp">
       <Filter>ソース ファイル\Base</Filter>
     </ClCompile>
-    <ClCompile Include="GeometryModel.cpp">
-      <Filter>ソース ファイル\3D</Filter>
-    </ClCompile>
     <ClCompile Include="GeometryObject3D.cpp">
       <Filter>ソース ファイル\3D</Filter>
     </ClCompile>
@@ -80,6 +77,12 @@
     </ClCompile>
     <ClCompile Include="GameBase.cpp">
       <Filter>ソース ファイル\GameScene</Filter>
+    </ClCompile>
+    <ClCompile Include="GeometryManager.cpp">
+      <Filter>ソース ファイル\Base</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -114,9 +117,6 @@
     <ClInclude Include="SoundManager.h">
       <Filter>ヘッダー ファイル\Base</Filter>
     </ClInclude>
-    <ClInclude Include="GeometryModel.h">
-      <Filter>ヘッダー ファイル\3D</Filter>
-    </ClInclude>
     <ClInclude Include="GeometryObject3D.h">
       <Filter>ヘッダー ファイル\3D</Filter>
     </ClInclude>
@@ -125,6 +125,12 @@
     </ClInclude>
     <ClInclude Include="GameBase.h">
       <Filter>ヘッダー ファイル\GameScene</Filter>
+    </ClInclude>
+    <ClInclude Include="GeometryManager.h">
+      <Filter>ヘッダー ファイル\Base</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

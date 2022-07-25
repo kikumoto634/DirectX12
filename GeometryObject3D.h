@@ -3,7 +3,8 @@
 #include <d3d12.h>
 
 #include "DirectXCommon.h"
-#include "GeometryModel.h"
+#include "GeometryManager.h"
+#include "Camera.h"
 
 //CD3DX12ヘルパー構造体
 #include <d3dx12.h>
@@ -56,7 +57,7 @@ public:
 		/// <summary>
 		/// カメラの初期化
 		/// </summary>
-		void InitializeCamera();
+		//void InitializeCamera();
 
 	private:
 		//DirectX12ベース
@@ -71,20 +72,11 @@ public:
 		//次に使うデスクリプタヒープの番号
 		int descHeapIndex = 0;
 
-		//モデルデータ
-		GeometryModel* model = nullptr;
+		//カメラ
+		Camera* camera = nullptr;
 
-		///カメラ関連ここから
-		//透視投影
-		XMMATRIX matProjection;	//プロジェクション行列
-		//ビュー変換行列
-		float angle = 0.0f;		//カメラの回転角
-		float distance = 100.f;	//カメラの距離
-		XMMATRIX matView;		//ビュー行列
-		XMFLOAT3 eye;			//視点座標
-		XMFLOAT3 target;		//注視点座標
-		XMFLOAT3 up;			//上方向ベクトル
-		///ここまで
+		//モデルデータ
+		GeometryManager* model = nullptr;
 	};
 
 	//定数バッファ用データ構造体(3D変換行列
@@ -100,7 +92,7 @@ public:
 	/// <summary>
 	/// 初期化
 	/// </summary>
-	static void StaticInitialize(DirectXCommon* dxCommon, GeometryModel* model);
+	static void StaticInitialize(DirectXCommon* dxCommon, GeometryManager* model, Camera* camera);
 
 	/// <summary>
 	/// デスクリプタヒープリセット
@@ -141,6 +133,8 @@ public:
 
 
 	//setter
+	void SetTexNumber(UINT texNumber)	{this->texNumber = texNumber;	}
+
 	void SetColor(const XMFLOAT4& color)	{this->color = color; }
 
 	void SetScale(const XMFLOAT3& scale)	{this->scale = scale; }
@@ -160,6 +154,8 @@ public:
 /// メンバ変数
 /// </summary>
 private:
+
+	UINT texNumber = 1;
 
 	//定数バッファ(行列用)
 	ComPtr<ID3D12Resource> constBuff;

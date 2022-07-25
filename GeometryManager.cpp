@@ -1,15 +1,10 @@
-﻿#include "GeometryModel.h"
-#include <cassert>
+﻿#include "GeometryManager.h"
 
-
-using namespace DirectX;
-
-void GeometryModel::Initialize(DirectXCommon* dxCommon, TextureManager* textureManager, UINT texNumber)
+void GeometryManager::Initialize(DirectXCommon* dxCommon, TextureManager* textureManager)
 {
-	this->textureManager = textureManager;
-	this->texNumber = texNumber;
-
 	HRESULT result = S_FALSE;
+
+	this->textureManager = textureManager;
 
 	//頂点データ
 	Vertex vertices[] = 
@@ -178,7 +173,7 @@ void GeometryModel::Initialize(DirectXCommon* dxCommon, TextureManager* textureM
 	ibView.SizeInBytes = sizeIB;
 }
 
-void GeometryModel::Draw(ID3D12GraphicsCommandList* commandList)
+void GeometryManager::Draw(ID3D12GraphicsCommandList* commandList, UINT texNumber)
 {
 	//デスクリプタヒープの配列
 	textureManager->SetDescriptorHeaps(commandList);

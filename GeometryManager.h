@@ -1,4 +1,5 @@
 ﻿#pragma once
+
 #include <DirectXMath.h>
 #include <d3d12.h>
 #include <wrl.h>
@@ -6,13 +7,19 @@
 #include "DirectXCommon.h"
 #include "TextureManager.h"
 
-/// <summary>
-/// 幾何学モデル
-/// </summary>
-class GeometryModel
+class GeometryManager
 {
-public://エイリアス
+/// <summary>
+/// エイリアス
+/// </summary>
+public:
 	template <class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
+
+/// <summary>
+/// 定数
+/// </summary>
+public:
+	static const int maxObjectCount = 512;
 
 /// <summary>
 /// インナークラス
@@ -31,25 +38,13 @@ public:
 /// </summary>
 public:
 
-	/// <summary>
-	/// 初期化
-	/// </summary>
-	/// <param name="dxCommon">DirectX12べーズ</param>
-	/// <param name="textureManager">テクスチャマネージャー</param>
-	/// <param name="texNuber">テクスチャ番号</param>
-	void Initialize(DirectXCommon* dxCommon, TextureManager* textureManager, UINT texNuber);
+	void Initialize(DirectXCommon* dxCommon, TextureManager* textureManager);
 
-	/// <summary>
-	/// 描画
-	/// </summary>
-	/// <param name="commandList">グラフィックスコマンド</param>
-	void Draw(ID3D12GraphicsCommandList* commandList);
-
+	void Draw(ID3D12GraphicsCommandList* commandList, UINT texNumber);
 
 	//getter
 	const D3D12_VERTEX_BUFFER_VIEW& GetVbView() {return vbView;}
 	const D3D12_INDEX_BUFFER_VIEW& GetIbView()	{return ibView;}
-
 
 /// <summary>
 /// メンバ変数
@@ -57,9 +52,6 @@ public:
 private:
 	//テクスチャマネージャー
 	TextureManager* textureManager = nullptr;
-
-	//テクスチャナンバー
-	UINT texNumber;
 
 	///頂点バッファ
 	ComPtr<ID3D12Resource> vertBuff;
