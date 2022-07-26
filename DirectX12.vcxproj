@@ -89,11 +89,13 @@
     <ClCompile Include="DebugText.cpp" />
     <ClCompile Include="DirectXCommon.cpp" />
     <ClCompile Include="DirectXGame.cpp" />
+    <ClCompile Include="FbxLoader.cpp" />
     <ClCompile Include="GameBase.cpp" />
     <ClCompile Include="GeometryManager.cpp" />
     <ClCompile Include="GeometryObject3D.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Model.cpp" />
     <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="TextureManager.cpp" />
@@ -139,10 +141,12 @@
     <ClInclude Include="DebugText.h" />
     <ClInclude Include="DirectXCommon.h" />
     <ClInclude Include="DirectXGame.h" />
+    <ClInclude Include="FbxLoader.h" />
     <ClInclude Include="GameBase.h" />
     <ClInclude Include="GeometryManager.h" />
     <ClInclude Include="GeometryObject3D.h" />
     <ClInclude Include="Input.h" />
+    <ClInclude Include="Model.h" />
     <ClInclude Include="SoundManager.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="TextureManager.h" />

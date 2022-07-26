@@ -1,5 +1,7 @@
 ﻿#include "DirectXGame.h"
 
+#include "FbxLoader.h"
+
 using namespace std;
 
 void DirectXGame::Initialize()
@@ -15,7 +17,6 @@ void DirectXGame::Initialize()
 	//スプライト共通テクスチャ読込
 	textureManager->LoadTexture(1, L"Resources/Texture.jpg");
 	textureManager->LoadTexture(2, L"Resources/Texture2.jpg");
-
 
 	//スプライト生成
 	for(int i = 0; i < TextureNum; i++)
@@ -40,6 +41,9 @@ void DirectXGame::Initialize()
 		object[i]->SetPosition({float(-50 + i*25), 0, 0});
 	}
 	
+	//FBX モデル名を指定してファイル読み込み
+	FbxLoader::GetInstance()->LoadModeFromFile("cube");
+
 #pragma endregion
 
 }

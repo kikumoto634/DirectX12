@@ -1,4 +1,5 @@
 ﻿#include "GameBase.h"
+#include "FbxLoader.h"
 
 using namespace std;
 
@@ -72,6 +73,9 @@ void GameBase::Initialize()
 	///幾何学オブジェクト共通初期化
 	GeometryObject3D::StaticInitialize(dxCommon.get(), geometryModel.get(), camera.get());
 
+	//FBX初期化
+	FbxLoader::GetInstance()->Initialize(dxCommon->GetDevice());
+
 	//デバックテキスト世のテクスチャ番号
 	const int debugTextTexNumber = 0;
 	textureManager->LoadTexture(debugTextTexNumber, L"Resources/texfont.png");
@@ -99,6 +103,7 @@ void GameBase::Update()
 void GameBase::Finalize()
 {
 	//static
+	FbxLoader::GetInstance()->Finalize();
 	GeometryObject3D::StaticFinalize();
 	Sprite::StaticFinalize();
 }
