@@ -40,6 +40,8 @@ public:
 	void SetTarget(const XMFLOAT3& target)	{this->target = target; }
 	void SetUp(const XMFLOAT3& up)	{this->up = up; }
 
+	void CameraMovement(XMFLOAT3 pos);
+
 protected:
 
 	//透視投影

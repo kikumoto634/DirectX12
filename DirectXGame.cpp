@@ -55,22 +55,14 @@ void DirectXGame::Update()
 	//カメラ
 	if(input->Push(DIK_A) || input->Push(DIK_D))
 	{
-		XMFLOAT3 eye = camera->GetEye();
-		XMFLOAT3 target = camera->GetTarget();
-
 		if(input->Push(DIK_A))
 		{
-			eye.x -= 2.f;
-			target.x -= 2.f;
+			camera->CameraMovement({-2.f,0,0});
 		}
 		else if(input->Push(DIK_D))
 		{
-			eye.x += 2.f;
-			target.x += 2.f;
+			camera->CameraMovement({2.f,0,0});
 		}
-
-		camera->SetEye(eye);
-		camera->SetTarget(target);
 	}
 
 	//スプライト

@@ -36,3 +36,14 @@ void Camera::UpdateProjectionMatrix()
 		0.1f, 1000.0f				//前端、奥端
 	);
 }
+
+void Camera::CameraMovement(XMFLOAT3 pos)
+{
+	eye.x += pos.x;
+	eye.y += pos.y;
+	eye.z += pos.z;
+
+	target.x += pos.x;
+	target.y += pos.y;
+	target.z += pos.z;
+}
