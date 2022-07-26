@@ -4,6 +4,11 @@
 #include <DirectXMath.h>
 #include <DirectXTex.h>
 
+#include <Windows.h>
+#include <wrl.h>
+#include <d3d12.h>
+#include <d3dx12.h>
+
 struct Node
 {
 	//名前
@@ -28,6 +33,20 @@ struct Node
 /// </summary>
 class Model
 {
+/// <summary>
+/// エイリアス
+/// </summary>
+private:
+	template <class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
+	using XMFLOAT2 = DirectX::XMFLOAT2;
+	using XMFLOAT3 = DirectX::XMFLOAT3;
+	using XMFLOAT4 = DirectX::XMFLOAT4;
+	using XMMATRIX = DirectX::XMMATRIX;
+	using TexMetadata = DirectX::TexMetadata;
+	using ScratchImage = DirectX::ScratchImage;
+	using string = std::string;
+	template <class T> using vector = std::vector<T>;
+
 public:
 	//フレンドクラス
 	friend class FbxLoader;
@@ -39,6 +58,25 @@ public:
 		DirectX::XMFLOAT3 normal;
 		DirectX::XMFLOAT3 uv;
 	};
+
+public:
+	/// <summary>
+	/// バッファ生成
+	/// </summary>
+	/// <param name="device">デバイス</param>
+	void CreateBuffers(ID3D12Device* device);
+
+	/// <summary>
+	/// 描画
+	/// </summary>
+	/// <param name="commandList">グラフィックスコマンドリスト</param>
+	void Draw(ID3D12GraphicsCommandList* commandList);
+
+	/// <summary>
+	/// モデルの変形行列取得
+	/// </summary>
+	/// <returns></returns>
+	const XMMATRIX& GetModelTransform() {return meshNode->globalTransform; }
 
 private:
 	//モデル名
@@ -61,5 +99,19 @@ private:
 	DirectX::TexMetadata metadata = {};
 	//スクラッチイメージ
 	DirectX::ScratchImage scratchImg = {};
+
+
+	//頂点バッファ
+	ComPtr<ID3D12Resource> vertBuff;
+	//インデックスバッファ
+	ComPtr<ID3D12Resource> indexBuff;
+	//テクスチャバッファ
+	ComPtr<ID3D12Resource> texBuff;
+	//頂点バッファビュー
+	D3D12_VERTEX_BUFFER_VIEW vbView = {};
+	//インデックスバッファビュー
+	D3D12_INDEX_BUFFER_VIEW ibView = {};
+	//SRV用デスクリプタヒープ
+	ComPtr<ID3D12DescriptorHeap> descHeapSRV;
 };
 
