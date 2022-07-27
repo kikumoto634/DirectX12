@@ -120,4 +120,18 @@ void Model::CreateBuffers(ID3D12Device *device)
 
 void Model::Draw(ID3D12GraphicsCommandList *commandList)
 {
+	//頂点バッファをセット
+	commandList->IASetVertexBuffers(0, 1, &vbView);
+	//インデックスバッファをセット
+	commandList->IASetIndexBuffer(&ibView);
+
+	//デスクリプタヒープのセット
+	ID3D12DescriptorHeap* ppHeaps[] = {descHeapSRV.Get()};
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
+	//シェーダリソースビューをセット
+	commandList->SetGraphicsRootDescriptorTable(1, descHeapSRV->GetGPUDescriptorHandleForHeapStart());
+
+	//描画コマンド
+	commandList->DrawIndexedInstanced((UINT)indices.size(), 1, 0, 0, 0);
 }

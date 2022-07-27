@@ -2,6 +2,7 @@
 
 #include "FbxLoader.h"
 
+
 using namespace std;
 
 void DirectXGame::Initialize()
@@ -42,7 +43,18 @@ void DirectXGame::Initialize()
 	}
 	
 	//FBX モデル名を指定してファイル読み込み
-	FbxLoader::GetInstance()->LoadModeFromFile("cube");
+	//FbxLoader::GetInstance()->LoadModeFromFile("cube");
+	model = FbxLoader::GetInstance()->LoadModeFromFile("cube");
+
+	//3Dオブジェクト生成とモデルのセット
+	modelObject = new Object3D();
+	modelObject->Initialize();
+	modelObject->SetModel(model);
+
+
+	camera->SetTarget({0, 20.f, 0});
+	camera->SetEye({0, 0, 100.f});
+
 
 #pragma endregion
 
@@ -117,6 +129,8 @@ void DirectXGame::Update()
 	}
 
 
+	modelObject->Update();
+
 	//サウンド
 	if(input->Push(DIK_SPACE))
 	{
@@ -143,6 +157,8 @@ void DirectXGame::Draw()
 		object[i]->Draw(dxCommon->GetCommandList());
 	}
 
+	modelObject->Draw(dxCommon->GetCommandList());
+
 	//スプライト
 	Sprite::SetPipelineState(dxCommon->GetCommandList());
 	for(int i = 0; i < TextureNum; i++)
@@ -160,4 +176,7 @@ void DirectXGame::Finalize()
 {
 	//基底クラスの解放
 	GameBase::Finalize();
+
+	delete modelObject;
+	delete model;
 }

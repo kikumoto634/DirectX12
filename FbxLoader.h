@@ -54,7 +54,7 @@ public:
 	/// ファイルからFBXモデル読込
 	/// </summary>
 	/// <param name="modelName">モデル名</param>
-	void LoadModeFromFile(const string& modelName);
+	Model* LoadModeFromFile(const string& modelName);
 
 	/// <summary>
 	/// 再帰的にノード構成を解析

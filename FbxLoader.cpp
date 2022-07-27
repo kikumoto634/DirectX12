@@ -34,7 +34,7 @@ void FbxLoader::Initialize(ID3D12Device *device)
     fbxImporter = FbxImporter::Create(fbxManager, "");
 }
 
-void FbxLoader::LoadModeFromFile(const string &modelName)
+Model* FbxLoader::LoadModeFromFile(const string &modelName)
 {
     //モデルと同じ名前にファイルから読込
     const string directoryPath = baseDirectory + modelName + "/";
@@ -74,6 +74,8 @@ void FbxLoader::LoadModeFromFile(const string &modelName)
 
     //バッファ生成
     model->CreateBuffers(device);
+
+    return model;
 }
 
 void FbxLoader::ParseNodeRecursive(Model *model, FbxNode *fbxNode, Node* parent)

@@ -96,16 +96,22 @@
     <ClCompile Include="Model.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
+    <ClCompile Include="Object3D.cpp">
+      <Filter>ソース ファイル</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="BasicVS.hlsl" />
     <FxCompile Include="BasicPS.hlsl" />
     <FxCompile Include="SpriteVS.hlsl" />
     <FxCompile Include="SpritePS.hlsl" />
+    <FxCompile Include="Resources\shaders\FBXVS.hlsl" />
+    <FxCompile Include="Resources\shaders\FBXPS.hlsl" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Basic.hlsli" />
     <None Include="Sprite.hlsli" />
+    <None Include="Resources\shaders\FBX.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WinApp.h">
@@ -148,6 +154,9 @@
       <Filter>ヘッダー ファイル\Camera</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
+      <Filter>ヘッダー ファイル</Filter>
+    </ClInclude>
+    <ClInclude Include="Object3D.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
   </ItemGroup>

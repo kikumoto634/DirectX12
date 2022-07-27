@@ -1,5 +1,6 @@
 ﻿#include "GameBase.h"
 #include "FbxLoader.h"
+#include "Object3D.h"
 
 using namespace std;
 
@@ -75,6 +76,15 @@ void GameBase::Initialize()
 
 	//FBX初期化
 	FbxLoader::GetInstance()->Initialize(dxCommon->GetDevice());
+
+	//デバイスのセット
+	Object3D::SetDevice(dxCommon->GetDevice());
+
+	//カメラをセット
+	Object3D::SetCamera(camera.get());
+
+	//グラフィックスパイプラインの生成
+	Object3D::CreateGraphicsPipeline();
 
 	//デバックテキスト世のテクスチャ番号
 	const int debugTextTexNumber = 0;
