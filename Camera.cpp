@@ -17,6 +17,8 @@ void Camera::Initialize()
 
 void Camera::Update()
 {
+	matViewProjection = matView * matProjection;
+
 	UpdateViewMatrix();
 	UpdateProjectionMatrix();
 }

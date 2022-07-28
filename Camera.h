@@ -30,6 +30,8 @@ public:
 	//getter
 	const XMMATRIX& GetMatProjection()	{return matProjection;}
 	const XMMATRIX& GetMatView()	{return matView;}
+	const XMMATRIX& GetViewProjectionMatrix()	{return matViewProjection;}
+
 
 	const XMFLOAT3& GetEye() {return eye; }
 	const XMFLOAT3& GetTarget() {return target; }
@@ -51,5 +53,7 @@ protected:
 	XMFLOAT3 eye;			//視点座標
 	XMFLOAT3 target;		//注視点座標
 	XMFLOAT3 up;			//上方向ベクトル
+
+	XMMATRIX matViewProjection;
 };
 

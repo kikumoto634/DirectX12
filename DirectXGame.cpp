@@ -80,6 +80,17 @@ void DirectXGame::Update()
 			camera->CameraMovement({2.f,0,0});
 		}
 	}
+	else if(input->Push(DIK_W) || input->Push(DIK_S))
+	{
+		if(input->Push(DIK_S))
+		{
+			camera->CameraMovement({0, -2.f,0});
+		}
+		else if(input->Push(DIK_W))
+		{
+			camera->CameraMovement({0,2.f,0});
+		}
+	}
 
 	//スプライト
 	if(input->Push(DIK_1) || input->Push(DIK_2)){

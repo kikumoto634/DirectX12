@@ -184,7 +184,7 @@ void DirectXCommon::Initialize(WinApp* winApp)
 			CD3DX12_CPU_DESCRIPTOR_HANDLE//デスクリプタヒープのハンドルを取得
 			(//表か裏でアドレスがずれる
 				rtvHeap->GetCPUDescriptorHandleForHeapStart(),
-				i,
+				INT(i),
 				device->GetDescriptorHandleIncrementSize(rtvHeapDesc.Type)
 			)
 		);

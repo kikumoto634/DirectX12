@@ -69,11 +69,11 @@ Model* FbxLoader::LoadModeFromFile(const string &modelName)
     //ルートノードから順に解析してモデルに流し込む
     ParseNodeRecursive(model,fbxScene->GetRootNode());
     
-    //Fbxシーンの解放
-    fbxScene->Destroy();
-
     //バッファ生成
     model->CreateBuffers(device);
+
+    //Fbxシーンの解放
+    fbxScene->Destroy();
 
     return model;
 }
@@ -168,7 +168,7 @@ void FbxLoader::ParseMeshVertices(Model *model, FbxMesh *fbxMesh)
     const int controlPointCount = fbxMesh->GetControlPointsCount();
     //必要数だけ頂点データ配列を確保
     Model::VertexPosNormalUv vert{};
-    model->vertices.resize(controlPointCount,vert);
+    model->vertices.resize(controlPointCount, vert);
 
     //FBXメッシュの頂点座標配列を取得
     FbxVector4* pCoord = fbxMesh->GetControlPoints();
@@ -232,7 +232,7 @@ void FbxLoader::ParseMeshFaces(Model *model, FbxMesh *fbxMesh)
                 FbxVector2 uvs;
                 bool lUnmappedUV;
                 //0番決め打ちで読み込み
-                if(fbxMesh->GetPolygonVertexUV(i,j, uvNames[0],uvs, lUnmappedUV))
+                if(fbxMesh->GetPolygonVertexUV(i,j, uvNames[0], uvs, lUnmappedUV))
                 {
                     vertex.uv.x = (float)uvs[0];
                     vertex.uv.y = (float)uvs[1];
@@ -293,7 +293,6 @@ void FbxLoader::ParseMaterial(Model *model, FbxNode *fbxNode)
 
             //ディフューズテクスチャを取り出す
             const FbxProperty diffuseProperty = material->FindProperty(FbxSurfaceMaterial::sDiffuse);
-            material->FindProperty(FbxSurfaceMaterial::sDiffuse);
             if(diffuseProperty.IsValid())
             {
                 const FbxFileTexture* texture = diffuseProperty.GetSrcObject<FbxFileTexture>();
