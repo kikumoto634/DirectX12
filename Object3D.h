@@ -70,6 +70,18 @@ public:
 	/// <param name="model">ƒ‚ƒfƒ‹</param>
 	void SetModel(Model* model)	{this->model = model;}
 
+
+	//setter
+	void SetScale(XMFLOAT3 scale)	{this->scale = scale;}
+	void SetRotation(XMFLOAT3 rotation)	{this->rotation = rotation;}
+	void SetPosition(XMFLOAT3 position)	{this->position = position;}
+
+	//getter
+	XMFLOAT3 GetScale()	{return this->scale;}
+	XMFLOAT3 GetRotation()	{return this->rotation;}
+	XMFLOAT3 GetPosition()	{return this->position;}
+
+
 /// <summary>
 /// Ã“Iƒƒ“ƒo•Ï”
 /// </summary>
