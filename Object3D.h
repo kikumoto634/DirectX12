@@ -9,8 +9,17 @@
 #include <DirectXMath.h>
 #include <string>
 
+#include "FbxLoader.h"
+
 class Object3D
 {
+/// <summary>
+/// 定数
+/// </summary>
+public:
+	//ボーンの最大数
+	static const int MAX_BONES = 32;
+
 /// <summary>
 /// エイリアス
 /// </summary>
@@ -29,6 +38,12 @@ public:
 		XMMATRIX viewproj;	//ビュープロジェクション
 		XMMATRIX world;		//ワールド行列
 		XMFLOAT3 cameraPos;	//カメラ座標(ワールド座標)
+	};
+
+	//定数バッファ用データ構造体(スキニング)
+	struct ConstBufferDataSkin
+	{
+		XMMATRIX bones[MAX_BONES];
 	};
 
 /// <summary>
@@ -70,6 +85,11 @@ public:
 	/// <param name="model">モデル</param>
 	void SetModel(Model* model)	{this->model = model;}
 
+	/// <summary>
+	/// アニメーション開始
+	/// </summary>
+	void PlayAnimation();
+
 
 	//setter
 	void SetScale(XMFLOAT3 scale)	{this->scale = scale;}
@@ -101,6 +121,8 @@ private:
 
 	//定数バッファ
 	ComPtr<ID3D12Resource> constBuffTransform;
+	//定数バッファ(スキン)
+	ComPtr<ID3D12Resource> constBufferSkin;
 
 	//ローカルスケール
 	XMFLOAT3 scale = {1, 1, 1};
@@ -112,5 +134,16 @@ private:
 	XMMATRIX matWorld{};
 	//モデル
 	Model* model = nullptr;
+
+	//1frameの時間
+	FbxTime frameTime;
+	//アニメーション開始時間
+	FbxTime startTime;
+	//アニメーション終了時間
+	FbxTime endTime;
+	//現在時間(アニメーション)
+	FbxTime currentTime;
+	//アニメーション再生中
+	bool isPlay = false;
 };
 

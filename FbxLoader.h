@@ -33,6 +33,13 @@ public:
 	/// <returns>インスタンス</returns>
 	static FbxLoader* GetInstance();
 
+	/// <summary>
+	/// FBXの行列をXMAtrixに変換
+	/// </summary>
+	/// <param name="dst">書き込み先</param>
+	/// <param name="src">もととなるFBX行列</param>
+	static void ConvertMatrixFromFbx(DirectX::XMMATRIX* dst, const FbxAMatrix& src);
+
 private:
 	// privateなコンストラクタ（シングルトンパターン）
 	FbxLoader() = default;
@@ -81,6 +88,9 @@ public:
 
 	//テクスチャ読み込み
 	void LoadTexture(Model* model, const std::string& fullpath);
+
+	//スキニング情報の読み取り
+	void ParseSkin(Model* model,FbxMesh* fbxMesh);
 
 	//ディレクトリを含んだファイルパスからファイル名を抽出する
 	std::string ExtractFileName(const std::string& path);

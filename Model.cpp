@@ -1,11 +1,17 @@
 ﻿#include "Model.h"
 
+Model::~Model()
+{
+	//FBXシーンの解放
+	fbxScene->Destroy();
+}
+
 void Model::CreateBuffers(ID3D12Device *device)
 {
 	HRESULT result = S_FALSE;
 
 	//頂点データの全体サイズ
-	UINT sizeVB = static_cast<UINT>(sizeof(VertexPosNormalUv)*vertices.size());
+	UINT sizeVB = static_cast<UINT>(sizeof(VertexPosNormalUvSkin)*vertices.size());
 	//頂点バッファの生成
 	result = device->CreateCommittedResource
 	(
@@ -18,7 +24,7 @@ void Model::CreateBuffers(ID3D12Device *device)
 	);
 	assert(SUCCEEDED(result));
 	//頂点バッファへのデータ転送
-	VertexPosNormalUv* vertMap = nullptr;
+	VertexPosNormalUvSkin* vertMap = nullptr;
 	result = vertBuff->Map(0, nullptr, (void**)&vertMap);
 	if(SUCCEEDED(result))
 	{
@@ -120,14 +126,14 @@ void Model::CreateBuffers(ID3D12Device *device)
 
 void Model::Draw(ID3D12GraphicsCommandList *commandList)
 {
+	//デスクリプタヒープのセット
+	ID3D12DescriptorHeap* ppHeaps[] = {descHeapSRV.Get()};
+	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
+
 	//頂点バッファをセット
 	commandList->IASetVertexBuffers(0, 1, &vbView);
 	//インデックスバッファをセット
 	commandList->IASetIndexBuffer(&ibView);
-
-	//デスクリプタヒープのセット
-	ID3D12DescriptorHeap* ppHeaps[] = {descHeapSRV.Get()};
-	commandList->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);
 
 	//シェーダリソースビューをセット
 	commandList->SetGraphicsRootDescriptorTable(1, descHeapSRV->GetGPUDescriptorHandleForHeapStart());
