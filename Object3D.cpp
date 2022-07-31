@@ -196,7 +196,7 @@ void Object3D::Initialize()
 	(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferDataTransform) + 0xff) &~0xff),
+		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferDataSkin) + 0xff) &~0xff),
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(&constBufferSkin)
@@ -206,6 +206,16 @@ void Object3D::Initialize()
 	//frame文の時間を60FPSで設定
 	frameTime.SetTime(0, 0, 0, 1, 0, FbxTime::EMode::eFrames60);
 
+
+	//定数バッファへのデータ転送
+	ConstBufferDataSkin* constMapSkin = nullptr;
+	result = constBufferSkin->Map(0, nullptr, (void**)&constMapSkin);
+	assert(SUCCEEDED(result));
+	for(int i = 0; i < MAX_BONES; i++)
+	{
+		constMapSkin->bones[i] = XMMatrixIdentity();
+	}
+	constBufferSkin->Unmap(0, nullptr);
 }
 
 void Object3D::Update()
@@ -243,6 +253,19 @@ void Object3D::Update()
 	//ボーン配列
 	std::vector<Model::Bone>& bones = model->GetBones();
 
+
+	//アニメーション
+	if(isPlay)
+	{
+		//1frame進める
+		currentTime += frameTime;
+		//最後まで再生したら
+		if(currentTime > endTime)
+		{
+			currentTime = startTime;
+		}
+	}
+
 	//	定数バッファへデータ転送
 	ConstBufferDataSkin* constMapSkin = nullptr;
 	result = constBufferSkin->Map(0,nullptr, (void**)&constMapSkin);
@@ -256,21 +279,9 @@ void Object3D::Update()
 		//XMMATRIXに変換
 		FbxLoader::ConvertMatrixFromFbx(&matCurrentPose, fbxCurrentPose);
 		//合成してスキニング行列に
-		constMapSkin->bones[i] = bones[i].invInitialPose* matCurrentPose;
+		constMapSkin->bones[i] = bones[i].invInitialPose * matCurrentPose;
 	}
 	constBufferSkin->Unmap(0,nullptr);
-
-	//アニメーション
-	if(isPlay)
-	{
-		//1frame進める
-		currentTime += frameTime;
-		//最後まで再生したら
-		if(currentTime > endTime)
-		{
-			currentTime = startTime;
-		}
-	}
 }
 
 void Object3D::Draw(ID3D12GraphicsCommandList* commandList)

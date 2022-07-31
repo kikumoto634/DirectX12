@@ -3,7 +3,8 @@
 Model::~Model()
 {
 	//FBXシーンの解放
-	fbxScene->Destroy();
+	//fbxScene->Destroy();
+	//fbxScene = nullptr;
 }
 
 void Model::CreateBuffers(ID3D12Device *device)

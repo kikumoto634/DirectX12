@@ -1,6 +1,5 @@
 ﻿#pragma once
 #include "GameBase.h"
-#include "Object3D.h"
 
 
 class DirectXGame : public GameBase
@@ -25,7 +24,7 @@ private:
 	//オブジェクト
 	std::unique_ptr<GeometryObject3D> object[ObjectNum]{};
 
-	Model* model = nullptr;
-	Object3D* modelObject = nullptr;
+	std::unique_ptr<Model> model;
+	std::unique_ptr<Object3D> modelObject;
 };
 

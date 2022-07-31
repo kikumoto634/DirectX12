@@ -1,7 +1,5 @@
 ﻿#include "DirectXGame.h"
 
-#include "FbxLoader.h"
-
 
 using namespace std;
 
@@ -44,13 +42,13 @@ void DirectXGame::Initialize()
 	
 	//FBX モデル名を指定してファイル読み込み
 	//FbxLoader::GetInstance()->LoadModeFromFile("cube");
-	model = FbxLoader::GetInstance()->LoadModeFromFile("boneTest");
+	model = std::unique_ptr<Model>(FbxLoader::GetInstance()->LoadModeFromFile("cube"));
 
 	//3Dオブジェクト生成とモデルのセット
-	modelObject = new Object3D();
+	modelObject = make_unique<Object3D>();
 	modelObject->Initialize();
-	modelObject->SetModel(model);
-
+	modelObject->SetModel(model.get());
+	modelObject->PlayAnimation();
 
 
 #pragma endregion
@@ -127,7 +125,7 @@ void DirectXGame::Update()
 		object[2]->SetPosition(pos);
 	}
 
-	//カメラこうしん
+	//カメラ更新
 	camera->Update();
 
 	//更新
@@ -136,9 +134,7 @@ void DirectXGame::Update()
 		object[i]->Update();
 	}
 
-
-	modelObject->Update();
-	modelObject->PlayAnimation();
+	//modelObject->Update();
 
 	//サウンド
 	if(input->Push(DIK_SPACE))
@@ -166,7 +162,7 @@ void DirectXGame::Draw()
 		object[i]->Draw(dxCommon->GetCommandList());
 	}
 
-	modelObject->Draw(dxCommon->GetCommandList());
+	//modelObject->Draw(dxCommon->GetCommandList());
 
 	//スプライト
 	Sprite::SetPipelineState(dxCommon->GetCommandList());
@@ -186,6 +182,6 @@ void DirectXGame::Finalize()
 	//基底クラスの解放
 	GameBase::Finalize();
 
-	delete modelObject;
-	delete model;
+	//delete modelObject;
+	//delete model;
 }

@@ -70,7 +70,7 @@ Model* FbxLoader::LoadModeFromFile(const string &modelName)
     fbxImporter->Import(fbxScene);
 
     //モデル生成
-    Model*model = new Model();
+    Model* model = new Model();
     model->name = modelName;
 
     //FBXノードの数を取得
@@ -84,7 +84,6 @@ Model* FbxLoader::LoadModeFromFile(const string &modelName)
     //バッファ生成
     model->CreateBuffers(device);
 
-    //Fbxシーンの解放
     model->fbxScene = fbxScene;
 
     return model;
@@ -172,7 +171,7 @@ void FbxLoader::ParseMesh(Model *model, FbxNode *fbxNode)
     ParseMaterial(model, fbxNode);
 
     //スキニング情報の読み取り
-    ParseSkin(model,fbxMesh);
+    ParseSkin(model, fbxMesh);
 }
 
 void FbxLoader::ParseMeshVertices(Model *model, FbxMesh *fbxMesh)
@@ -353,6 +352,14 @@ void FbxLoader::ParseSkin(Model *model, FbxMesh *fbxMesh)
     //スキニング情報がなければ終了
     if(fbxSkin == nullptr)
     {
+        //各頂点についての処理
+        for(int i = 0; i < model->vertices.size(); i++)
+        {
+            //最初のボーン(単位行列)の影響を100%にする
+            model->vertices[i].boneIndex[0] = 0;
+            model->vertices[i].boneWeight[0] = 1.f;
+        }
+
         return ;
     }
 
@@ -447,11 +454,11 @@ void FbxLoader::ParseSkin(Model *model, FbxMesh *fbxMesh)
             vertices[i].boneIndex[weightArrayIndex] = weightSet.index;
             vertices[i].boneWeight[weightArrayIndex] = weightSet.weight;
             //4つに達したら終了
-            if(++weightArrayIndex>= Model::MAX_BONE_INDICES)
+            if(++weightArrayIndex >= Model::MAX_BONE_INDICES)
             {
                 float weight = 0.0f;
                 //２番目以降のウェイトを合計
-                for(int j = 0; j < Model::MAX_BONE_INDICES; j++)
+                for(int j = 1; j < Model::MAX_BONE_INDICES; j++)
                 {
                     weight += vertices[i].boneWeight[j];
                 }

@@ -21,6 +21,9 @@
 //サウンド
 #include "SoundManager.h"
 
+#include "Object3D.h"
+
+#include "FbxLoader.h"
 
 /// <summary>
 /// ゲーム共通基盤　(フレームワーク)
