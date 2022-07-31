@@ -134,7 +134,7 @@ void DirectXGame::Update()
 		object[i]->Update();
 	}
 
-	//modelObject->Update();
+	modelObject->Update();
 
 	//サウンド
 	if(input->Push(DIK_SPACE))
@@ -162,7 +162,7 @@ void DirectXGame::Draw()
 		object[i]->Draw(dxCommon->GetCommandList());
 	}
 
-	//modelObject->Draw(dxCommon->GetCommandList());
+	modelObject->Draw(dxCommon->GetCommandList());
 
 	//スプライト
 	Sprite::SetPipelineState(dxCommon->GetCommandList());
