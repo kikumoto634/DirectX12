@@ -42,7 +42,7 @@ void DirectXGame::Initialize()
 	
 	//FBX モデル名を指定してファイル読み込み
 	//FbxLoader::GetInstance()->LoadModeFromFile("cube");
-	model = std::unique_ptr<Model>(FbxLoader::GetInstance()->LoadModeFromFile("dolly"));
+	model = std::unique_ptr<Model>(FbxLoader::GetInstance()->LoadModeFromFile("boneTest"));
 
 	//3Dオブジェクト生成とモデルのセット
 	modelObject = make_unique<Object3D>();
