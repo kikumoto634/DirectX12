@@ -33,7 +33,7 @@ void FbxLoader::ConvertMatrixFromFbx(DirectX::XMMATRIX *dst, const FbxAMatrix &s
 void FbxLoader::Initialize(ID3D12Device *device)
 {
     //再初期化チェック
-    assert(fbxManager == nullptr);
+    assert(!fbxManager);
 
     this->device = device;
 
@@ -61,10 +61,10 @@ Model* FbxLoader::LoadModeFromFile(const string &modelName)
 
     //ファイル名を指定してFBXファイルを読み込む
     auto result = fbxImporter->Initialize(fullpath.c_str(), -1, fbxManager->GetIOSettings());
-    assert(SUCCEEDED(result));
+    assert(result);
 
     //シーン生成
-    FbxScene* fbxScene = FbxScene::Create(fbxManager,"fbxScene");
+    FbxScene* fbxScene = FbxScene::Create(fbxManager, "fbxScene");
 
     //ファイルからロードしたFBXの情報をシーンにインポート
     fbxImporter->Import(fbxScene);
@@ -81,10 +81,10 @@ Model* FbxLoader::LoadModeFromFile(const string &modelName)
     //ルートノードから順に解析してモデルに流し込む
     ParseNodeRecursive(model,fbxScene->GetRootNode());
     
+    model->fbxScene = fbxScene;
+
     //バッファ生成
     model->CreateBuffers(device);
-
-    model->fbxScene = fbxScene;
 
     return model;
 }
@@ -249,7 +249,7 @@ void FbxLoader::ParseMeshFaces(Model *model, FbxMesh *fbxMesh)
                 if(fbxMesh->GetPolygonVertexUV(i,j, uvNames[0], uvs, lUnmappedUV))
                 {
                     vertex.uv.x = (float)uvs[0];
-                    vertex.uv.y = (float)uvs[1];
+                    vertex.uv.y = 1 - (float)uvs[1];
                 }
             }
 
@@ -364,7 +364,7 @@ void FbxLoader::ParseSkin(Model *model, FbxMesh *fbxMesh)
     }
 
     //ボーン配列の参照
-    std::vector<Model::Bone>& bones = model->bones;
+    std::vector<Bone>& bones = model->bones;
 
     //ボーン数
     int clusterCount = fbxSkin->GetClusterCount();
@@ -380,8 +380,8 @@ void FbxLoader::ParseSkin(Model *model, FbxMesh *fbxMesh)
         const char* boneName = fbxCluster->GetLink()->GetName();
 
         //新しいボーン追加し、追加したボーンの参照を得る
-        bones.emplace_back(Model::Bone(boneName));
-        Model::Bone& bone = bones.back();
+        bones.emplace_back(Bone(boneName));
+        Bone& bone = bones.back();
         //自作ボーンとFBXのボーンを紐づける
         bone.fbxCluster = fbxCluster;
         
@@ -440,13 +440,14 @@ void FbxLoader::ParseSkin(Model *model, FbxMesh *fbxMesh)
     {
         //頂点のウェイトから最も大きい4つを選択
         auto& weightList = weightLists[i];
-        //大証比較用のラムダ式を指定して降順にソート
+        //大小比較用のラムダ式を指定して降順にソート
         weightList.sort([](auto const& lhs, auto const& rhs){
-            //左の要素のほうが大きければtrue,それでなければflafseを返す
-            return lhs.weight > rhs.weight;
+                //左の要素のほうが大きければtrue,それでなければflafseを返す
+                return lhs.weight > rhs.weight;
             });
 
         int weightArrayIndex = 0;
+
         //降順ソート済みのウェイトリストから
         for(auto& weightSet : weightList)
         {

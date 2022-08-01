@@ -30,7 +30,21 @@ struct Node
 };
 
 
-
+//ボーン構造体
+struct Bone
+{
+	//名前
+	std::string name;
+	//初期姿勢の逆行列
+	DirectX::XMMATRIX invInitialPose;
+	//クラスター(FBX側のボーン情報)
+	FbxCluster* fbxCluster;
+	//コンストラクタ
+	Bone(const std::string& name)
+	{
+		this->name = name;
+	}
+};
 
 /// <summary>
 /// FBXモデル
@@ -70,22 +84,6 @@ public:
 		DirectX::XMFLOAT3 uv;
 		UINT boneIndex[MAX_BONE_INDICES];	//ボーン番号
 		float boneWeight[MAX_BONE_INDICES];	//ボーン重み
-	};
-
-	//ボーン構造体
-	struct Bone
-	{
-		//名前
-		std::string name;
-		//初期姿勢の逆行列
-		DirectX::XMMATRIX invInitialPose;
-		//クラスター(FBX側のボーン情報)
-		FbxCluster* fbxCluster;
-		//コンストラクタ
-		Bone(const std::string& name)
-		{
-			this->name = name;
-		}
 	};
 
 public:

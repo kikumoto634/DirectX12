@@ -251,7 +251,7 @@ void Object3D::Update()
 	}
 
 	//ボーン配列
-	std::vector<Model::Bone>& bones = model->GetBones();
+	std::vector<Bone>& bones = model->GetBones();
 
 
 	//アニメーション

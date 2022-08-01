@@ -64,6 +64,12 @@ public:
 	Model* LoadModeFromFile(const string& modelName);
 
 	/// <summary>
+	/// 解放
+	/// </summary>
+	void Finalize();
+
+private:
+	/// <summary>
 	/// 再帰的にノード構成を解析
 	/// </summary>
 	/// <param name="model">読込先モデルオブジェクト</param>
@@ -94,11 +100,6 @@ public:
 
 	//ディレクトリを含んだファイルパスからファイル名を抽出する
 	std::string ExtractFileName(const std::string& path);
-
-	/// <summary>
-	/// 解放
-	/// </summary>
-	void Finalize();
 
 private:
 	//デバイス
