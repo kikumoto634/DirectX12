@@ -55,11 +55,6 @@ public:
 	/// </summary>
 	virtual void Draw() = 0;
 
-	/// <summary>
-	/// 解放
-	/// </summary>
-	virtual void Finalize();
-
 protected:
 	//終了フラグ
 	bool endFlag = false;
@@ -68,24 +63,24 @@ protected:
 	std::unique_ptr<WinApp> winApp;
 
 	//DirectXオブジェクト
-	std::unique_ptr<DirectXCommon> dxCommon;
+	DirectXCommon* dxCommon = nullptr;
 
 	//入力
-	std::unique_ptr<Input> input;
+	//std::unique_ptr<Input> input;
 
 	//テクスチャマネージャー
-	std::unique_ptr<TextureManager> textureManager;
+	//std::unique_ptr<TextureManager> textureManager;
 
 	//モデル
-	std::unique_ptr<GeometryManager> geometryModel;
+	//std::unique_ptr<GeometryManager> geometryModel;
 
 	//カメラ
-	std::unique_ptr<Camera> camera;
+	//std::unique_ptr<Camera> camera;
 
 	//デバック
-	std::unique_ptr<DebugText> debugText;
+	//std::unique_ptr<DebugText> debugText;
 
 	//サウンドマネージャー
-	std::unique_ptr<SoundManager> soundManager;
+	//std::unique_ptr<SoundManager> soundManager;
 };
 
