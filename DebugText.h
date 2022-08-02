@@ -14,6 +14,7 @@ public:
 	static const int fontWidth = 9;			//フォント画像内1文字内の横幅
 	static const int fontHeight = 18;		//フォント画像内1文字内の縦幅
 	static const int fontLineCount = 14;	//フォント画像内1行分の文字数
+	static const int kBufferSize = 256;		//書式つき文字列展開用バッファサイズ
 
 	~DebugText();
 
