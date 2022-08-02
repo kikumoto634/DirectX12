@@ -1,13 +1,9 @@
 ﻿#pragma once
 
-#include "DirectXCommon.h"
-
-#include <d3d12.h>
 #include <d3dx12.h>
 #include <wrl.h>
-#include "DirectXTex.h"
-
-using namespace DirectX;
+#include <string>
+#include <array>
 
 //テクスチャマネージャー
 class TextureManager
@@ -17,55 +13,45 @@ public://エイリアス
 
 public:	//定数
 	//テクスチャの最大枚数
-	static const int maxTextureCount = 512;
+	static const size_t kNumDescriptors = 256;
+
+public://サブクラス
+	struct Texture
+	{
+		//テクスチャリソース
+		ComPtr<ID3D12Resource> resource;
+		//シェーダーリソースビューのハンドル(CPU)
+		CD3DX12_CPU_DESCRIPTOR_HANDLE cpuDescHandleSRV;
+		//シェーダーリソースビューのハンドル(GPU)
+		CD3DX12_GPU_DESCRIPTOR_HANDLE gpuDeschandleSRV;
+		//名前
+		std::string name;
+	};
 
 public:	//メンバ関数
-	/// <summary>
-	/// 初期化
-	/// </summary>
-	/// <param name="dxCommon">DirectXCommon->device.Get()</param>
-	void Initialize(DirectXCommon* dxCommon);
 
-	/// <summary>
-	/// テクスチャ読み込み
-	/// </summary>
-	/// <param name="texnumber">テクスチャ番号</param>
-	/// <param name="filename">テクスチャファイル名</param>
-	void LoadTexture(UINT texnumber, const wchar_t* filename);
+	static uint32_t Load(const std::string& fileName);
 
-	/// <summary>
-	/// テクスチャバッファ取得
-	/// </summary>
-	/// <param name="texnumber">テクスチャ番号</param>
-	/// <returns></returns>
-	ID3D12Resource* GetSpriteTexBuffer(UINT texnumber);
+	static TextureManager* GetInstance();
 
-	/// <summary>
-	/// デスクリプタヒープをセット
-	/// </summary>
-	/// <param name="commandList">グラフィックスコマンド</param>
-	void SetDescriptorHeaps (ID3D12GraphicsCommandList* commandList);
+	void Initialize(ID3D12Device* device, std::string directoryPath = "Resources/");
 
-	/// <summary>
-	/// SRVをセット
-	/// </summary>
-	/// <param name="commandList">グラフィックスコマンド</param>
-	/// <param name="RootParameterIndex">ルートパラメータ番号</param>
-	/// <param name="texnumber">テクスチャ番号</param>
-	void SetShaderResourceView(ID3D12GraphicsCommandList* commandList, UINT RootParameterIndex, UINT texnumber);
+	void ResetAll();
 
-	/// <summary>
-	/// デスクリプタヒープ取得
-	/// </summary>
-	/// <returns></returns>
-	ID3D12DescriptorHeap* GetDescHeap() {return descHeap.Get(); }
+	const D3D12_RESOURCE_DESC GetResourceDesc(uint32_t texturehandle);
 
-private:	//メンバ変数
-	//テクスチャ用デスクリプタヒープの生成
-	ComPtr<ID3D12DescriptorHeap> descHeap;
-	//テクスチャリソース(テクスチャバッファ)の配列
-	ComPtr<ID3D12Resource> textureBuffer[maxTextureCount];
+	void SetGraphicsRootDescriptorTable(ID3D12GraphicsCommandList*commandList, UINT rootParamIndex,uint32_t textureHandle);
 
-	DirectXCommon* dxCommon = nullptr;
+private://メンバ変数
+
+	ID3D12Device* device;
+	UINT descriptorHandleIncrementSize = 0u;
+	std::string directoryPath;
+	ComPtr<ID3D12DescriptorHeap> desciptorHeap;
+	uint32_t indexNextDescriptorHeap = 0u;
+	std::array<Texture, kNumDescriptors> textures;
+
+	uint32_t LoadInternal(const std::string& fileName);
 };
+
 
