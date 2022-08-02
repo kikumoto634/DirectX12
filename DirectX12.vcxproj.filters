@@ -49,6 +49,15 @@
     <Filter Include="ソース ファイル\3D">
       <UniqueIdentifier>{c82fa9c5-5308-4c1a-ba47-ec17c6ad0e28}</UniqueIdentifier>
     </Filter>
+    <Filter Include="FBXShader">
+      <UniqueIdentifier>{356be1b2-a0c0-4159-96fc-0ff0a4887d8a}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="3dShader">
+      <UniqueIdentifier>{03d17544-5827-46ed-9f40-da61bb3d4ebb}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="2dShader">
+      <UniqueIdentifier>{d5fde6c4-96cd-481d-9f5d-6b27c8685db2}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -101,17 +110,35 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <FxCompile Include="BasicVS.hlsl" />
-    <FxCompile Include="BasicPS.hlsl" />
-    <FxCompile Include="SpriteVS.hlsl" />
-    <FxCompile Include="SpritePS.hlsl" />
-    <FxCompile Include="Resources\shaders\FBXVS.hlsl" />
-    <FxCompile Include="Resources\shaders\FBXPS.hlsl" />
+    <FxCompile Include="Resources\shaders\FBXPS.hlsl">
+      <Filter>FBXShader</Filter>
+    </FxCompile>
+    <FxCompile Include="Resources\shaders\FBXVS.hlsl">
+      <Filter>FBXShader</Filter>
+    </FxCompile>
+    <FxCompile Include="BasicVS.hlsl">
+      <Filter>3dShader</Filter>
+    </FxCompile>
+    <FxCompile Include="BasicPS.hlsl">
+      <Filter>3dShader</Filter>
+    </FxCompile>
+    <FxCompile Include="SpritePS.hlsl">
+      <Filter>2dShader</Filter>
+    </FxCompile>
+    <FxCompile Include="SpriteVS.hlsl">
+      <Filter>2dShader</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Basic.hlsli" />
-    <None Include="Sprite.hlsli" />
-    <None Include="Resources\shaders\FBX.hlsli" />
+    <None Include="Resources\shaders\FBX.hlsli">
+      <Filter>FBXShader</Filter>
+    </None>
+    <None Include="Basic.hlsli">
+      <Filter>3dShader</Filter>
+    </None>
+    <None Include="Sprite.hlsli">
+      <Filter>2dShader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="WinApp.h">
