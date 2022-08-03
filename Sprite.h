@@ -73,19 +73,21 @@ private: //静的メンバ関数
 	//頂点数
 	static const int verticesNum = 4;
 	//デバイス
-	static ID3D12Device* device;
+	static ID3D12Device* sDevice;
 	//デストラクタサイズ
-	static UINT descriptorHandleSize;
+	static UINT sDescriptorHandleSize;
 	//グラフィックスコマンドリスト
-	static ID3D12GraphicsCommandList* commandList;
+	static ID3D12GraphicsCommandList* sCommandList;
 	//ルートシグネチャ
-	static ComPtr<ID3D12Resource> rootSignature;
+	static ComPtr<ID3D12RootSignature> sRootSignature;
 	//パイプライン
-	static ComPtr<ID3D12PipelineState> pipelineState;
+	static ComPtr<ID3D12PipelineState> sPipelineState;
 	//射影行列
-	static XMMATRIX matProjection;
+	static XMMATRIX sMatProjection;
 
 public:	//メンバ関数
+
+	Sprite() = default;
 
 	/// <summary>
 	/// コンストラクタ
@@ -109,7 +111,7 @@ public:	//メンバ関数
 	/// 角度の設定
 	/// </summary>
 	/// <param name="rotation">角度</param>
-	void SetRotation(float rotation);
+	void SetRotation(const float rotation);
 
 	float GetRotation() { return rotation; }
 
@@ -141,7 +143,7 @@ public:	//メンバ関数
 	/// 左右反転の設定
 	/// </summary>
 	/// <param name="isFlipX">左右反転</param>
-	void SetIsFlipX(bool isFlipX);
+	void SetIsFlipX(const bool isFlipX);
 
 	bool GetIsFlipX() { return isFlipX; }
 
@@ -149,7 +151,7 @@ public:	//メンバ関数
 	/// 上下反転の設定
 	/// </summary>
 	/// <param name="isFlipX">上下反転</param>
-	void SetIsFlipY(bool isFlipY);
+	void SetIsFlipY(const bool isFlipY);
 
 	bool GetIsFlipY() { return isFlipY; }
 

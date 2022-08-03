@@ -176,7 +176,7 @@ void GeometryManager::Initialize(DirectXCommon* dxCommon, TextureManager* textur
 void GeometryManager::Draw(ID3D12GraphicsCommandList* commandList, UINT texNumber)
 {
 	//デスクリプタヒープの配列
-	textureManager->SetDescriptorHeaps(commandList);
+	//textureManager->SetDescriptorHeaps(commandList);
 
 	//頂点バッファの設定
 	commandList->IASetVertexBuffers(0, 1, &vbView);
@@ -184,7 +184,7 @@ void GeometryManager::Draw(ID3D12GraphicsCommandList* commandList, UINT texNumbe
 	commandList->IASetIndexBuffer(&ibView);
 
 	//シェーダリソースビューをセット
-	textureManager->SetShaderResourceView(commandList, 1, texNumber);
+	//textureManager->SetShaderResourceView(commandList, 1, texNumber);
 
 	//描画コマンド
 	commandList->DrawIndexedInstanced(_countof(indices),1, 0, 0, 0);

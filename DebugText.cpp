@@ -15,9 +15,9 @@ void DebugText::Initialize(UINT texnumber)
 	for(int i = 0; i < _countof(sprites); i++)
 	{
 		//スプライト生成
-		sprites[i] = new Sprite();
+		//sprites[i] = new Sprite();
 		//スプライトを初期化する
-		sprites[i]->Initialize(texnumber);
+		//sprites[i]->Initialize(texnumber);
 	}
 }
 
@@ -46,9 +46,9 @@ void DebugText::Print(const std::string& text, float x, float y, float scale = 1
 		int fontIndexX = fontIndex % fontLineCount;
 
 		//座標計算
-		sprites[spriteIndex]->SetPosition({x + fontWidth * scale * i, y});
+		/*sprites[spriteIndex]->SetPosition({x + fontWidth * scale * i, y});
 		sprites[spriteIndex]->SetTextureRect((float)fontIndexX * fontWidth, (float)fontIndexY * fontHeight, (float)fontWidth, (float)fontHeight);
-		sprites[spriteIndex]->SetSize({fontWidth * scale, fontHeight * scale});
+		sprites[spriteIndex]->SetSize({fontWidth * scale, fontHeight * scale});*/
 
 		//文字を一つ進める
 		spriteIndex++;
@@ -61,7 +61,7 @@ void DebugText::DrawAll(ID3D12GraphicsCommandList* commandList)
 	for(int i = 0; i < spriteIndex; i++)
 	{
 		//スプライト描画
-		sprites[i]->Draw(commandList);
+		//sprites[i]->Draw(commandList);
 	}
 	spriteIndex = 0;
 }

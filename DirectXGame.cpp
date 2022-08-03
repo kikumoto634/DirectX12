@@ -1,4 +1,5 @@
 ﻿#include "DirectXGame.h"
+#include "Sprite.h"
 
 
 void DirectXGame::Initialize()
@@ -7,7 +8,8 @@ void DirectXGame::Initialize()
 
 #pragma region シーンの初期化
 
-
+	textureHandle = TextureManager::Load("Texture.jpg");
+	sprite = Sprite::Create(textureHandle, {100, 50});
 
 #pragma endregion
 
@@ -15,8 +17,6 @@ void DirectXGame::Initialize()
 
 void DirectXGame::Update()
 {
-	ID3D12GraphicsCommandList* commandList = dxCommon->GetCommandList();
-
 #pragma region シーン更新
 
 #pragma endregion
@@ -24,12 +24,17 @@ void DirectXGame::Update()
 
 void DirectXGame::Draw()
 {
+	ID3D12GraphicsCommandList* commandList = dxCommon->GetCommandList();
+
 #pragma region 背景スプライト描画
 	// 背景スプライト描画前処理
+	Sprite::PreDraw(commandList);
 
+	//BACK
+	sprite->Draw();
 
 	// スプライト描画後処理
-
+	Sprite::PostDraw();
 	// 深度バッファクリア
 	dxCommon->ClearDepthBuffer();
 #pragma endregion
@@ -43,19 +48,17 @@ void DirectXGame::Draw()
 #pragma endregion
 
 #pragma region 前景スプライト描画
-	// 前景スプライト描画前処理
+	// 背景スプライト描画前処理
+	Sprite::PreDraw(commandList);
 
+	//UI
 
-	// デバッグテキストの描画
-
-	
 	// スプライト描画後処理
-
-
+	Sprite::PostDraw();
 #pragma endregion
 }
 
 void DirectXGame::Finalize()
 {
-
+	delete sprite;
 }

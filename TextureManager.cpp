@@ -13,7 +13,7 @@ TextureManager *TextureManager::GetInstance()
 	return &instance;
 }
 
-void TextureManager::Initialize(ID3D12Device* device, std::string directoryPath = "Resources/")
+void TextureManager::Initialize(ID3D12Device* device, std::string directoryPath)
 {
 	assert(device);
 
@@ -42,7 +42,7 @@ void TextureManager::ResetAll()
 	indexDescriptorHeap = 0;
 
 	//全テクスチャ初期化
-	for(size_t i = 0; i , kNumDescriptors; i++)
+	for(size_t i = 0; i < kNumDescriptors; i++)
 	{
 		texture[i].resource.Reset();
 		texture[i].cpuDescHandleSRV.ptr = 0;

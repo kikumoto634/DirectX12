@@ -1,5 +1,6 @@
 ﻿#include "GameBase.h"
 #include "TextureManager.h"
+#include "Sprite.h"
 
 void GameBase::Run()
 {
@@ -47,6 +48,8 @@ void GameBase::Initialize()
 	TextureManager::GetInstance()->Initialize(dxCommon->GetDevice());
 	TextureManager::Load("white1x1.png");
 
+	Sprite::StaticInitialize(dxCommon->GetDevice(), WinApp::kWindowWidth, WinApp::kWindowHeight);
+
 #pragma endregion
 
 	//ゲームシーン初期化
@@ -70,6 +73,8 @@ void GameBase::Draw()
 
 void GameBase::Finalize()
 {
+	gameScene->Finalize();
+
 	delete gameScene;
 	gameScene = nullptr;
 
