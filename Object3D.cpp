@@ -235,7 +235,7 @@ void Object3D::Update()
 	matWorld *= matTrans;
 
 	const XMMATRIX& matViewProjection = camera->GetViewProjectionMatrix();
-	//const XMMATRIX& modelTransform = model->GetModelTransform();
+	const XMMATRIX& modelTransform = model->GetModelTransform();
 	const XMFLOAT3& cameraPos = camera->GetEye();
 	
 	HRESULT result;
@@ -245,13 +245,13 @@ void Object3D::Update()
 	if(SUCCEEDED(result))
 	{
 		constMap->viewproj = matViewProjection;
-		//constMap->world = modelTransform * matWorld;
+		constMap->world = modelTransform * matWorld;
 		constMap->cameraPos = cameraPos;
 		constBuffTransform->Unmap(0,nullptr);
 	}
 
 	//ボーン配列
-	//std::vector<Bone>& bones = model->GetBones();
+	std::vector<Bone>& bones = model->GetBones();
 
 
 	//アニメーション
@@ -270,17 +270,17 @@ void Object3D::Update()
 	ConstBufferDataSkin* constMapSkin = nullptr;
 	result = constBufferSkin->Map(0,nullptr, (void**)&constMapSkin);
 	assert(SUCCEEDED(result));
-	//for(int i = 0; i < bones.size(); i++)
-	//{
-	//	//今の姿勢行列
-	//	XMMATRIX matCurrentPose;
-	//	//今の姿勢行列を取得
-	//	FbxAMatrix fbxCurrentPose = bones[i].fbxCluster->GetLink()->EvaluateGlobalTransform(currentTime);
-	//	//XMMATRIXに変換
-	//	FbxLoader::ConvertMatrixFromFbx(&matCurrentPose, fbxCurrentPose);
-	//	//合成してスキニング行列に
-	//	constMapSkin->bones[i] = bones[i].invInitialPose * matCurrentPose;
-	//}
+	for(int i = 0; i < bones.size(); i++)
+	{
+		//今の姿勢行列
+		XMMATRIX matCurrentPose;
+		//今の姿勢行列を取得
+		FbxAMatrix fbxCurrentPose = bones[i].fbxCluster->GetLink()->EvaluateGlobalTransform(currentTime);
+		//XMMATRIXに変換
+		FbxLoader::ConvertMatrixFromFbx(&matCurrentPose, fbxCurrentPose);
+		//合成してスキニング行列に
+		constMapSkin->bones[i] = bones[i].invInitialPose * matCurrentPose;
+	}
 	constBufferSkin->Unmap(0,nullptr);
 }
 
@@ -302,25 +302,25 @@ void Object3D::Draw(ID3D12GraphicsCommandList* commandList)
 	commandList->SetGraphicsRootConstantBufferView(2, constBufferSkin->GetGPUVirtualAddress());
 
 	//モデル描画
-	//model->Draw(commandList);
+	model->Draw(commandList);
 }
 
 void Object3D::PlayAnimation()
 {
-	//FbxScene* fbxScene = model->GetFbxScene();
+	FbxScene* fbxScene = model->GetFbxScene();
 	//0番にアニメーション取得
-	//FbxAnimStack* animstack = fbxScene->GetSrcObject<FbxAnimStack>(0);
+	FbxAnimStack* animstack = fbxScene->GetSrcObject<FbxAnimStack>(0);
 	//アニメーションの名前取得
-	//const char* animstackname = animstack->GetName();
+	const char* animstackname = animstack->GetName();
 	//アニメーションの時間情報
-	//FbxTakeInfo* takeinfo = fbxScene->GetTakeInfo(animstackname);
+	FbxTakeInfo* takeinfo = fbxScene->GetTakeInfo(animstackname);
 
 	//開始時間取得
-	//startTime = takeinfo->mLocalTimeSpan.GetStart();
+	startTime = takeinfo->mLocalTimeSpan.GetStart();
 	//終了時間
-	//endTime = takeinfo->mLocalTimeSpan.GetStop();
+	endTime = takeinfo->mLocalTimeSpan.GetStop();
 	//開始時間に合わせる
-	//currentTime = startTime;
+	currentTime = startTime;
 	//再生中状態にする
 	isPlay = true;
 }

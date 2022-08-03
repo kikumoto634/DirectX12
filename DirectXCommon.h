@@ -79,11 +79,11 @@ private://メンバ変数
 	//バックバッファ
 	std::vector<ComPtr<ID3D12Resource>> backBuffers;
 	//深度バッファ
-	ComPtr<ID3D12Resource> depthBuff;
+	ComPtr<ID3D12Resource> depthBuff = nullptr;
 	//深度ステンシルビュー
-	ComPtr<ID3D12DescriptorHeap> dsvHeap;
+	ComPtr<ID3D12DescriptorHeap> dsvHeap = nullptr;
 	//レンダーターゲットビュー
-	ComPtr<ID3D12DescriptorHeap> rtvHeap;
+	ComPtr<ID3D12DescriptorHeap> rtvHeap = nullptr;
 	//フェンス
 	ComPtr<ID3D12Fence> fence;
 	UINT64 fenceVal = 0;
@@ -92,11 +92,6 @@ private://メンバ変数
 
 
 private://メンバ関数
-
-	DirectXCommon() = default;
-	~DirectXCommon() = default;
-	DirectXCommon(const DirectXCommon&) = delete;
-	const DirectXCommon& operator=(const DirectXCommon&) = delete;
 
 	/// <summary>
 	/// DXGIデバイス初期化

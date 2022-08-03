@@ -18,7 +18,7 @@ TextureManager *TextureManager::GetInstance()
 
 void TextureManager::Initialize(ID3D12Device *device, std::string directoryPath)
 {
-	assert(device);
+	assert(SUCCEEDED(device));
 
 	this->device = device;
 	this->directoryPath = directoryPath;
