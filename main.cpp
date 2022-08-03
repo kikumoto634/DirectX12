@@ -1,9 +1,10 @@
-﻿#include "DirectXGame.h"
+﻿#include "GameBase.h"
+#include "WinApp.h"
 
 /// Windowsアプリでのエントリーポイント(main関数)
 int WINAPI WinMain(HINSTANCE, HINSTANCE,LPSTR,int)
 {
-	auto game = new DirectXGame();
+	auto game = new GameBase();
 	//ゲーム実行
 	game->Run();
 	//解放

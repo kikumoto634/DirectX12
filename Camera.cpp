@@ -32,11 +32,11 @@ void Camera::UpdateViewMatrix()
 void Camera::UpdateProjectionMatrix()
 {
 	//透視投影
-	matProjection = XMMatrixPerspectiveFovLH(
-		XMConvertToRadians(45.0f),	//上下画角45°
-		(float)WinApp::window_width / WinApp::window_height,			//aspect比(画面横幅/画面縦幅)
-		0.1f, 1000.0f				//前端、奥端
-	);
+	//matProjection = XMMatrixPerspectiveFovLH(
+	//	XMConvertToRadians(45.0f),	//上下画角45°
+	//	(float)WinApp::window_width / WinApp::window_height,			//aspect比(画面横幅/画面縦幅)
+	//	0.1f, 1000.0f				//前端、奥端
+	//);
 }
 
 void Camera::CameraMovement(XMFLOAT3 pos)

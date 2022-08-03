@@ -1,30 +1,18 @@
 ﻿#pragma once
-#include "GameBase.h"
+#include "DirectXCommon.h"
 
-
-class DirectXGame : public GameBase
+class DirectXGame
 {
 public:
-	static const int TextureNum = 2;
-	static const int ObjectNum = 5;
+	void Initialize();
 
-public:
-	void Initialize() override;
+	void Update();
 
-	void Update() override;
+	void Draw();
 
-	void Draw() override;
-
-	void Finalize() override;
+	void Finalize();
 
 private:
-	//スプライト
-	std::unique_ptr<Sprite> sprite[TextureNum]{};
-
-	//オブジェクト
-	std::unique_ptr<GeometryObject3D> object[ObjectNum]{};
-
-	std::unique_ptr<Model> model;
-	std::unique_ptr<Object3D> modelObject;
+	DirectXCommon* dxCommon= nullptr;
 };
 

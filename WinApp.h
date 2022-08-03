@@ -1,52 +1,108 @@
 ﻿#pragma once
-
 #include <Windows.h>
+#include <cstdint>
 
 /// <summary>
-/// WindowsAPI
+/// ウィンドウズアプリケーション
 /// </summary>
-class WinApp
-{
-public://staticメンバ変数
-	//ウィンドウサイズ
-	/* staticはcpp側に置かないといけないが、static const intはこちらでよい*/
-	static const int window_width = 1280;	//横幅
-	static const int window_height = 720;	//縦幅
+class WinApp {
+  public: // 静的メンバ変数
+	// ウィンドウサイズ
+	static const int kWindowWidth = 1280; // 横幅
+	static const int kWindowHeight = 720; // 縦幅
+	// ウィンドウクラス名
+	static const wchar_t kWindowClassName[];
 
-public://staticメンバ関数
-	/// ウィンドウプロシージャ	(グローバル関数を要求されたらstaticメンバ関数を渡せる)
+	enum class SizeChangeMode {
+		kNone,        //!< サイズ変更不可
+		kNormal,      //!< 自由変更
+		kFixedAspect, //!< アスペクト比一定
+	};
+
+  public: // 静的メンバ関数
+	/// <summary>
+	/// シングルトンインスタンスの取得
+	/// </summary>
+	/// <returns>シングルトンインスタンス</returns>
+	static WinApp* GetInstance();
+
+	/// <summary>
+	/// ウィンドウプロシージャ
+	/// </summary>
+	/// <param name="hwnd">ウィンドウハンドル</param>
+	/// <param name="msg">メッセージ番号</param>
+	/// <param name="wparam">メッセージ情報1</param>
+	/// <param name="lparam">メッセージ情報2</param>
+	/// <returns>成否</returns>
 	static LRESULT WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
-public://メンバ関数
-	
-	///<summary>
-	/// デストラクタ
-	///</summary>
-	~WinApp();
+  public: // メンバ関数
+	/// <summary>
+	/// ゲームウィンドウの作成
+	/// <param name="title">ウィンドウタイトル</param>
+	/// <param name="windowStyle">ウィンドウの初期スタイル</param>
+	/// <param name="clientWidth">ウィンドウのクライアント領域の初期幅</param>
+	/// <param name="clientHeight">ウィンドウのクライアント領域の初期高さ</param>
+	/// </summary>
+	void CreateGameWindow(
+	  const char* title = "DirectXGame", UINT windowStyle = WS_OVERLAPPEDWINDOW,
+	  int32_t clientWidth = kWindowWidth, int32_t clientHeight = kWindowHeight);
 
 	/// <summary>
-	/// 初期化
+	/// ゲームウィンドウの破棄
 	/// </summary>
-	void Initialize();
+	void TerminateGameWindow();
 
 	/// <summary>
-	/// 毎フレーム処理
+	/// メッセージの処理
 	/// </summary>
-	bool Update();
-
+	/// <returns>終了かどうか</returns>
+	bool ProcessMessage();
 
 	/// <summary>
-	/// アクセッサ
+	/// ウィンドウハンドルの取得
 	/// </summary>
-	const HWND& GetHwnd() {return hwnd;}
-	const WNDCLASSEX& GetWndClass() {return w;}
-	/*WNDCLASSEXはでかい構造体のため、const 参照で取得*/
+	/// <returns></returns>
+	HWND GetHwnd() const { return hwnd_; }
 
-private://メンバ変数
+	HINSTANCE GetHInstance() const { return wndClass_.hInstance; }
 
-	HWND hwnd = nullptr;	//ウィンドウハンドル
-	WNDCLASSEX w{};			//ウィンドウクラス
+	/// <summary>
+	/// フルスクリーン設定
+	/// </summary>
+	/// <param name="fullscreen">フルスクリーンにするかどうか</param>
+	void SetFullscreen(bool fullscreen);
 
-	MSG msg{};	//メッセージ
+	/// <summary>
+	/// フルスクリーンかどうか
+	/// </summary>
+	/// <returns></returns>
+	bool IsFullscreen() const;
+
+	/// <summary>
+	/// サイズ変更モードの設定
+	/// </summary>
+	/// <returns></returns>
+	void SetSizeChangeMode(SizeChangeMode sizeChangeMode);
+
+	/// <summary>
+	/// サイズ変更モードの取得
+	/// </summary>
+	/// <returns></returns>
+	SizeChangeMode GetSizeChangeMode() const;
+
+  private: // メンバ関数
+	WinApp() = default;
+	~WinApp() = default;
+	WinApp(const WinApp&) = delete;
+	const WinApp& operator=(const WinApp&) = delete;
+  private: // メンバ変数
+	// Window関連
+	HWND hwnd_ = nullptr;   // ウィンドウハンドル
+	WNDCLASSEX wndClass_{}; // ウィンドウクラス
+	UINT windowStyle_;
+	bool isFullscreen_ = false;
+	RECT windowRect_;
+	SizeChangeMode sizeChangeMode_ = SizeChangeMode::kNormal;
+	float aspectRatio_;
 };
-

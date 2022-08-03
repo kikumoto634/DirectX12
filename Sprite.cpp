@@ -18,13 +18,13 @@ void Sprite::StaticInitialize(DirectXCommon* dxCommon, TextureManager* texManage
 	//グラフィックスパイプライン生成
 	common->InitializeGraphicsPipeline();
 
-	//並行投影の射影行列生成
-	common->matProjection = XMMatrixOrthographicOffCenterLH
-	(
-		0.f, WinApp::window_width,
-		WinApp::window_height, 0.f,
-		0.f, 1.f
-	);
+	////並行投影の射影行列生成
+	//common->matProjection = XMMatrixOrthographicOffCenterLH
+	//(
+	//	0.f, WinApp::window_width,
+	//	WinApp::window_height, 0.f,
+	//	0.f, 1.f
+	//);
 }
 
 void Sprite::StaticFinalize()
