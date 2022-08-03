@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "WinApp.h"
 #include "DirectXCommon.h"
-
 #include "DirectXGame.h"
 
 /// <summary>

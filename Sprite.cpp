@@ -1,12 +1,12 @@
 ﻿#include "Sprite.h"
-
+#include <cassert>
 #include <d3dcompiler.h>
+#include <d3d12.h>
+#include "TextureManager.h"
 
 #pragma comment(lib, "d3dcompiler.lib")
 
 using namespace DirectX;
-
-Sprite::Common* Sprite::common = nullptr;
 
 void Sprite::StaticInitialize(DirectXCommon* dxCommon, TextureManager* texManager)
 {
@@ -211,232 +211,72 @@ void Sprite::Draw(ID3D12GraphicsCommandList *commandList)
 	commandList->DrawInstanced(4, 1, 0, 0);
 }
 
-XMFLOAT2 Sprite::GetPosition()
+
+void Sprite::StaticInitialize(ID3D12Device *device, int window_width, int window_height, const std::wstring &directoryPath)
 {
-	return XMFLOAT2(position.m128_f32[0], position.m128_f32[1]);
+	Sprite::device = device;
+
+	Sprite::descriptorHandleSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 }
 
-void Sprite::SetPosition(XMFLOAT2 pos)
+void Sprite::PreDraw(ID3D12GraphicsCommandList *commandList)
 {
-	this->position.m128_f32[0] = pos.x;
-	this->position.m128_f32[1] = pos.y;
-
-	//頂点情報の転送
-	SpriteTransferVertexBuffer();
 }
 
-XMFLOAT2 Sprite::GetSize()
+void Sprite::PostDraw()
 {
-	return XMFLOAT2(size.x, size.y);
 }
 
-void Sprite::SetSize(XMFLOAT2 size)
+Sprite *Sprite::Create(uint32_t textureHandle, XMFLOAT2 pos, XMFLOAT4 color, XMFLOAT2 anchor, bool isFlipX, bool isFlipY)
 {
-	this->size.x = size.x;
-	this->size.y = size.y;
-	
-	//頂点情報の転送
-	SpriteTransferVertexBuffer();
+	return nullptr;
 }
 
-void Sprite::SetAnchorpoint(XMFLOAT2 pos)
-{
-	this->anchorpoint.x = pos.x;
-	this->anchorpoint.y = pos.y;
 
-	SpriteTransferVertexBuffer();
+Sprite::Sprite(uint32_t textureHandle, XMFLOAT2 pos, XMFLOAT2 size, XMFLOAT4 color, XMFLOAT2 anchor, bool isFlipX, bool isFlipY)
+{
 }
 
-void Sprite::SetTextureRect(float tex_x, float tex_y, float tex_width, float tex_height)
+bool Sprite::Initialize()
 {
-	this->texLeftTop = {tex_x, tex_y};
-	this->texSize = {tex_width, tex_height};
+	return false;
+}
 
-	SpriteTransferVertexBuffer();
+void Sprite::SetTextureHandle(uint32_t textureHandle)
+{
+}
+
+void Sprite::SetRotation(float rotation)
+{
+}
+
+void Sprite::SetSize(const XMFLOAT2 &size)
+{
+}
+
+void Sprite::SetAnchorPoint(const XMFLOAT2 &anchorpoint)
+{
 }
 
 void Sprite::SetIsFlipX(bool IsFlipX)
 {
-	this->IsFlipX = IsFlipX;
 
-	SpriteTransferVertexBuffer();
 }
 
 void Sprite::SetIsFlipY(bool IsFlipY)
 {
-	this->IsFlipY = IsFlipY;
 
-	SpriteTransferVertexBuffer();
 }
 
-void Sprite::Common::InitializeGraphicsPipeline()
+void Sprite::SetTextureRect(const XMFLOAT2 &texBase, const XMFLOAT2 &texSize)
 {
-	HRESULT result;
-
-	///頂点シェーダーfileの読み込みとコンパイル
-	ComPtr<ID3DBlob> vsBlob ;			//頂点シェーダーオブジェクト
-	ComPtr<ID3DBlob> psBlob ;			//ピクセルシェーダーオブジェクト
-	ComPtr<ID3DBlob> errorBlob ;		//エラーオブジェクト
-
-	//頂点シェーダーの読み込みコンパイル
-	result = D3DCompileFromFile(
-		L"SpriteVS.hlsl",		//シェーダーファイル名
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,	//インクルード可能にする
-		"main", "vs_5_0",					//エントリーポイント名、シェーダーモデル指定
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,	//デバック用設定
-		0,
-		&vsBlob, &errorBlob);
-	//エラーなら
-	if(FAILED(result)){
-		//errorBlobからエラー内容をstring型にコピー
-		std::string error;
-		error.resize(errorBlob->GetBufferSize());
-
-		std::copy_n((char*)errorBlob->GetBufferPointer(),
-					errorBlob->GetBufferSize(),
-					error.begin());
-		error += "\n";
-		//エラー内容を出力ウィンドウに表示
-		OutputDebugStringA(error.c_str());
-		assert(0);
-	}
-
-	//ピクセルシェーダーの読み込みコンパイル
-	result = D3DCompileFromFile(
-		L"SpritePS.hlsl",		//シェーダーファイル名
-		nullptr,
-		D3D_COMPILE_STANDARD_FILE_INCLUDE,	//インクルード可能にする
-		"main", "ps_5_0",					//エントリーポイント名、シェーダーモデル指定
-		D3DCOMPILE_DEBUG | D3DCOMPILE_SKIP_OPTIMIZATION,	//デバック用設定
-		0,
-		&psBlob, &errorBlob);
-	//エラーなら
-	if(FAILED(result)){
-		//errorBlobからエラー内容をstring型にコピー
-		std::string error;
-		error.resize(errorBlob->GetBufferSize());
-
-		std::copy_n((char*)errorBlob->GetBufferPointer(),
-					errorBlob->GetBufferSize(),
-					error.begin());
-		error += "\n";
-		//エラー内容を出力ウィンドウに表示
-		OutputDebugStringA(error.c_str());
-		assert(0);
-	}
-
-
-	///頂点レイアウト
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] = {
-	
-		{//xyz座標
-			"POSITION",										//セマンティック名
-			0,												//同じセマンティック名が複数あるときに使うインデックス
-			DXGI_FORMAT_R32G32B32_FLOAT,					//要素数とビット数を表す (XYZの3つでfloat型なのでR32G32B32_FLOAT)
-			0,												//入力スロットインデックス
-			D3D12_APPEND_ALIGNED_ELEMENT,					//データのオフセット値 (D3D12_APPEND_ALIGNED_ELEMENTだと自動設定)
-			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,		//入力データ種別 (標準はD3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA)
-			0												//一度に描画するインスタンス数
-		},
-		{//uv座標
-			"TEXCOORD",
-			0,
-			DXGI_FORMAT_R32G32_FLOAT,
-			0,
-			D3D12_APPEND_ALIGNED_ELEMENT,
-			D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA,
-			0
-		},
-	};
-
-	///ルートパラメータ
-	//デスクリプタレンジの設定
-	CD3DX12_DESCRIPTOR_RANGE descRangeSRV{};
-	descRangeSRV.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-
-
-	//設定
-	////定数バッファ 0番
-	CD3DX12_ROOT_PARAMETER rootParam[2] = {};
-	////定数　0番 material
-	rootParam[0].InitAsConstantBufferView(0);
-	////テクスチャレジスタ 0番
-	rootParam[1].InitAsDescriptorTable(1, &descRangeSRV);
-
-
-	///<summmary>
-	///グラフィックスパイプライン
-	///<summary/>
-	
-	//グラフィックスパイプライン設定
-	D3D12_GRAPHICS_PIPELINE_STATE_DESC pipelineDesc{};
-	//シェーダー設定
-	pipelineDesc.VS = CD3DX12_SHADER_BYTECODE(vsBlob.Get());
-	pipelineDesc.PS = CD3DX12_SHADER_BYTECODE(psBlob.Get());
-	
-	//サンプルマスク設定
-	pipelineDesc.SampleMask = D3D12_DEFAULT_SAMPLE_MASK;	//標準設定
-	//ラスタライザ設定 背面カリング	ポリゴン内塗りつぶし	深度クリッピング有効
-	pipelineDesc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-	pipelineDesc.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
-	//ブレンドステート
-	//レンダーターゲットのブレンド設定
-	D3D12_RENDER_TARGET_BLEND_DESC& blenddesc = pipelineDesc.BlendState.RenderTarget[0];
-	blenddesc.RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;	//RGBAすべてのチャンネルを描画
-	//共通設定
-	blenddesc.BlendEnable = true;						//ブレンドを有効にする
-	blenddesc.BlendOpAlpha = D3D12_BLEND_OP_ADD;		//加算
-	blenddesc.SrcBlendAlpha = D3D12_BLEND_ONE;			//ソースの値を100% 使う	(ソースカラー			 ： 今から描画しようとしている色)
-	blenddesc.DestBlendAlpha = D3D12_BLEND_ZERO;		//デストの値を  0% 使う	(デスティネーションカラー： 既にキャンバスに描かれている色)
-	//各種設定
-	blenddesc.BlendOp = D3D12_BLEND_OP_ADD;	//設定
-	blenddesc.SrcBlend = D3D12_BLEND_SRC_ALPHA;			//ソースの値を 何% 使う
-	blenddesc.DestBlend = D3D12_BLEND_INV_SRC_ALPHA;	//デストの値を 何% 使う
-	//頂点レイアウト設定
-	pipelineDesc.InputLayout.pInputElementDescs = inputLayout;
-	pipelineDesc.InputLayout.NumElements = _countof(inputLayout);
-	//図形の形状設定 (プリミティブトポロジー)
-	pipelineDesc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	//その他設定
-	pipelineDesc.NumRenderTargets = 1;		//描画対象は一つ
-	pipelineDesc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;	//0~255指定のRGBA
-	pipelineDesc.SampleDesc.Count = 1;	//1ピクセルにつき1回サンプリング
-	//デプスステンシルステートの設定	(深度テストを行う、書き込み許可、深度がちいさければ許可)
-	pipelineDesc.DepthStencilState = CD3DX12_DEPTH_STENCIL_DESC(D3D12_DEFAULT);
-	pipelineDesc.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_ALWAYS;
-	pipelineDesc.DepthStencilState.DepthEnable = false;
-	pipelineDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;	//深度値フォーマット
-
-	///テクスチャサンプラー
-	//設定
-	CD3DX12_STATIC_SAMPLER_DESC samplerDesc = CD3DX12_STATIC_SAMPLER_DESC(0);
-
-
-	//ルートシグネチャ (テクスチャ、定数バッファなどシェーダーに渡すリソース情報をまとめたオブジェクト)
-	//設定
-	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDesc{};
-	rootSignatureDesc.Init_1_0(_countof(rootParam), rootParam,1, &samplerDesc,D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);
-	//シリアライズ
-	ComPtr<ID3DBlob> rootSigBlob;
-	result = D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob,&errorBlob);
-	if(FAILED(result))
-	{
-		assert(0);
-	}
-	result = dxCommon->GetDevice()->CreateRootSignature(0,rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(),IID_PPV_ARGS(&common->rootsignature));
-	if(FAILED(result))
-	{
-		assert(0);
-	}
-	//パイプラインにルートシグネチャをセット
-	pipelineDesc.pRootSignature = common->rootsignature.Get();
-
-	//パイプラインステート (グラフィックスパイプラインの設定をまとめたのがパイプラインステートオブジェクト(PSO))
-	//パイプラインステートの生成
-	result = dxCommon->GetDevice()->CreateGraphicsPipelineState(&pipelineDesc, IID_PPV_ARGS(&common->pipelinestate));
-	if(FAILED(result))
-	{
-		assert(0);
-	}
 }
+
+void Sprite::Draw()
+{
+}
+
+void Sprite::TransferVertices()
+{
+}
+

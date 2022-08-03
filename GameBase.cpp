@@ -1,6 +1,5 @@
 ﻿#include "GameBase.h"
-#include "FbxLoader.h"
-#include "Object3D.h"
+#include "TextureManager.h"
 
 void GameBase::Run()
 {
@@ -45,6 +44,8 @@ void GameBase::Initialize()
 
 #pragma region 汎用的機能の初期化
 	
+	TextureManager::GetInstance()->Initialize(dxCommon->GetDevice());
+	TextureManager::Load("white1x1.png");
 
 #pragma endregion
 
