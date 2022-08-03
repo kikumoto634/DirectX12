@@ -1,5 +1,7 @@
 ﻿#include "GeometryManager.h"
 
+using namespace DirectX;
+
 void GeometryManager::Initialize(DirectXCommon* dxCommon, TextureManager* textureManager)
 {
 	HRESULT result = S_FALSE;

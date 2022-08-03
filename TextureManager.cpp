@@ -2,7 +2,8 @@
 #include <assert.h>
 
 
-uint32_t TextureManager::Load(const string &fileName)
+
+uint32_t TextureManager::Load(const std::string& fileName)
 {
 	return TextureManager::GetInstance()->LoadInternal(fileName);
 }
@@ -51,7 +52,7 @@ void TextureManager::ResetAll()
 	}
 }
 
-uint32_t TextureManager::LoadInternal(const string &fileName)
+uint32_t TextureManager::LoadInternal(const std::string &fileName)
 {
 	assert(indexDescriptorHeap < kNumDescriptors);
 	uint32_t handle = indexDescriptorHeap;
@@ -165,6 +166,7 @@ const D3D12_RESOURCE_DESC TextureManager::GetResourceDesc(uint32_t textureHandle
 
 void TextureManager::SetGraphicsRootDescriptorTable(ID3D12GraphicsCommandList *commandList, UINT rootParamIndex, uint32_t textureHandle)
 {
+	assert(textureHandle < texture.size());
 	//テスクチャ用デスクリプタヒープの設定
 	ID3D12DescriptorHeap* ppHeaps[] = {descriptorHeap.Get()};
 	commandList->SetDescriptorHeaps(_countof(ppHeaps),ppHeaps);

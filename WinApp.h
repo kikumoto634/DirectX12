@@ -36,7 +36,7 @@ class WinApp {
 	/// <returns>成否</returns>
 	static LRESULT WindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam);
 
-  public: // メンバ関数
+  public: //メンバ関数
 	/// <summary>
 	/// ゲームウィンドウの作成
 	/// <param name="title">ウィンドウタイトル</param>

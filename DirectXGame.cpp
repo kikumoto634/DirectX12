@@ -8,7 +8,7 @@ void DirectXGame::Initialize()
 
 #pragma region シーンの初期化
 
-	textureHandle = TextureManager::Load("Texture.jpg");
+	textureHandle = TextureManager::Load("Morley_Idel.png");
 	sprite = Sprite::Create(textureHandle, {100, 50});
 
 #pragma endregion
@@ -31,7 +31,6 @@ void DirectXGame::Draw()
 	Sprite::PreDraw(commandList);
 
 	//BACK
-	sprite->Draw();
 
 	// スプライト描画後処理
 	Sprite::PostDraw();
@@ -52,6 +51,7 @@ void DirectXGame::Draw()
 	Sprite::PreDraw(commandList);
 
 	//UI
+	sprite->Draw();
 
 	// スプライト描画後処理
 	Sprite::PostDraw();

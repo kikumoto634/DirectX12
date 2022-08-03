@@ -22,6 +22,7 @@ XMMATRIX Sprite::sMatProjection;
 
 void Sprite::StaticInitialize(ID3D12Device *device, int window_width, int window_height, const std::wstring &directoryPath)
 {
+	assert(device);
 	sDevice = device;
 
 	sDescriptorHandleSize = device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
@@ -105,20 +106,6 @@ void Sprite::StaticInitialize(ID3D12Device *device, int window_width, int window
 		},
 	};
 
-	///ルートパラメータ
-	//デスクリプタレンジの設定
-	CD3DX12_DESCRIPTOR_RANGE descRangeSRV{};
-	descRangeSRV.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-
-
-	//設定
-	////定数バッファ 0番
-	CD3DX12_ROOT_PARAMETER rootParam[2] = {};
-	////定数　0番 material
-	rootParam[0].InitAsConstantBufferView(0);
-	////テクスチャレジスタ 0番
-	rootParam[1].InitAsDescriptorTable(1, &descRangeSRV);
-
 
 	///<summmary>
 	///グラフィックスパイプライン
@@ -163,10 +150,26 @@ void Sprite::StaticInitialize(ID3D12Device *device, int window_width, int window
 	pipelineDesc.DepthStencilState.DepthEnable = false;
 	pipelineDesc.DSVFormat = DXGI_FORMAT_D32_FLOAT;	//深度値フォーマット
 
+	///ルートパラメータ
+	//デスクリプタレンジの設定
+	CD3DX12_DESCRIPTOR_RANGE descRangeSRV{};
+	descRangeSRV.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
+
+
+	//設定
+	////定数バッファ 0番
+	CD3DX12_ROOT_PARAMETER rootParam[2] = {};
+	////定数　0番 material
+	rootParam[0].InitAsConstantBufferView(0, 0);
+	////テクスチャレジスタ 0番
+	rootParam[1].InitAsDescriptorTable(1, &descRangeSRV);
+
 	///テクスチャサンプラー
 	//設定
-	CD3DX12_STATIC_SAMPLER_DESC samplerDesc = CD3DX12_STATIC_SAMPLER_DESC(0);
-
+	CD3DX12_STATIC_SAMPLER_DESC samplerDesc = CD3DX12_STATIC_SAMPLER_DESC(0, D3D12_FILTER_MIN_MAG_MIP_LINEAR);
+	samplerDesc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+	samplerDesc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
 
 	//ルートシグネチャ (テクスチャ、定数バッファなどシェーダーに渡すリソース情報をまとめたオブジェクト)
 	//設定
@@ -285,7 +288,7 @@ bool Sprite::Initialize()
 
 	//頂点バッファビューの転送
 	vbView.BufferLocation = vertBuff->GetGPUVirtualAddress();
-	vbView.SizeInBytes = sizeof(VertexPosUv) * verticesNum;
+	vbView.SizeInBytes = sizeof(VertexPosUv) * 4;
 	vbView.StrideInBytes = sizeof(VertexPosUv);
 
 	{

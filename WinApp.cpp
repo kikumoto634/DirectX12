@@ -20,7 +20,7 @@ std::wstring ConvertString(const std::string& str) {
 	return result;
 }
 
-// ref: https://devblogs.microsoft.com/oldnewthing/20131017-00/?p=2903
+
 BOOL UnadjustWindowRectEx(LPRECT prc, DWORD dwStyle, BOOL fMenu, DWORD dwExStyle) {
 	RECT rc;
 	SetRectEmpty(&rc);
