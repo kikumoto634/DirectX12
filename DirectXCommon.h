@@ -1,21 +1,28 @@
 ﻿#pragma once
 #include "WinApp.h"
+
+//基本(初期化)
 #include <d3d12.h>
 #include <dxgi1_6.h>
+
+//アダプタの列挙
 #include <vector>
 #include <string>
+
+//ComPtrスマートポインタ
 #include <wrl.h>
+
+//CD3DX12ヘルパー構造体
 #include <d3dx12.h>
 
 
 /// <summary>
-/// DirectX
+/// DIrectX
 /// </summary>
 class DirectXCommon
 {
 public://エイリアス
 	template <class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
-
 
 public://メンバ関数
 
@@ -41,17 +48,6 @@ public://メンバ関数
 	void EndDraw();
 
 	/// <summary>
-	/// レンダーターゲットクリア
-	/// </summary>
-	void ClearRenderTarget();
-
-	/// <summary>
-	/// 深度バッファのクリア
-	/// </summary>
-	void ClearDepthBuffer();
-
-
-	/// <summary>
 	/// device取得
 	/// </summary>
 	/// <returns></returns>
@@ -61,8 +57,6 @@ public://メンバ関数
 
 private://メンバ変数
 	WinApp* winApp = nullptr;
-
-#pragma region DirectX3D関連
 
 	//DXGIファクトリー
 	ComPtr<IDXGIFactory7> dxgiFactory= nullptr;
@@ -87,40 +81,5 @@ private://メンバ変数
 	//フェンス
 	ComPtr<ID3D12Fence> fence;
 	UINT64 fenceVal = 0;
-
-#pragma endregion DirectX3D関連
-
-
-private://メンバ関数
-
-	/// <summary>
-	/// DXGIデバイス初期化
-	/// </summary>
-	void InitializeDXGIDevice();
-
-	/// <summary>
-	/// スワップチェーンの生成
-	/// </summary>
-	void CreateSwapChain();
-
-	/// <summary>
-	/// コマンド関連初期化
-	/// </summary>
-	void InitializeCommand();
-
-	/// <summary>
-	/// レンダーターゲット生成
-	/// </summary>
-	void CreateFinalRenderTargets();
-
-	/// <summary>
-	/// 深度バッファ生成
-	/// </summary>
-	void CreateDepthBuffer();
-
-	/// <summary>
-	/// フェンス生成
-	/// </summary>
-	void CreateFence();
 };
 
