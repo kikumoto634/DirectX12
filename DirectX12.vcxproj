@@ -98,8 +98,6 @@
     <ClCompile Include="DirectXGame.cpp" />
     <ClCompile Include="FbxLoader.cpp" />
     <ClCompile Include="GameBase.cpp" />
-    <ClCompile Include="GeometryManager.cpp" />
-    <ClCompile Include="GeometryObject3D.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Model.cpp" />
@@ -168,8 +166,6 @@
     <ClInclude Include="DirectXGame.h" />
     <ClInclude Include="FbxLoader.h" />
     <ClInclude Include="GameBase.h" />
-    <ClInclude Include="GeometryManager.h" />
-    <ClInclude Include="GeometryObject3D.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Object3D.h" />
