@@ -320,6 +320,12 @@ void Sprite::SetTextureHandle(uint32_t textureHandle)
 	resourceDesc = TextureManager::GetInstance()->GetResourceDesc(this->textureHandle);
 }
 
+void Sprite::SetPosition(const XMFLOAT2 &pos)
+{
+	this->position = pos;
+	TransferVertices();
+}
+
 void Sprite::SetRotation(float rotation)
 {
 	this->rotation = rotation;

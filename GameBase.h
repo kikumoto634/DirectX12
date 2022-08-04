@@ -2,6 +2,7 @@
 #include "WinApp.h"
 #include "DirectXCommon.h"
 #include "DirectXGame.h"
+//#include "DebugText.h"
 
 /// <summary>
 /// ゲーム共通基盤　(フレームワーク)
@@ -41,6 +42,7 @@ public:
 protected:
 	WinApp* winApp = nullptr;
 	DirectXCommon* dxCommon = nullptr;
+	//DebugText* debugtext = nullptr;
 
 	//シーン
 	DirectXGame* gameScene = nullptr;

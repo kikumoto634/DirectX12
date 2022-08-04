@@ -1,4 +1,5 @@
 ﻿#include "DebugText.h"
+#include "TextureManager.h"
 
 DebugText::~DebugText()
 {
@@ -10,19 +11,25 @@ DebugText::~DebugText()
 	}
 }
 
-void DebugText::Initialize(UINT texnumber)
+DebugText* DebugText::GetInstance()
 {
-	for(int i = 0; i < _countof(sprites); i++)
-	{
-		//スプライト生成
-		//sprites[i] = new Sprite();
-		//スプライトを初期化する
-		//sprites[i]->Initialize(texnumber);
+	static DebugText instance;
+	return &instance;
+}
+
+void DebugText::Initialize()
+{
+	// デバッグテキスト用テクスチャ読み込み
+	textureHandle = TextureManager::Load("texfont.png");
+	// 全てのスプライトデータについて
+	for (int i = 0; i < _countof(sprites); i++) {
+		// スプライトを生成する
+		sprites[i] = Sprite::Create(textureHandle, {0, 0});
 	}
 }
 
 //一文字追加
-void DebugText::Print(const std::string& text, float x, float y, float scale = 1.0f)
+void DebugText::Print(const std::string& text, float x, float y, float scale)
 {
 	//すべての文字について
 	for(int i = 0; i < text.size(); i++)
@@ -46,9 +53,9 @@ void DebugText::Print(const std::string& text, float x, float y, float scale = 1
 		int fontIndexX = fontIndex % fontLineCount;
 
 		//座標計算
-		/*sprites[spriteIndex]->SetPosition({x + fontWidth * scale * i, y});
-		sprites[spriteIndex]->SetTextureRect((float)fontIndexX * fontWidth, (float)fontIndexY * fontHeight, (float)fontWidth, (float)fontHeight);
-		sprites[spriteIndex]->SetSize({fontWidth * scale, fontHeight * scale});*/
+		sprites[spriteIndex]->SetPosition({posX + fontWidth * scale * i, posY});
+		sprites[spriteIndex]->SetTextureRect({float(fontIndexX * fontWidth), float(fontIndexY* fontHeight)}, {float(fontWidth),float(fontHeight)});
+		sprites[spriteIndex]->SetSize({fontWidth * scale, fontHeight * scale});
 
 		//文字を一つ進める
 		spriteIndex++;
@@ -61,7 +68,7 @@ void DebugText::DrawAll(ID3D12GraphicsCommandList* commandList)
 	for(int i = 0; i < spriteIndex; i++)
 	{
 		//スプライト描画
-		//sprites[i]->Draw(commandList);
+		sprites[i]->Draw();
 	}
 	spriteIndex = 0;
 }

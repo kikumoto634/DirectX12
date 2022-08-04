@@ -108,6 +108,14 @@ public:	//メンバ関数
 	uint32_t GetTextureHandle()	{return textureHandle;}
 
 	/// <summary>
+	/// 座標設定
+	/// </summary>
+	/// <param name="pos">座標</param>
+	void SetPosition(const XMFLOAT2& pos);
+
+	const XMFLOAT2& GetPosition()	{return position;}
+
+	/// <summary>
 	/// 角度の設定
 	/// </summary>
 	/// <param name="rotation">角度</param>

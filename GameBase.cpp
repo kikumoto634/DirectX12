@@ -50,6 +50,9 @@ void GameBase::Initialize()
 
 	Sprite::StaticInitialize(dxCommon->GetDevice(), WinApp::kWindowWidth, WinApp::kWindowHeight);
 
+	//debugtext->DebugText::GetInstance();
+	//debugtext->Initialize();
+
 #pragma endregion
 
 	//ゲームシーン初期化

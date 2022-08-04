@@ -5,6 +5,7 @@
 void DirectXGame::Initialize()
 {
 	dxCommon = DirectXCommon::GetInstance();
+	//debugText = DebugText::GetInstance();
 
 #pragma region シーンの初期化
 
@@ -18,6 +19,8 @@ void DirectXGame::Initialize()
 void DirectXGame::Update()
 {
 #pragma region シーン更新
+
+	debugText->Print("aaa", 100, 100);
 
 #pragma endregion
 }
@@ -52,6 +55,9 @@ void DirectXGame::Draw()
 
 	//UI
 	sprite->Draw();
+
+	//debug
+	//debugText->DrawAll(commandList);
 
 	// スプライト描画後処理
 	Sprite::PostDraw();
