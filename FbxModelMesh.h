@@ -74,7 +74,7 @@ public: //メンバ関数
 
 	void CreateBuffers();
 
-	void Draw(ID3D12GraphicsCommandList* commandList);
+	void Draw(ID3D12GraphicsCommandList* commandList, UINT rootParameterIndex);
 
 private: //メンバ変数
 
@@ -90,10 +90,14 @@ private: //メンバ変数
 	ComPtr<ID3D12Resource> vertBuff;
 	//インデックスバッファ
 	ComPtr<ID3D12Resource> indexBuff;
+	//テクスチャバッファ
+	ComPtr<ID3D12Resource> texBuff;
 	//頂点バッファビュー
 	D3D12_VERTEX_BUFFER_VIEW vbView{};
 	//インデックスバッファビュー
 	D3D12_INDEX_BUFFER_VIEW ibView{};
+	//SRV用デスクリプタヒープ
+	ComPtr<ID3D12DescriptorHeap> descHeapsSRV;
 
 	//頂点データ配列
 	std::vector<VertexPosNormalUVSkin> vertices;
