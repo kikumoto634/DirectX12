@@ -11,7 +11,6 @@ using namespace DirectX;
 ///</summary>
 
 ID3D12Device* Object3D::device = nullptr;
-Camera* Object3D::camera = nullptr;
 
 ComPtr<ID3D12RootSignature> Object3D::rootsignature;
 ComPtr<ID3D12PipelineState> Object3D::pipelinestate;
@@ -148,13 +147,15 @@ void Object3D::CreateGraphicsPipeline()
 	descRangeSRV.Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0); // t0 レジスタ
 
 	// ルートパラメータ
-	CD3DX12_ROOT_PARAMETER rootparams[3]{};
-	// CBV（座標変換行列用）
+	CD3DX12_ROOT_PARAMETER rootparams[4]{};
+	// CBV（World変換行列用）
 	rootparams[0].InitAsConstantBufferView(0, 0, D3D12_SHADER_VISIBILITY_ALL);
 	// SRV（テクスチャ）
 	rootparams[1].InitAsDescriptorTable(1, &descRangeSRV, D3D12_SHADER_VISIBILITY_ALL);
 	//CBV (スキニング用)
 	rootparams[2].InitAsConstantBufferView(3, 0, D3D12_SHADER_VISIBILITY_ALL);
+	// CBV（View変換行列用）
+	rootparams[3].InitAsConstantBufferView(1, 0, D3D12_SHADER_VISIBILITY_ALL);
 
 	// スタティックサンプラー
 	CD3DX12_STATIC_SAMPLER_DESC samplerDesc = CD3DX12_STATIC_SAMPLER_DESC(0);
@@ -166,32 +167,22 @@ void Object3D::CreateGraphicsPipeline()
 	ComPtr<ID3DBlob> rootSigBlob;
 	// バージョン自動判定のシリアライズ
 	result = D3DX12SerializeVersionedRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1_0, &rootSigBlob, &errorBlob);
+	assert(SUCCEEDED(result));
 	// ルートシグネチャの生成
 	result = device->CreateRootSignature(0, rootSigBlob->GetBufferPointer(), rootSigBlob->GetBufferSize(), IID_PPV_ARGS(rootsignature.ReleaseAndGetAddressOf()));
-	if (FAILED(result)) { assert(0); }
+	assert(SUCCEEDED(result));
 
 	gpipeline.pRootSignature = rootsignature.Get();
 
 	// グラフィックスパイプラインの生成
 	result = device->CreateGraphicsPipelineState(&gpipeline, IID_PPV_ARGS(pipelinestate.ReleaseAndGetAddressOf()));
-	if (FAILED(result)) { assert(0); }
+	assert(SUCCEEDED(result));
 }
 
 void Object3D::Initialize()
 {
 	HRESULT result;
 	//定数バッファの生成
-	result = device->CreateCommittedResource
-	(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer((sizeof(ConstBufferDataTransform) + 0xff) &~0xff),
-		D3D12_RESOURCE_STATE_GENERIC_READ,
-		nullptr,
-		IID_PPV_ARGS(&constBuffTransform)
-	);
-	assert(SUCCEEDED(result));
-
 	result = device->CreateCommittedResource
 	(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -220,35 +211,8 @@ void Object3D::Initialize()
 
 void Object3D::Update()
 {
-	XMMATRIX matScale, matRot, matTrans;
 
-	matScale = XMMatrixScaling(scale.x, scale.y, scale.z);
-	matRot = XMMatrixIdentity();
-	matRot *= XMMatrixRotationX(XMConvertToRadians(rotation.x));
-	matRot *= XMMatrixRotationY(XMConvertToRadians(rotation.y));
-	matRot *= XMMatrixRotationZ(XMConvertToRadians(rotation.z));
-	matTrans = XMMatrixTranslation(position.x, position.y, position.z);
-
-	matWorld = XMMatrixIdentity();
-	matWorld *= matScale;
-	matWorld *= matRot;
-	matWorld *= matTrans;
-
-	const XMMATRIX& matViewProjection = camera->GetViewProjectionMatrix();
-	const XMMATRIX& modelTransform = model->GetModelTransform();
-	const XMFLOAT3& cameraPos = camera->GetEye();
-	
-	HRESULT result;
-
-	ConstBufferDataTransform* constMap = nullptr;
-	result = constBuffTransform->Map(0,nullptr, (void**)&constMap);
-	if(SUCCEEDED(result))
-	{
-		constMap->viewproj = matViewProjection;
-		constMap->world = modelTransform * matWorld;
-		constMap->cameraPos = cameraPos;
-		constBuffTransform->Unmap(0,nullptr);
-	}
+	HRESULT result = S_FALSE;
 
 	//ボーン配列
 	std::vector<Bone>& bones = model->GetBones();
@@ -284,7 +248,7 @@ void Object3D::Update()
 	constBufferSkin->Unmap(0,nullptr);
 }
 
-void Object3D::Draw(ID3D12GraphicsCommandList* commandList)
+void Object3D::Draw(ID3D12GraphicsCommandList* commandList,  const WorldTransform& worldTransform, const ViewProjection& viewProjection)
 {
 	if(model == nullptr)
 	{
@@ -298,8 +262,9 @@ void Object3D::Draw(ID3D12GraphicsCommandList* commandList)
 	//プリミティブ形状を設定
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 	//定数バッファビィーをセット
-	commandList->SetGraphicsRootConstantBufferView(0, constBuffTransform->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootConstantBufferView(0, worldTransform.constBuff->GetGPUVirtualAddress());
 	commandList->SetGraphicsRootConstantBufferView(2, constBufferSkin->GetGPUVirtualAddress());
+	commandList->SetGraphicsRootConstantBufferView(3, viewProjection.constBuff->GetGPUVirtualAddress());
 
 	//モデル描画
 	model->Draw(commandList);

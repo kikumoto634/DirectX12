@@ -53,6 +53,11 @@ void GameBase::Initialize()
 	//debugtext->DebugText::GetInstance();
 	//debugtext->Initialize();
 
+	//FbxLoader::GetInstance()->Initialize(dxCommon->GetDevice());
+
+	//Object3D::SetDevice(dxCommon->GetDevice());
+	//Object3D::CreateGraphicsPipeline();
+
 #pragma endregion
 
 	//ゲームシーン初期化
@@ -80,6 +85,8 @@ void GameBase::Finalize()
 
 	delete gameScene;
 	gameScene = nullptr;
+
+	//FbxLoader::GetInstance()->Finalize();
 
 	winApp->TerminateGameWindow();
 }

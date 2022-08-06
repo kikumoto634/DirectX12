@@ -4,6 +4,9 @@
 #include "DirectXGame.h"
 //#include "DebugText.h"
 
+//#include "FbxLoader.h"
+//#include "Object3D.h"
+
 /// <summary>
 /// ゲーム共通基盤　(フレームワーク)
 /// </summary>

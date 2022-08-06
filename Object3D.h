@@ -9,6 +9,9 @@
 #include <DirectXMath.h>
 #include <string>
 
+#include "WorldTransform.h"
+#include "ViewProjection.h"
+
 #include "FbxLoader.h"
 
 class Object3D
@@ -32,13 +35,6 @@ protected:
 
 public:
 	//サブクラス
-	//定数バッファ用データ構造体(座標変換行列用)
-	struct ConstBufferDataTransform
-	{
-		XMMATRIX viewproj;	//ビュープロジェクション
-		XMMATRIX world;		//ワールド行列
-		XMFLOAT3 cameraPos;	//カメラ座標(ワールド座標)
-	};
 
 	//定数バッファ用データ構造体(スキニング)
 	struct ConstBufferDataSkin
@@ -52,8 +48,6 @@ public:
 public:
 	//setter
 	static void SetDevice(ID3D12Device* device) {Object3D::device = device; }
-	static void SetCamera(Camera* camera)	{Object3D::camera = camera;}
-
 	/// <summary>
 	/// グラフィックスパイプラインの生成
 	/// </summary>
@@ -77,7 +71,7 @@ public:
 	/// <summary>
 	/// 描画
 	/// </summary>
-	void Draw(ID3D12GraphicsCommandList* commandList);
+	void Draw(ID3D12GraphicsCommandList* commandList, const WorldTransform& worldTransform, const ViewProjection& viewProjection);
 
 	/// <summary>
 	/// モデルセット
@@ -107,7 +101,6 @@ public:
 /// </summary>
 private:
 	static ID3D12Device* device;
-	static Camera* camera;
 
 	//ルートシグネチャ
 	static ComPtr<ID3D12RootSignature> rootsignature;
@@ -119,8 +112,6 @@ private:
 /// </summary>
 private:
 
-	//定数バッファ
-	ComPtr<ID3D12Resource> constBuffTransform;
 	//定数バッファ(スキン)
 	ComPtr<ID3D12Resource> constBufferSkin;
 

@@ -97,6 +97,8 @@
     <ClCompile Include="DirectXCommon.cpp" />
     <ClCompile Include="DirectXGame.cpp" />
     <ClCompile Include="FbxLoader.cpp" />
+    <ClCompile Include="FbxModelMesh.cpp" />
+    <ClCompile Include="FbxModel.cpp" />
     <ClCompile Include="GameBase.cpp" />
     <ClCompile Include="Input.cpp" />
     <ClCompile Include="main.cpp" />
@@ -105,7 +107,9 @@
     <ClCompile Include="SoundManager.cpp" />
     <ClCompile Include="Sprite.cpp" />
     <ClCompile Include="TextureManager.cpp" />
+    <ClCompile Include="ViewProjection.cpp" />
     <ClCompile Include="WinApp.cpp" />
+    <ClCompile Include="WorldTransform.cpp" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="BasicPS.hlsl">
@@ -165,6 +169,8 @@
     <ClInclude Include="DirectXCommon.h" />
     <ClInclude Include="DirectXGame.h" />
     <ClInclude Include="FbxLoader.h" />
+    <ClInclude Include="FbxModelMesh.h" />
+    <ClInclude Include="FbxModel.h" />
     <ClInclude Include="GameBase.h" />
     <ClInclude Include="Input.h" />
     <ClInclude Include="Model.h" />
@@ -172,7 +178,9 @@
     <ClInclude Include="SoundManager.h" />
     <ClInclude Include="Sprite.h" />
     <ClInclude Include="TextureManager.h" />
+    <ClInclude Include="ViewProjection.h" />
     <ClInclude Include="WinApp.h" />
+    <ClInclude Include="WorldTransform.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
