@@ -13,6 +13,11 @@ class Sprite
 {
 public://エイリアス
 	template <class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
+	using XMMATRIX = DirectX::XMMATRIX;
+	using XMVECTOR = DirectX::XMVECTOR;
+	using XMFLOAT4 = DirectX::XMFLOAT4;
+	using XMFLOAT3 = DirectX::XMFLOAT3;
+	using XMFLOAT2 = DirectX::XMFLOAT2;
 
 public://サブクラス
 	class Common{
