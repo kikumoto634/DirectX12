@@ -32,8 +32,6 @@ public:	//列挙
 public:	//定数
 	static const int MAX_BONES = 32;
 
-private://静的定数
-	static const string kBaseDirectory;
 
 public:	//サブクラス
 	//定数バッファ用データ構造(スキニング)
@@ -48,9 +46,9 @@ private://静的メンバ関数
 
 	static void InitializeGraphicsPipeline();
 
-	static FbxModelMesh* Create();
+	static FbxModel* Create();
 
-	static void PreDraw();
+	static void PreDraw(ID3D12GraphicsCommandList* commandList);
 
 	static void PostDraw();
 
@@ -66,6 +64,12 @@ public:	//メンバ関数
 
 	void PlayAnimation();
 
+private:	//静的メンバ変数
+	static UINT sDescriptorHandle;
+	static ID3D12GraphicsCommandList* sCommandList;
+	static ComPtr<ID3D12RootSignature> sRootSignature;
+	static ComPtr<ID3D12PipelineState> sPipelineState;
+
 private:	//メンバ変数
 
 	ComPtr<ID3D12Resource> constBufferSkin;
@@ -73,6 +77,6 @@ private:	//メンバ変数
 	FbxTime frameTime;
 	
 
-	std::vector<FbxModelMesh> mesh;
+	std::vector<FbxModelMesh*> mesh;
 };
 

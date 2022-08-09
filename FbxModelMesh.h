@@ -5,7 +5,8 @@
 #include <wrl.h>
 #include <string>
 #include <vector>
-#include "FbxLoader.h"
+#include <fbxsdk.h>
+#include <DirectXTex.h>
 
 struct NODE
 {
@@ -77,6 +78,8 @@ public: //ƒƒ“ƒoŠÖ”
 	void Draw(ID3D12GraphicsCommandList* commandList, UINT rootParameterIndex);
 
 private: //ƒƒ“ƒo•Ï”
+
+	FbxScene* fbxScene = nullptr;
 
 	std::string name;
 
