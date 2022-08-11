@@ -13,8 +13,10 @@ void DirectXGame::Initialize()
 	//スプライト共通テクスチャ読込
 	textureManager->LoadTexture(1, L"Resources/Texture.jpg");
 
+
+	playerObject = make_unique<GeometryObject3D>();
 	player = make_unique<Player>();
-	player->Initialize(input, 1);
+	player->Initialize(input.get(), 1, playerObject.get());
 
 #pragma endregion
 

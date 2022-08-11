@@ -7,19 +7,23 @@
 class Player
 {
 public:
-	void Initialize(Input* input, UINT textureNumber, Vector3 pos = {0,0,0}, Vector3 rot = {0,0,0});
+	void Initialize(Input* input, UINT textureNumber, GeometryObject3D* object, Vector3 pos = {0,0,50}, Vector3 rot = {0,0,0});
 	void Update();
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
 private:
-	std::unique_ptr<GeometryObject3D> object;
+	Vector3 MovementInput();
+	Vector3 RotationInput();
+
+private:
+	GeometryObject3D* object;
+	Input* input = nullptr;
 
 	Vector3 position;
 	Vector3 rotation;
 	UINT textureNumber;
 
-	Input* input = nullptr;
-
-	float velocity = 3.f;
+	float velocity_Movement = 1.f;
+	float velocity_Rotation = 0.025f;
 };
 

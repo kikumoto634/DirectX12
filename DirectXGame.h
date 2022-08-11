@@ -16,6 +16,8 @@ public:
 	void Finalize() override;
 
 private:
+
+	std::unique_ptr<GeometryObject3D> playerObject;
 	std::unique_ptr<Player> player;
 };
 
