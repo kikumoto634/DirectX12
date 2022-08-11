@@ -236,7 +236,7 @@ void Object3D::Update()
 
 	const XMMATRIX& matViewProjection = camera->GetViewProjectionMatrix();
 	const XMMATRIX& modelTransform = model->GetModelTransform();
-	const XMFLOAT3& cameraPos = camera->GetEye();
+	const Vector3& cameraPos = camera->GetEye();
 	
 	HRESULT result;
 

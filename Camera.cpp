@@ -11,6 +11,9 @@ void Camera::Initialize()
 	target = {0, 0, 0};
 	up = {0, 1, 0};
 
+	nearZ = 0.1f;
+	farZ = 1000.f;
+
 	UpdateViewMatrix();
 	UpdateProjectionMatrix();
 }
@@ -26,7 +29,11 @@ void Camera::Update()
 void Camera::UpdateViewMatrix()
 {
 	//ビュー変換行列
-	matView = XMMatrixLookAtLH(XMLoadFloat3(&eye), XMLoadFloat3(&target), XMLoadFloat3(&up));	
+	XMFLOAT3 kEye{eye.x, eye.y, eye.z};
+	XMFLOAT3 kTarget{target.x, target.y, target.z};
+	XMFLOAT3 kUp{up.x, up.y, up.z};
+
+	matView = XMMatrixLookAtLH(XMLoadFloat3(&kEye), XMLoadFloat3(&kTarget), XMLoadFloat3(&kUp));	
 }
 
 void Camera::UpdateProjectionMatrix()
@@ -35,17 +42,13 @@ void Camera::UpdateProjectionMatrix()
 	matProjection = XMMatrixPerspectiveFovLH(
 		XMConvertToRadians(45.0f),	//上下画角45°
 		(float)WinApp::window_width / WinApp::window_height,			//aspect比(画面横幅/画面縦幅)
-		0.1f, 1000.0f				//前端、奥端
+		nearZ, farZ				//前端、奥端
 	);
 }
 
-void Camera::CameraMovement(XMFLOAT3 pos)
+void Camera::CameraMovement(Vector3 pos)
 {
-	eye.x += pos.x;
-	eye.y += pos.y;
-	eye.z += pos.z;
-
-	target.x += pos.x;
-	target.y += pos.y;
-	target.z += pos.z;
+	eye += pos;
+	target += pos;
 }
+

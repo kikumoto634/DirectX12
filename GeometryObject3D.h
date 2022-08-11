@@ -5,8 +5,8 @@
 #include "DirectXCommon.h"
 #include "GeometryManager.h"
 #include "Camera.h"
+#include "Vector3.h"
 
-//CD3DX12ヘルパー構造体
 #include <d3dx12.h>
 
 /// <summary>
@@ -21,7 +21,6 @@ public:
 	template <class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
 	using XMMATRIX = DirectX::XMMATRIX;
-	using XMFLOAT3 = DirectX::XMFLOAT3;
 	using XMFLOAT4 = DirectX::XMFLOAT4;
 
 /// <summary>
@@ -137,18 +136,18 @@ public:
 
 	void SetColor(const XMFLOAT4& color)	{this->color = color; }
 
-	void SetScale(const XMFLOAT3& scale)	{this->scale = scale; }
+	void SetScale(const Vector3& scale)	{this->scale = scale; }
 
-	void SetRotation(const XMFLOAT3& rotation)	{this->rotation = rotation; }
+	void SetRotation(const Vector3& rotation)	{this->rotation = rotation; }
 
-	void SetPosition(const XMFLOAT3& position)	{this->position = position; }
+	void SetPosition(const Vector3& position)	{this->position = position; }
 
 
 	//getter
 	const XMFLOAT4& GetColor()	{return this->color; }
-	const XMFLOAT3& GetScale() {return this->scale; }
-	const XMFLOAT3& GetRotation()	{return this->rotation; }
-	const XMFLOAT3& GetPosition()	{return this->position; }
+	const Vector3& GetScale() {return this->scale; }
+	const Vector3& GetRotation()	{return this->rotation; }
+	const Vector3& GetPosition()	{return this->position; }
 
 /// <summary>
 /// メンバ変数
@@ -171,9 +170,9 @@ private:
 
 	//トランスフォーム
 	//アフィン変換
-	XMFLOAT3 scale = {1.0f, 1.0f, 1.0f};
-	XMFLOAT3 rotation = {0.0f, 0.0f, 0.0f};
-	XMFLOAT3 position = {0.0f, 0.0f, 0.0f};
+	Vector3 scale = {1.0f, 1.0f, 1.0f};
+	Vector3 rotation = {0.0f, 0.0f, 0.0f};
+	Vector3 position = {0.0f, 0.0f, 0.0f};
 	//ワールド変換行列
 	XMMATRIX matWorld;
 	//親オブジェクトへのポインタ

@@ -10,6 +10,8 @@
 #include <string>
 
 #include "FbxLoader.h"
+#include "Vector2.h"
+#include "Vector3.h"
 
 class Object3D
 {
@@ -25,9 +27,6 @@ public:
 /// </summary>
 protected:
 	template <class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
-	using XMFLOAT2 = DirectX::XMFLOAT2;
-	using XMFLOAT3 = DirectX::XMFLOAT3;
-	using XMFLOAT4 = DirectX::XMFLOAT4;
 	using XMMATRIX = DirectX::XMMATRIX;
 
 public:
@@ -37,7 +36,7 @@ public:
 	{
 		XMMATRIX viewproj;	//ビュープロジェクション
 		XMMATRIX world;		//ワールド行列
-		XMFLOAT3 cameraPos;	//カメラ座標(ワールド座標)
+		Vector3 cameraPos;	//カメラ座標(ワールド座標)
 	};
 
 	//定数バッファ用データ構造体(スキニング)
@@ -92,14 +91,14 @@ public:
 
 
 	//setter
-	void SetScale(XMFLOAT3 scale)	{this->scale = scale;}
-	void SetRotation(XMFLOAT3 rotation)	{this->rotation = rotation;}
-	void SetPosition(XMFLOAT3 position)	{this->position = position;}
+	void SetScale(Vector3 scale)	{this->scale = scale;}
+	void SetRotation(Vector3 rotation)	{this->rotation = rotation;}
+	void SetPosition(Vector3 position)	{this->position = position;}
 
 	//getter
-	XMFLOAT3 GetScale()	{return this->scale;}
-	XMFLOAT3 GetRotation()	{return this->rotation;}
-	XMFLOAT3 GetPosition()	{return this->position;}
+	Vector3 GetScale()	{return this->scale;}
+	Vector3 GetRotation()	{return this->rotation;}
+	Vector3 GetPosition()	{return this->position;}
 
 
 /// <summary>
@@ -125,11 +124,11 @@ private:
 	ComPtr<ID3D12Resource> constBufferSkin;
 
 	//ローカルスケール
-	XMFLOAT3 scale = {1, 1, 1};
+	Vector3 scale = {1, 1, 1};
 	//X,Y,Z軸周りのローカル回転角
-	XMFLOAT3 rotation = {0, 0, 0};
+	Vector3 rotation = {0, 0, 0};
 	//ローカル座標
-	XMFLOAT3 position = {0, 0, 0};
+	Vector3 position = {0, 0, 0};
 	//ローカルワールド変換行列
 	XMMATRIX matWorld{};
 	//モデル
