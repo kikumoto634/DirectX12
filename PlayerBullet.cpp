@@ -20,6 +20,11 @@ void PlayerBullet::Initialize(UINT textureNumber, GeometryObject3D *object, cons
 
 void PlayerBullet::Update()
 {
+	if(--deathTimer <= 0)
+	{
+		isDead = true;
+	}
+
 	position += velocity;
 	object->SetPosition(position);
 

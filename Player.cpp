@@ -22,6 +22,12 @@ void Player::Initialize(Input* input, UINT textureNumber, GeometryObject3D* obje
 
 void Player::Update()
 {
+	//デスフラグのたった弾の削除
+	bullets.remove_if([](unique_ptr<PlayerBullet>& bullet)
+	{
+			return bullet->GetIsDead();
+	});
+
 	//移動
 	position += MovementInput().normalize() * velocity_Movement;
 	//回転

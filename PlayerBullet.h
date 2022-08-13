@@ -9,6 +9,11 @@ public:
 	void Update();
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
+	bool GetIsDead() const {return isDead;}
+
+private:
+	static const int32_t kLifeTime = 60 * 5;
+
 private:
 	Vector3 position;
 	Vector3 rotation;
@@ -17,4 +22,9 @@ private:
 
 	//速度
 	Vector3 velocity;
+
+	//デスタイマー
+	int32_t deathTimer = kLifeTime;
+	//デスフラグ
+	bool isDead = false;
 };
