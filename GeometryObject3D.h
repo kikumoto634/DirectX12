@@ -6,6 +6,7 @@
 #include "GeometryManager.h"
 #include "Camera.h"
 #include "Vector3.h"
+#include "Matrix4.h"
 
 #include <d3dx12.h>
 
@@ -20,7 +21,6 @@ class GeometryObject3D
 public:
 	template <class T> using ComPtr = Microsoft::WRL::ComPtr<T>;
 
-	using XMMATRIX = DirectX::XMMATRIX;
 	using XMFLOAT4 = DirectX::XMFLOAT4;
 
 /// <summary>
@@ -80,7 +80,7 @@ public:
 
 	//定数バッファ用データ構造体(3D変換行列
 	struct ConstBufferData{
-		XMMATRIX mat;	//3D変換行列
+		DirectX::XMMATRIX mat;	//3D変換行列
 		XMFLOAT4 color;	//色(RGBA)
 	};
 
@@ -174,7 +174,7 @@ private:
 	Vector3 rotation = {0.0f, 0.0f, 0.0f};
 	Vector3 position = {0.0f, 0.0f, 0.0f};
 	//ワールド変換行列
-	XMMATRIX matWorld;
+	DirectX::XMMATRIX matWorld;
 	//親オブジェクトへのポインタ
 	GeometryObject3D* parent = nullptr;
 };

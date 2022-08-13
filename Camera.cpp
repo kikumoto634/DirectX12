@@ -29,16 +29,22 @@ void Camera::Update()
 void Camera::UpdateViewMatrix()
 {
 	//ビュー変換行列
-	XMFLOAT3 kEye{eye.x, eye.y, eye.z};
-	XMFLOAT3 kTarget{target.x, target.y, target.z};
-	XMFLOAT3 kUp{up.x, up.y, up.z};
+	//matView = MatrixLookAtLH(eye, target, up);
 
-	matView = XMMatrixLookAtLH(XMLoadFloat3(&kEye), XMLoadFloat3(&kTarget), XMLoadFloat3(&kUp));	
+	XMFLOAT3 keye{eye.x, eye.y, eye.z};
+	XMFLOAT3 ktarget{target.x, target.y, target.z};
+	XMFLOAT3 kup{up.x, up.y, up.z};
+	matView = XMMatrixLookAtLH(XMLoadFloat3(&keye), XMLoadFloat3(&ktarget), XMLoadFloat3(&kup));
 }
 
 void Camera::UpdateProjectionMatrix()
 {
 	//透視投影
+	/*matProjection = MatrixProjectionMatrix(
+		XMConvertToRadians(45.f),
+		(float)WinApp::window_width / WinApp::window_height,
+		nearZ, farZ
+	);*/
 	matProjection = XMMatrixPerspectiveFovLH(
 		XMConvertToRadians(45.0f),	//上下画角45°
 		(float)WinApp::window_width / WinApp::window_height,			//aspect比(画面横幅/画面縦幅)

@@ -9,15 +9,15 @@ void Player::Initialize(Input* input, UINT textureNumber, GeometryObject3D* obje
 	assert(object);
 
 	this->input = input;
-	this->object = object;
+	this->playerObject = object;
 	position = pos;
 	rotation = rot;
 	this->textureNumber = textureNumber;
 
-	this->object->Initialize();
-	this->object->SetTexNumber(this->textureNumber);
-	this->object->SetPosition(position);
-	this->object->SetRotation(rotation);
+	this->playerObject->Initialize();
+	this->playerObject->SetTexNumber(this->textureNumber);
+	this->playerObject->SetPosition(position);
+	this->playerObject->SetRotation(rotation);
 }
 
 void Player::Update()
@@ -36,14 +36,25 @@ void Player::Update()
 	position.y = min(position.y, +moveLimitY);
 
 	//更新
-	object->SetPosition(position);
-	object->SetRotation(rotation);
-	object->Update();
+	playerObject->SetPosition(position);
+	playerObject->SetRotation(rotation);
+	playerObject->Update();
+
+	Attack();
+	for(unique_ptr<PlayerBullet>& bullet : bullets)
+	{
+		bullet->Update();
+	}
 }
 
 void Player::Draw(ID3D12GraphicsCommandList* commandList)
 {
-	object->Draw(commandList);
+	playerObject->Draw(commandList);
+
+	for(unique_ptr<PlayerBullet>& bullet : bullets)
+	{
+		bullet->Draw(commandList);
+	}
 }
 
 Vector3 Player::MovementInput()
@@ -84,4 +95,26 @@ Vector3 Player::RotationInput()
 	}
 
 	return rot;
+}
+
+void Player::Attack()
+{
+	if(input->Trigger(DIK_SPACE))
+	{
+		//速度
+		const float bulletSpeed = 1.0f;
+		Vector3 velocity(0, 0, bulletSpeed);
+
+		//速度と自機の回転
+		//velocity = velocity * playerObject->GetWorld();
+
+		//生成初期化
+		unique_ptr<PlayerBullet> newBullet = make_unique<PlayerBullet>();
+		unique_ptr<GeometryObject3D> newBulletObject = make_unique<GeometryObject3D>();
+
+		newBullet->Initialize(textureNumber, newBulletObject.get(), position, velocity);
+
+		bullets.push_back(move(newBullet));
+		bulletsObject.push_back(move(newBulletObject));
+	}
 }

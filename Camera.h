@@ -2,15 +2,13 @@
 
 #include <DirectXMath.h>
 #include "Vector3.h"
+#include "Matrix4.h"
 
 /// <summary>
 /// カメラ
 /// </summary>
 class Camera
 {
-public:
-	using XMMATRIX = DirectX::XMMATRIX;
-
 public:
 	/// <summary>
 	/// 初期化
@@ -28,9 +26,9 @@ public:
 
 
 	//getter
-	const XMMATRIX& GetMatProjection()	{return matProjection;}
-	const XMMATRIX& GetMatView()	{return matView;}
-	const XMMATRIX& GetViewProjectionMatrix()	{return matViewProjection;}
+	const DirectX::XMMATRIX& GetMatProjection()	{return matProjection;}
+	const DirectX::XMMATRIX& GetMatView()	{return matView;}
+	const DirectX::XMMATRIX& GetViewProjectionMatrix()	{return matViewProjection;}
 
 	const Vector3& GetUp() {return up; }
 
@@ -67,9 +65,9 @@ public:
 protected:
 
 	//透視投影
-	XMMATRIX matProjection;	//プロジェクション行列
+	DirectX::XMMATRIX matProjection;	//プロジェクション行列
 	//ビュー変換行列
-	XMMATRIX matView;		//ビュー行列
+	DirectX::XMMATRIX matView;		//ビュー行列
 	Vector3 eye;			//視点座標
 	Vector3 target;		//注視点座標
 	Vector3 up;			//上方向ベクトル
@@ -77,6 +75,6 @@ protected:
 	float nearZ;
 	float farZ;
 
-	XMMATRIX matViewProjection;
+	DirectX::XMMATRIX matViewProjection;
 };
 

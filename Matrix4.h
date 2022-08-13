@@ -1,4 +1,6 @@
 #pragma once
+#include "Vector3.h"
+
 class Matrix4
 {
 public:
@@ -14,3 +16,22 @@ public:
 
 	Matrix4& operator*=(const Matrix4& m2);
 };
+
+const Matrix4& MatrixIdentity();
+
+const Matrix4& MatrixScaling(float x, float y, float z);
+
+const Matrix4& MatrixRotationX(float angle);
+const Matrix4& MatrixRotationY(float angle);
+const Matrix4& MatrixRotationZ(float angle);
+
+const Matrix4& MatrixTranslation(float x, float y, float z);
+
+const Matrix4& MatrixLookAtLH(const Vector3& eye, const Vector3& target, const Vector3& up);
+
+const Matrix4& MatrixProjectionMatrix(float FovAngleY, float AspectRatio, float NearZ, float FarZ);
+
+const Vector3& Vector3Transform(const Vector3& v, const Matrix4& m);
+
+const Matrix4& operator*(const Matrix4& m1, const Matrix4& m2);
+const Vector3& operator*(const Vector3& v, const Matrix4& m);

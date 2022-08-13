@@ -1,8 +1,11 @@
 #pragma once
 #include <memory>
+#include <list>
+
 #include "GeometryObject3D.h"
 #include "Vector3.h"
 #include "Input.h"
+#include "PlayerBullet.h"
 
 class Player
 {
@@ -15,14 +18,22 @@ private:
 	Vector3 MovementInput();
 	Vector3 RotationInput();
 
+	void Attack();
+
 private:
-	GeometryObject3D* object;
+	//オブジェクト
+	GeometryObject3D* playerObject = nullptr;
+
+	std::list<std::unique_ptr<PlayerBullet>> bullets;
+	std::list<std::unique_ptr<GeometryObject3D>> bulletsObject;
 	Input* input = nullptr;
 
+	//情報
 	Vector3 position;
 	Vector3 rotation;
 	UINT textureNumber;
 
+	//変数
 	float velocity_Movement = 1.f;
 	float velocity_Rotation = 0.025f;
 };
