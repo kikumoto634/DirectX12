@@ -234,8 +234,8 @@ void Object3D::Update()
 	matWorld *= matRot;
 	matWorld *= matTrans;
 
-	//const XMMATRIX& matViewProjection = camera->GetViewProjectionMatrix();
-	//const XMMATRIX& modelTransform = model->GetModelTransform();
+	const XMMATRIX& matViewProjection = camera->GetViewProjectionMatrix();
+	const XMMATRIX& modelTransform = model->GetModelTransform();
 	const Vector3& cameraPos = camera->GetEye();
 	
 	HRESULT result;
@@ -244,8 +244,8 @@ void Object3D::Update()
 	result = constBuffTransform->Map(0,nullptr, (void**)&constMap);
 	if(SUCCEEDED(result))
 	{
-	//	constMap->viewproj = matViewProjection;
-	//	constMap->world = modelTransform * matWorld;
+		constMap->viewproj = matViewProjection;
+		constMap->world = modelTransform * matWorld;
 		constMap->cameraPos = cameraPos;
 		constBuffTransform->Unmap(0,nullptr);
 	}

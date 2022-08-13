@@ -94,6 +94,15 @@ Vector3 Player::RotationInput()
 		rot.y += 1.f;
 	}
 
+	if(input->Push(DIK_W))
+	{
+		rot.x += 1.f;
+	}
+	else if(input->Push(DIK_S))
+	{
+		rot.x -= 1.f;
+	}
+
 	return rot;
 }
 
@@ -106,13 +115,15 @@ void Player::Attack()
 		Vector3 velocity(0, 0, bulletSpeed);
 
 		//ë¨ìxÇ∆é©ã@ÇÃâÒì]
-		//velocity = velocity * playerObject->GetWorld();
+		velocity.x = velocity.x*playerObject->GetWorld().r[0].m128_f32[0] + velocity.y*playerObject->GetWorld().r[1].m128_f32[0] + velocity.z*playerObject->GetWorld().r[2].m128_f32[0];
+		velocity.y = velocity.x*playerObject->GetWorld().r[0].m128_f32[1] + velocity.y*playerObject->GetWorld().r[1].m128_f32[1] + velocity.z*playerObject->GetWorld().r[2].m128_f32[1];
+		velocity.z = velocity.x*playerObject->GetWorld().r[0].m128_f32[2] + velocity.y*playerObject->GetWorld().r[1].m128_f32[2] + velocity.z*playerObject->GetWorld().r[2].m128_f32[2];
 
 		//ê∂ê¨èâä˙âª
 		unique_ptr<PlayerBullet> newBullet = make_unique<PlayerBullet>();
 		unique_ptr<GeometryObject3D> newBulletObject = make_unique<GeometryObject3D>();
 
-		newBullet->Initialize(textureNumber, newBulletObject.get(), position, velocity);
+		newBullet->Initialize(textureNumber, newBulletObject.get(), position, rotation, velocity);
 
 		bullets.push_back(move(newBullet));
 		bulletsObject.push_back(move(newBulletObject));

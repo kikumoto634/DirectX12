@@ -149,6 +149,8 @@ public:
 	const Vector3& GetRotation()	{return this->rotation; }
 	const Vector3& GetPosition()	{return this->position; }
 
+	const XMMATRIX& GetWorld()	{return this->matWorld;}
+
 /// <summary>
 /// メンバ変数
 /// </summary>
