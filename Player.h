@@ -10,7 +10,7 @@
 class Player
 {
 public:
-	void Initialize(Input* input, UINT textureNumber, GeometryObject3D* object, Vector3 pos = {0,0,50}, Vector3 rot = {0,0,0});
+	void Initialize(Input* input, UINT textureNumber, GeometryObject3D* object, Vector3 pos = {0,0,0}, Vector3 rot = {0,0,0});
 	void Update();
 	void Draw(ID3D12GraphicsCommandList* commandList);
 

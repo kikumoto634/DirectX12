@@ -96,6 +96,7 @@
     <ClCompile Include="DebugText.cpp" />
     <ClCompile Include="DirectXCommon.cpp" />
     <ClCompile Include="DirectXGame.cpp" />
+    <ClCompile Include="Enemy.cpp" />
     <ClCompile Include="FbxLoader.cpp" />
     <ClCompile Include="GameBase.cpp" />
     <ClCompile Include="GeometryManager.cpp" />
@@ -171,6 +172,7 @@
     <ClInclude Include="DebugText.h" />
     <ClInclude Include="DirectXCommon.h" />
     <ClInclude Include="DirectXGame.h" />
+    <ClInclude Include="Enemy.h" />
     <ClInclude Include="FbxLoader.h" />
     <ClInclude Include="GameBase.h" />
     <ClInclude Include="GeometryManager.h" />

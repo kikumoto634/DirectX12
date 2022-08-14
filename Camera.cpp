@@ -5,7 +5,7 @@ using namespace DirectX;
 
 void Camera::Initialize()
 {
-	const float distance = 100.f;	//カメラの距離
+	const float distance = 150.f;	//カメラの距離
 
 	eye = {0, 0, -distance};
 	target = {0, 0, 0};

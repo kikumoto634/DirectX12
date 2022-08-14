@@ -2,6 +2,7 @@
 #include "GameBase.h"
 
 #include "Player.h"
+#include "Enemy.h"
 
 class DirectXGame : public GameBase
 {
@@ -19,5 +20,8 @@ private:
 
 	std::unique_ptr<GeometryObject3D> playerObject;
 	std::unique_ptr<Player> player;
+
+	std::unique_ptr<GeometryObject3D> enemyObject;
+	std::unique_ptr<Enemy> enemy;
 };
 
