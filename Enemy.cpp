@@ -1,14 +1,17 @@
 #include "Enemy.h"
 #include <cassert>
 
-void (Enemy::*Enemy::spFuncTable[])() = {
-	&Enemy::ApporoachMove,
-	&Enemy::LeaveMove
-};
+
+Enemy::~Enemy()
+{
+	delete state;
+}
 
 void Enemy::Initialize(UINT textureNumber, GeometryObject3D *object, Vector3 pos, Vector3 rot)
 {
 	assert(object);
+
+	state = new EnemyApporoach();
 
 	this->textureNumber = textureNumber;
 	this->enemyObject = object;
@@ -23,9 +26,7 @@ void Enemy::Initialize(UINT textureNumber, GeometryObject3D *object, Vector3 pos
 
 void Enemy::Update()
 {
-	//ˆÚ“®
-	(this->*spFuncTable[static_cast<size_t>(phase)])();
-
+	state->Update(this);
 
 	enemyObject->SetPosition(position);
 	enemyObject->Update();
@@ -36,19 +37,27 @@ void Enemy::Draw(ID3D12GraphicsCommandList *commandList)
 	enemyObject->Draw(commandList);
 }
 
-void Enemy::ApporoachMove()
+void Enemy::ChangeState(EnemyState* newState)
+{
+	delete state;
+	state = newState;
+}
+
+
+
+void EnemyApporoach::Update(Enemy* pEnemy)
 {
 	Vector3 move = {0.f,0.f,-1.f};
-	position += move.normalize() * approachVelocity;
+	pEnemy->PositionIncrement(move.normalize() * pEnemy->approachVelocity);
 
-	if(position.z < 10.f)
+	if(pEnemy->GetPosition().z < 10.f)
 	{
-		phase = Phase::Leave;
+		pEnemy->ChangeState(new EnemyLeave);
 	}
 }
 
-void Enemy::LeaveMove()
+void EnemyLeave::Update(Enemy* pEnemy)
 {
 	Vector3 move = {-0.5f,0.5f,-1.f};
-	position += move.normalize() * approachVelocity;	
+	pEnemy->PositionIncrement(move.normalize() * pEnemy->leaveVelocity);
 }

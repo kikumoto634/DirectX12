@@ -2,28 +2,53 @@
 #include "GeometryObject3D.h"
 #include "Vector3.h"
 
+class Enemy;
+
+class EnemyState
+{
+public:
+	virtual void Update(Enemy* pEnemy) = 0;
+};
+
+//ê⁄ãﬂ
+class EnemyApporoach : public EnemyState
+{
+public:
+	void Update(Enemy* pEnemy);
+};
+
+//ó£íE
+class EnemyLeave : public EnemyState
+{
+public:
+	void Update(Enemy* pEnemy);
+};
+
 /// <summary>
 /// ìG
-/// </summary>
+/// </summary> 
 class Enemy
 {
-private:
-	enum class Phase
-	{
-		Apporoach,
-		Leave,
-	};
-
-private:
-	static void (Enemy::*spFuncTable[])();
+public:
+	const float approachVelocity = 2.f;
+	const float leaveVelocity = 4.f;
 
 public:
+	Enemy() = default;
+	~Enemy();
+
 	void Initialize(UINT textureNumber, GeometryObject3D* object, Vector3 pos = {0,0,50}, Vector3 rot = {0,0,0});
 	void Update();
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
-	void ApporoachMove();
-	void LeaveMove();
+	//èÛë‘ëJà⁄
+	void ChangeState(EnemyState* newState);
+
+	//â¡éZ
+	void PositionIncrement(Vector3 pos)	{position += pos;}
+
+	//Get
+	Vector3 GetPosition()	{return position;}
 
 private:
 	//ÉIÉuÉWÉFÉNÉg
@@ -34,9 +59,6 @@ private:
 	Vector3 rotation;
 	UINT textureNumber;
 
-	float approachVelocity = 2.f;
-	float leaveVelocity = 4.f;
-
-	Phase phase = Phase::Apporoach;
+	//èÛë‘
+	EnemyState* state = nullptr;
 };
-
