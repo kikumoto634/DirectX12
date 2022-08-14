@@ -34,15 +34,25 @@ void Enemy::Update()
 	{
 		return bullet->GetIsDead();
 	});
+	//終了したタイマー削除
+	timedCalls.remove_if([](unique_ptr<TimedCall>& time)
+	{
+		return time->IsFinished();
+	});
 
 	state->Update(this);
 
 	enemyObject->SetPosition(position);
 	enemyObject->Update();
 
+	//全要素を回す
 	for(unique_ptr<EnemyBullet>& bullet : bullets)
 	{
 		bullet->Update();
+	}
+	for(unique_ptr<TimedCall>& timer : timedCalls)
+	{
+		timer->Update();
 	}
 }
 
@@ -77,6 +87,14 @@ void Enemy::Fire()
 	bulletsObject.push_back(move(newBulletObject));
 }
 
+void Enemy::FireTimeReset()
+{
+	Fire();
+
+	//発射タイマーをセット
+	timedCalls.push_back(std::make_unique<TimedCall>(std::bind(&Enemy::FireTimeReset, this), kFireInterval));
+}
+
 void Enemy::ChangeState(EnemyState* newState)
 {
 	delete state;
@@ -85,20 +103,14 @@ void Enemy::ChangeState(EnemyState* newState)
 
 void Enemy::ApporoachInitialize()
 {
-	FireTimerInitialize();
+	//発射タイマーをセットする
+	FireTimeReset();
 }
 
 
 
 void EnemyApporoach::Update(Enemy* pEnemy)
 {
-	//発射処理
-	pEnemy->FireTimerDecrement(1);
-	if(pEnemy->GetFireTimer() < 0)
-	{
-		pEnemy->Fire();
-		pEnemy->FireTimerInitialize();
-	}
 
 	Vector3 move = {0.f,0.f,-1.f};
 	pEnemy->PositionIncrement(move.normalize() * pEnemy->approachVelocity);

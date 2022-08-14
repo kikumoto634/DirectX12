@@ -5,6 +5,7 @@
 #include "GeometryObject3D.h"
 #include "Vector3.h"
 #include "EnemyBullet.h"
+#include "TimedCall.h"
 
 class Enemy;
 
@@ -48,10 +49,8 @@ public:
 	void Update();
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
-	//発射
-	void Fire();
-	void FireTimerDecrement(int frame)	{fireTimer -= frame;}
-	void FireTimerInitialize()	{fireTimer = kFireInterval;}
+	//弾の発射、タイマーリセットするコールバック
+	void FireTimeReset();
 
 	//状態遷移
 	void ChangeState(EnemyState* newState);
@@ -64,7 +63,10 @@ public:
 
 	//Get
 	Vector3 GetPosition()	{return position;}
-	int32_t GetFireTimer()	{return fireTimer;}
+
+private:
+	//発射
+	void Fire();
 
 private:
 	//オブジェクト
@@ -72,8 +74,8 @@ private:
 
 	std::list<std::unique_ptr<EnemyBullet>> bullets;
 	std::list<std::unique_ptr<GeometryObject3D>> bulletsObject;
-	//発射タイマー
-	int32_t fireTimer = 0;
+	//時限発動のリスト
+	std::list<std::unique_ptr<TimedCall>> timedCalls;
 
 	//情報
 	Vector3 position;
