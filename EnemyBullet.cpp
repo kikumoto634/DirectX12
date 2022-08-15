@@ -25,6 +25,11 @@ void EnemyBullet::Initialize(UINT textureNumber, GeometryObject3D *object, const
 	rotation.x = std::atan2(-velocity.y, temp);
 
 	this->object->SetRotation(rotation);
+
+	//Õ“Ë‘®«İ’è
+	SetCollisionAttribute(kCollisionAttributeEnemy);
+	//Õ“Ë‘ÎÛ‚ğ©•ª‚Ì‘®«ˆÈŠO‚Éİ’è
+	SetCollisionMask(kCollisionAttributeEnemy);
 }
 
 void EnemyBullet::Update()

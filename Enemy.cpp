@@ -24,6 +24,11 @@ void Enemy::Initialize(UINT textureNumber, GeometryObject3D *object, Vector3 pos
 
 	state = new EnemyApporoach();
 	ApporoachInitialize();
+
+	//Õ“Ë‘®«İ’è
+	SetCollisionAttribute(kCollisionAttributeEnemy);
+	//Õ“Ë‘ÎÛ‚ğ©•ª‚Ì‘®«ˆÈŠO‚Éİ’è
+	SetCollisionMask(kCollisionAttributeEnemy);
 }
 
 void Enemy::Update()

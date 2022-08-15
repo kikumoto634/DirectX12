@@ -16,6 +16,11 @@ void PlayerBullet::Initialize(UINT textureNumber, GeometryObject3D *object, cons
 	this->object->SetPosition(position);
 	this->object->SetRotation(rotation);
 	this->object->SetColor({1,0,0,1});
+
+	//Õ“Ë‘®«İ’è
+	SetCollisionAttribute(kCollisionAttributePlayer);
+	//Õ“Ë‘ÎÛ‚ğ©•ª‚Ì‘®«ˆÈŠO‚Éİ’è
+	SetCollisionMask(kCollisionAttributePlayer);
 }
 
 void PlayerBullet::Update()

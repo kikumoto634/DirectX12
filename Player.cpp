@@ -18,6 +18,11 @@ void Player::Initialize(Input* input, UINT textureNumber, GeometryObject3D* obje
 	this->playerObject->SetTexNumber(this->textureNumber);
 	this->playerObject->SetPosition(position);
 	this->playerObject->SetRotation(rotation);
+
+	//Õ“Ë‘®«İ’è
+	SetCollisionAttribute(kCollisionAttributePlayer);
+	//Õ“Ë‘ÎÛ‚ğ©•ª‚Ì‘®«ˆÈŠO‚Éİ’è
+	SetCollisionMask(kCollisionAttributePlayer);
 }
 
 void Player::Update()

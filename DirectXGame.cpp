@@ -81,35 +81,48 @@ void DirectXGame::CheckAllCollision()
 	//敵弾リストの取得
 	const std::list<std::unique_ptr<EnemyBullet>>& enemyBullets = enemy->GetBullets();
 
-#pragma region 自キャラと敵弾の当たり判定
-
-	for(const std::unique_ptr<EnemyBullet>& bullet : enemyBullets){
-		CheckCollisionPair(player.get(), bullet.get());
-	}
-
-#pragma endregion
-
-#pragma region 自弾と敵キャラの当たり判定
-
+	//コライダー
+	std::list<Collider*> colliders;
+	//コライダーをリストに登録
+	colliders.push_back(player.get());
+	colliders.push_back(enemy.get());
+	//自弾すべてについて
 	for(const std::unique_ptr<PlayerBullet>& bullet : playerBullets){
-		CheckCollisionPair(bullet.get(), enemy.get());
+		colliders.push_back(bullet.get());
+	}
+	//敵弾すべてについて
+	for(const std::unique_ptr<EnemyBullet>& bullet : enemyBullets){
+		colliders.push_back(bullet.get());
 	}
 
-#pragma endregion
+	//総当たり判定
+	//リスト内のペアを総当たり
+	std::list<Collider*>::iterator itrA = colliders.begin();
+	for(; itrA != colliders.end(); ++itrA){
+		//イテレータAからコライダーAを取得
+		Collider* colliderA = *itrA;
 
-#pragma region 自弾と敵弾の当たり判定
+		//イテレータBはイテレータAの次の要素から回す(重複判定回避)
+		std::list<Collider*>::iterator itrB = itrA;
+		itrB++;
 
-	for(const std::unique_ptr<PlayerBullet>& playerBullet : playerBullets){
-		for(const std::unique_ptr<EnemyBullet>& enemyBullet : enemyBullets){
-			CheckCollisionPair(playerBullet.get(), enemyBullet.get());
+		for(; itrB != colliders.end(); ++itrB){
+			//イテレータBからコライダーBを取得
+			Collider* colliderB = *itrB;
+
+			//ペアの当たり判定
+			CheckCollisionPair(colliderA, colliderB);
 		}
 	}
-
-#pragma endregion
 }
 
 void DirectXGame::CheckCollisionPair(Collider *colliderA, Collider *colliderB)
 {
+	//衝突フィルタリング
+	if(colliderA->GetCollisionAttribute() == colliderB->GetCollisionMask() || colliderB->GetCollisionAttribute() == colliderA->GetCollisionMask()){
+		return;
+	}
+
 	Vector3 posA = colliderA->GetPosition();
 	Vector3 posB = colliderB->GetPosition();
 

@@ -17,12 +17,12 @@ public:
 
 	void Finalize() override;
 
+private:
 	/// <summary>
 	/// 衝突判定と応答
 	/// </summary>
 	void CheckAllCollision();
 
-private:
 	void CheckCollisionPair(Collider* colliderA, Collider* colliderB);
 
 private:
