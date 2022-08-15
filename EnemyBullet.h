@@ -9,7 +9,11 @@ public:
 	void Update();
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
+	//è’ìÀîªíË
+	void OnCollision();
+
 	bool GetIsDead() const {return isDead;}
+	Vector3 GetPosition()	{return position;}
 
 private:
 	static const int32_t kLifeTime = 60 * 5;

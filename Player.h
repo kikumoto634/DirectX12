@@ -14,8 +14,13 @@ public:
 	void Update();
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
+	//Õ“Ë”»’è
+	void OnCollision();
+
 	//Get
 	Vector3 GetPosition()	{return position;}
+	//’eƒŠƒXƒgæ“¾
+	const std::list<std::unique_ptr<PlayerBullet>>& GetBullets()	{return bullets;}
 
 private:
 	Vector3 MovementInput();

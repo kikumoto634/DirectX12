@@ -72,12 +72,6 @@ void Enemy::Fire()
 	//‘¬“x
 	const float bulletSpeed = 5.0f;
 
-	//Vector3 velocity(0, 0, bulletSpeed);
-	////‘¬“x‚ÆŽ©‹@‚Ì‰ñ“]
-	//velocity.x = velocity.x*enemyObject->GetWorld().r[0].m128_f32[0] + velocity.y*enemyObject->GetWorld().r[1].m128_f32[0] + velocity.z*enemyObject->GetWorld().r[2].m128_f32[0];
-	//velocity.y = velocity.x*enemyObject->GetWorld().r[0].m128_f32[1] + velocity.y*enemyObject->GetWorld().r[1].m128_f32[1] + velocity.z*enemyObject->GetWorld().r[2].m128_f32[1];
-	//velocity.z = velocity.x*enemyObject->GetWorld().r[0].m128_f32[2] + velocity.y*enemyObject->GetWorld().r[1].m128_f32[2] + velocity.z*enemyObject->GetWorld().r[2].m128_f32[2];
-
 	//—U“±’e
 	Vector3 playerPos = player->GetPosition();
 	Vector3 enemyPos = GetPosition();
@@ -115,6 +109,10 @@ void Enemy::ApporoachInitialize()
 void Enemy::ApporoachFinalize()
 {
 	timedCalls.clear();
+}
+
+void Enemy::OnCollision()
+{
 }
 
 void EnemyApporoach::Update(Enemy* pEnemy)

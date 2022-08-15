@@ -16,6 +16,11 @@ public:
 
 	void Finalize() override;
 
+	/// <summary>
+	/// 衝突判定と応答
+	/// </summary>
+	void CheckAllCollision();
+
 private:
 
 	std::unique_ptr<GeometryObject3D> playerObject;

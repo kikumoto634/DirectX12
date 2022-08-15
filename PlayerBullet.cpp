@@ -35,3 +35,8 @@ void PlayerBullet::Draw(ID3D12GraphicsCommandList *commandList)
 {
 	object->Draw(commandList);
 }
+
+void PlayerBullet::OnCollision()
+{
+	isDead = true;
+}

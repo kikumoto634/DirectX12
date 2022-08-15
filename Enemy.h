@@ -63,11 +63,16 @@ public:
 	//接近フェーズ後処理
 	void ApporoachFinalize();
 
+	//衝突判定
+	void OnCollision();
+
 	//加算
 	void PositionIncrement(Vector3 pos)	{position += pos;}
 
 	//Get
 	Vector3 GetPosition()	{return position;}
+	//弾リスト取得
+	const std::list<std::unique_ptr<EnemyBullet>>& GetBullets()	{return bullets;}
 
 	//Set
 	void SetPlayer(Player* player)	{this->player = player;}

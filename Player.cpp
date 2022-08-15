@@ -63,6 +63,10 @@ void Player::Draw(ID3D12GraphicsCommandList* commandList)
 	}
 }
 
+void Player::OnCollision()
+{
+}
+
 Vector3 Player::MovementInput()
 {
 	Vector3 move = {0, 0, 0};
@@ -117,7 +121,7 @@ void Player::Attack()
 	if(input->Trigger(DIK_SPACE))
 	{
 		//‘¬“x
-		const float bulletSpeed = 1.0f;
+		const float bulletSpeed = 4.0f;
 		Vector3 velocity(0, 0, bulletSpeed);
 
 		//‘¬“x‚ÆŽ©‹@‚Ì‰ñ“]
