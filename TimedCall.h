@@ -8,7 +8,7 @@ class TimedCall
 {
 public:
 	//コンストラクタ
-	TimedCall(std::function<void(void)> func, uint32_t time);
+	TimedCall(std::function<void(void)> func1, std::function<void(void)> func2, uint32_t time);
 	//更新
 	void Update();
 	//完了ならtrueを返す
@@ -16,7 +16,10 @@ public:
 
 private:
 	//コールバック
-	std::function<void(void)> func;
+	//繰り返し
+	std::function<void(void)> func1;
+	//イベント
+	std::function<void(void)> func2;
 	//残り時間
 	uint32_t time = 0;
 	//完了フラグ

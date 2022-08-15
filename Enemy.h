@@ -39,7 +39,7 @@ public:
 
 public:
 	const float approachVelocity = 2.f;
-	const float leaveVelocity = 4.f;
+	const float leaveVelocity = 3.f;
 
 public:
 	Enemy() = default;
@@ -57,6 +57,8 @@ public:
 
 	//接近フェーズ初期化
 	void ApporoachInitialize();
+	//接近フェーズ後処理
+	void ApporoachFinalize();
 
 	//加算
 	void PositionIncrement(Vector3 pos)	{position += pos;}

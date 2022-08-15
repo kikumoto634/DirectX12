@@ -12,8 +12,6 @@ void Enemy::Initialize(UINT textureNumber, GeometryObject3D *object, Vector3 pos
 {
 	assert(object);
 
-	state = new EnemyApporoach();
-
 	this->textureNumber = textureNumber;
 	this->enemyObject = object;
 	this->position = pos;
@@ -24,6 +22,7 @@ void Enemy::Initialize(UINT textureNumber, GeometryObject3D *object, Vector3 pos
 	this->enemyObject->SetPosition(this->position);
 	this->enemyObject->SetRotation(this->rotation);
 
+	state = new EnemyApporoach();
 	ApporoachInitialize();
 }
 
@@ -89,10 +88,8 @@ void Enemy::Fire()
 
 void Enemy::FireTimeReset()
 {
-	Fire();
-
 	//発射タイマーをセット
-	timedCalls.push_back(std::make_unique<TimedCall>(std::bind(&Enemy::FireTimeReset, this), kFireInterval));
+	timedCalls.push_back(std::make_unique<TimedCall>(std::bind(&Enemy::FireTimeReset, this), std::bind(&Enemy::Fire, this), kFireInterval));
 }
 
 void Enemy::ChangeState(EnemyState* newState)
@@ -107,16 +104,19 @@ void Enemy::ApporoachInitialize()
 	FireTimeReset();
 }
 
-
+void Enemy::ApporoachFinalize()
+{
+	timedCalls.clear();
+}
 
 void EnemyApporoach::Update(Enemy* pEnemy)
 {
-
 	Vector3 move = {0.f,0.f,-1.f};
 	pEnemy->PositionIncrement(move.normalize() * pEnemy->approachVelocity);
 
-	if(pEnemy->GetPosition().z < 10.f)
+	if(pEnemy->GetPosition().z < 100.f)
 	{
+		pEnemy->ApporoachFinalize();
 		pEnemy->ChangeState(new EnemyLeave);
 	}
 }
