@@ -7,7 +7,7 @@
 class TimedCall
 {
 public:
-	//コンストラクタ
+	//コンストラクタ(タイマーリセット、イベント)
 	TimedCall(std::function<void(void)> func1, std::function<void(void)> func2, uint32_t time);
 	//更新
 	void Update();

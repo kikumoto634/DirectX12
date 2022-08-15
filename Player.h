@@ -14,6 +14,9 @@ public:
 	void Update();
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
+	//Get
+	Vector3 GetPosition()	{return position;}
+
 private:
 	Vector3 MovementInput();
 	Vector3 RotationInput();

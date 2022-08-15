@@ -6,7 +6,10 @@
 #include "Vector3.h"
 #include "EnemyBullet.h"
 #include "TimedCall.h"
+#include "Player.h"
 
+//前方宣言
+class Player;
 class Enemy;
 
 class EnemyState
@@ -38,8 +41,8 @@ public:
 	static const int kFireInterval = 60;
 
 public:
-	const float approachVelocity = 2.f;
-	const float leaveVelocity = 3.f;
+	const float approachVelocity = 1.f;
+	const float leaveVelocity = 1.5f;
 
 public:
 	Enemy() = default;
@@ -66,6 +69,9 @@ public:
 	//Get
 	Vector3 GetPosition()	{return position;}
 
+	//Set
+	void SetPlayer(Player* player)	{this->player = player;}
+
 private:
 	//発射
 	void Fire();
@@ -86,4 +92,8 @@ private:
 
 	//状態
 	EnemyState* state = nullptr;
+
+
+	//コンポーネント
+	Player* player = nullptr;
 };

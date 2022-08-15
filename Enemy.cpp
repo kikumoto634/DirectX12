@@ -67,20 +67,28 @@ void Enemy::Draw(ID3D12GraphicsCommandList *commandList)
 
 void Enemy::Fire()
 {
+	assert(player);
+
 	//ë¨ìx
 	const float bulletSpeed = 5.0f;
-	Vector3 velocity(0, 0, bulletSpeed);
 
-	//ë¨ìxÇ∆é©ã@ÇÃâÒì]
-	velocity.x = velocity.x*enemyObject->GetWorld().r[0].m128_f32[0] + velocity.y*enemyObject->GetWorld().r[1].m128_f32[0] + velocity.z*enemyObject->GetWorld().r[2].m128_f32[0];
-	velocity.y = velocity.x*enemyObject->GetWorld().r[0].m128_f32[1] + velocity.y*enemyObject->GetWorld().r[1].m128_f32[1] + velocity.z*enemyObject->GetWorld().r[2].m128_f32[1];
-	velocity.z = velocity.x*enemyObject->GetWorld().r[0].m128_f32[2] + velocity.y*enemyObject->GetWorld().r[1].m128_f32[2] + velocity.z*enemyObject->GetWorld().r[2].m128_f32[2];
+	//Vector3 velocity(0, 0, bulletSpeed);
+	////ë¨ìxÇ∆é©ã@ÇÃâÒì]
+	//velocity.x = velocity.x*enemyObject->GetWorld().r[0].m128_f32[0] + velocity.y*enemyObject->GetWorld().r[1].m128_f32[0] + velocity.z*enemyObject->GetWorld().r[2].m128_f32[0];
+	//velocity.y = velocity.x*enemyObject->GetWorld().r[0].m128_f32[1] + velocity.y*enemyObject->GetWorld().r[1].m128_f32[1] + velocity.z*enemyObject->GetWorld().r[2].m128_f32[1];
+	//velocity.z = velocity.x*enemyObject->GetWorld().r[0].m128_f32[2] + velocity.y*enemyObject->GetWorld().r[1].m128_f32[2] + velocity.z*enemyObject->GetWorld().r[2].m128_f32[2];
+
+	//óUì±íe
+	Vector3 playerPos = player->GetPosition();
+	Vector3 enemyPos = GetPosition();
+	enemyPos = playerPos - enemyPos;
+	enemyPos = enemyPos.normalize();
 
 	//ê∂ê¨èâä˙âª
 	unique_ptr<EnemyBullet> newBullet = make_unique<EnemyBullet>();
 	unique_ptr<GeometryObject3D> newBulletObject = make_unique<GeometryObject3D>();
 
-	newBullet->Initialize(textureNumber, newBulletObject.get(), position, rotation, velocity);
+	newBullet->Initialize(textureNumber, newBulletObject.get(), position, enemyPos*bulletSpeed);
 	
 	bullets.push_back(move(newBullet));
 	bulletsObject.push_back(move(newBulletObject));
@@ -114,7 +122,7 @@ void EnemyApporoach::Update(Enemy* pEnemy)
 	Vector3 move = {0.f,0.f,-1.f};
 	pEnemy->PositionIncrement(move.normalize() * pEnemy->approachVelocity);
 
-	if(pEnemy->GetPosition().z < 100.f)
+	if(pEnemy->GetPosition().z < 50.f)
 	{
 		pEnemy->ApporoachFinalize();
 		pEnemy->ChangeState(new EnemyLeave);

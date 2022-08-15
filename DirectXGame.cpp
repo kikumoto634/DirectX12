@@ -22,6 +22,7 @@ void DirectXGame::Initialize()
 	enemyObject = make_unique<GeometryObject3D>();
 	enemy = make_unique<Enemy>();
 	enemy->Initialize(2, enemyObject.get(), {0, 25, 500});
+	enemy->SetPlayer(player.get());
 
 #pragma endregion
 
