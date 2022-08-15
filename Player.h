@@ -6,8 +6,9 @@
 #include "Vector3.h"
 #include "Input.h"
 #include "PlayerBullet.h"
+#include "Collider.h"
 
-class Player
+class Player : public Collider
 {
 public:
 	void Initialize(Input* input, UINT textureNumber, GeometryObject3D* object, Vector3 pos = {0,0,0}, Vector3 rot = {0,0,0});
@@ -15,10 +16,10 @@ public:
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
 	//Õ“Ë”»’è
-	void OnCollision();
+	void OnCollision() override;
 
 	//Get
-	Vector3 GetPosition()	{return position;}
+	const Vector3 GetPosition() override	{return position;}
 	//’eƒŠƒXƒgæ“¾
 	const std::list<std::unique_ptr<PlayerBullet>>& GetBullets()	{return bullets;}
 

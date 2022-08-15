@@ -76,9 +76,6 @@ void DirectXGame::Finalize()
 
 void DirectXGame::CheckAllCollision()
 {
-	//判定対象AとBの座標
-	Vector3 posA, posB;
-
 	//自弾リストの取得
 	const std::list<std::unique_ptr<PlayerBullet>>& playerBullets = player->GetBullets();
 	//敵弾リストの取得
@@ -86,32 +83,16 @@ void DirectXGame::CheckAllCollision()
 
 #pragma region 自キャラと敵弾の当たり判定
 
-	posA = player.get()->GetPosition();
 	for(const std::unique_ptr<EnemyBullet>& bullet : enemyBullets){
-		posB = bullet.get()->GetPosition();
-
-		float length = (posB.x-posA.x)*(posB.x-posA.x) + (posB.y-posA.y)*(posB.y-posA.y) + (posB.z-posA.z)*(posB.z-posA.z);
-		if(length <= (2+2)*(2+2))
-		{
-			player->OnCollision();
-			bullet->OnCollision();
-		}
+		CheckCollisionPair(player.get(), bullet.get());
 	}
 
 #pragma endregion
 
 #pragma region 自弾と敵キャラの当たり判定
 
-	posA = enemy.get()->GetPosition();
 	for(const std::unique_ptr<PlayerBullet>& bullet : playerBullets){
-		posB = bullet.get()->GetPosition();
-
-		float length = (posB.x-posA.x)*(posB.x-posA.x) + (posB.y-posA.y)*(posB.y-posA.y) + (posB.z-posA.z)*(posB.z-posA.z);
-		if(length <= (5+5)*(5+5))
-		{
-			enemy->OnCollision();
-			bullet->OnCollision();
-		}
+		CheckCollisionPair(bullet.get(), enemy.get());
 	}
 
 #pragma endregion
@@ -120,18 +101,21 @@ void DirectXGame::CheckAllCollision()
 
 	for(const std::unique_ptr<PlayerBullet>& playerBullet : playerBullets){
 		for(const std::unique_ptr<EnemyBullet>& enemyBullet : enemyBullets){
-
-			posA = playerBullet.get()->GetPosition();
-			posB = enemyBullet.get()->GetPosition();
-
-			float length = (posB.x-posA.x)*(posB.x-posA.x) + (posB.y-posA.y)*(posB.y-posA.y) + (posB.z-posA.z)*(posB.z-posA.z);
-			if(length <= (5+5)*(2+2))
-			{
-				playerBullet->OnCollision();
-				enemyBullet->OnCollision();
-			}
+			CheckCollisionPair(playerBullet.get(), enemyBullet.get());
 		}
 	}
 
 #pragma endregion
+}
+
+void DirectXGame::CheckCollisionPair(Collider *colliderA, Collider *colliderB)
+{
+	Vector3 posA = colliderA->GetPosition();
+	Vector3 posB = colliderB->GetPosition();
+
+	float length = (posB.x-posA.x)*(posB.x-posA.x) + (posB.y-posA.y)*(posB.y-posA.y) + (posB.z-posA.z)*(posB.z-posA.z);
+	if(length <= (3+3)*(3+3)){
+		colliderA->OnCollision();
+		colliderB->OnCollision();
+	}
 }

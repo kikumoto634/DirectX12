@@ -3,6 +3,7 @@
 
 #include "Player.h"
 #include "Enemy.h"
+#include "Collider.h"
 
 class DirectXGame : public GameBase
 {
@@ -20,6 +21,9 @@ public:
 	/// 衝突判定と応答
 	/// </summary>
 	void CheckAllCollision();
+
+private:
+	void CheckCollisionPair(Collider* colliderA, Collider* colliderB);
 
 private:
 

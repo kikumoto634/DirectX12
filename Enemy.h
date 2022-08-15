@@ -7,6 +7,7 @@
 #include "EnemyBullet.h"
 #include "TimedCall.h"
 #include "Player.h"
+#include "Collider.h"
 
 //‘O•ûéŒ¾
 class Player;
@@ -35,7 +36,7 @@ public:
 /// <summary>
 /// “G
 /// </summary> 
-class Enemy
+class Enemy : public Collider
 {
 public:
 	static const int kFireInterval = 60;
@@ -64,13 +65,13 @@ public:
 	void ApporoachFinalize();
 
 	//Õ“Ë”»’è
-	void OnCollision();
+	void OnCollision() override;
 
 	//‰ÁZ
 	void PositionIncrement(Vector3 pos)	{position += pos;}
 
 	//Get
-	Vector3 GetPosition()	{return position;}
+	const Vector3 GetPosition() override	{return position;}
 	//’eƒŠƒXƒgæ“¾
 	const std::list<std::unique_ptr<EnemyBullet>>& GetBullets()	{return bullets;}
 

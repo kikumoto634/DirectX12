@@ -67,6 +67,12 @@
     <Filter Include="ヘッダー ファイル\Enemy">
       <UniqueIdentifier>{942a15f1-9f1b-4e1b-a0ef-ca8650e1a9a0}</UniqueIdentifier>
     </Filter>
+    <Filter Include="ソース ファイル\Collider">
+      <UniqueIdentifier>{411de212-9fff-4c50-b28b-0f91638308a2}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="ヘッダー ファイル\Collider">
+      <UniqueIdentifier>{44734784-cde5-44ea-93d1-aaf9ab6e32ea}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp">
@@ -140,6 +146,9 @@
     </ClCompile>
     <ClCompile Include="TimedCall.cpp">
       <Filter>ソース ファイル\Enemy</Filter>
+    </ClCompile>
+    <ClCompile Include="Collider.cpp">
+      <Filter>ソース ファイル\Collider</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -224,6 +233,9 @@
     </ClInclude>
     <ClInclude Include="TimedCall.h">
       <Filter>ヘッダー ファイル\Enemy</Filter>
+    </ClInclude>
+    <ClInclude Include="Collider.h">
+      <Filter>ヘッダー ファイル\Collider</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

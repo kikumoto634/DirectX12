@@ -1,8 +1,9 @@
 #pragma once
 #include "Vector3.h"
 #include "GeometryObject3D.h"
+#include "Collider.h"
 
-class EnemyBullet
+class EnemyBullet : public Collider
 {
 public:
 	void Initialize(UINT textureNumber, GeometryObject3D* object, const Vector3& pos, const Vector3& velocity);
@@ -10,10 +11,10 @@ public:
 	void Draw(ID3D12GraphicsCommandList* commandList);
 
 	//è’ìÀîªíË
-	void OnCollision();
+	void OnCollision() override;
 
 	bool GetIsDead() const {return isDead;}
-	Vector3 GetPosition()	{return position;}
+	const Vector3 GetPosition() override	{return position;}
 
 private:
 	static const int32_t kLifeTime = 60 * 5;
