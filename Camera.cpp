@@ -12,7 +12,7 @@ void Camera::Initialize()
 	up = {0, 1, 0};
 
 	nearZ = 0.1f;
-	farZ = 1000.f;
+	farZ = 2000.f;
 
 	UpdateViewMatrix();
 	UpdateProjectionMatrix();

@@ -24,6 +24,13 @@ void DirectXGame::Initialize()
 	enemy->Initialize(2, enemyObject.get(), {0, 25, 500});
 	enemy->SetPlayer(player.get());
 
+	skydomeModel = make_unique<Model>();
+	skydomeModel = unique_ptr<Model>(FbxLoader::GetInstance()->LoadModeFromFile("skydome"));
+	skydomeObject = make_unique<Object3D>();
+	skydome = make_unique<Skydome>();
+	skydome->Initialize(skydomeModel.get(), skydomeObject.get());
+
+
 	collisionManager = make_unique<CollisionManager>();
 
 #pragma endregion
@@ -47,6 +54,7 @@ void DirectXGame::Update()
 		enemy->Update();
 	}
 
+	skydome->Update();
 
 	CheckAllCollision();
 #pragma endregion
@@ -65,6 +73,8 @@ void DirectXGame::Draw()
 		enemy->Draw(dxCommon->GetCommandList());
 	}
 
+	skydome->Draw(dxCommon->GetCommandList());
+	
 	//DirectXCommon描画後処理
 	dxCommon->EndDraw();
 }

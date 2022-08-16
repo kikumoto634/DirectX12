@@ -3,6 +3,7 @@
 
 #include "Player.h"
 #include "Enemy.h"
+#include "Skydome.h"
 #include "Collider.h"
 #include "CollisionManager.h"
 
@@ -29,11 +30,18 @@ private:
 
 private:
 
+	//Player
 	std::unique_ptr<GeometryObject3D> playerObject;
 	std::unique_ptr<Player> player;
 
+	//Enemy
 	std::unique_ptr<GeometryObject3D> enemyObject;
 	std::unique_ptr<Enemy> enemy;
+
+	//Sky
+	std::unique_ptr<Model> skydomeModel;		//マテリアル
+	std::unique_ptr<Object3D> skydomeObject;	//オブジェクト
+	std::unique_ptr<Skydome> skydome;
 
 	//衝突判定
 	std::unique_ptr<CollisionManager> collisionManager;
