@@ -24,6 +24,8 @@ void DirectXGame::Initialize()
 	enemy->Initialize(2, enemyObject.get(), {0, 25, 500});
 	enemy->SetPlayer(player.get());
 
+	collisionManager = make_unique<CollisionManager>();
+
 #pragma endregion
 
 }
@@ -76,29 +78,31 @@ void DirectXGame::Finalize()
 
 void DirectXGame::CheckAllCollision()
 {
+	//リストクリア
+	collisionManager->CollisionClear();
+
 	//自弾リストの取得
 	const std::list<std::unique_ptr<PlayerBullet>>& playerBullets = player->GetBullets();
 	//敵弾リストの取得
 	const std::list<std::unique_ptr<EnemyBullet>>& enemyBullets = enemy->GetBullets();
 
-	//コライダー
-	std::list<Collider*> colliders;
+
 	//コライダーをリストに登録
-	colliders.push_back(player.get());
-	colliders.push_back(enemy.get());
+	collisionManager->SetCollision(player.get());
+	collisionManager->SetCollision(enemy.get());
 	//自弾すべてについて
 	for(const std::unique_ptr<PlayerBullet>& bullet : playerBullets){
-		colliders.push_back(bullet.get());
+		collisionManager->SetCollision(bullet.get());
 	}
 	//敵弾すべてについて
 	for(const std::unique_ptr<EnemyBullet>& bullet : enemyBullets){
-		colliders.push_back(bullet.get());
+		collisionManager->SetCollision(bullet.get());
 	}
 
 	//総当たり判定
 	//リスト内のペアを総当たり
-	std::list<Collider*>::iterator itrA = colliders.begin();
-	for(; itrA != colliders.end(); ++itrA){
+	std::list<Collider*>::iterator itrA = collisionManager->colliders.begin();
+	for(; itrA != collisionManager->colliders.end(); ++itrA){
 		//イテレータAからコライダーAを取得
 		Collider* colliderA = *itrA;
 
@@ -106,7 +110,7 @@ void DirectXGame::CheckAllCollision()
 		std::list<Collider*>::iterator itrB = itrA;
 		itrB++;
 
-		for(; itrB != colliders.end(); ++itrB){
+		for(; itrB != collisionManager->colliders.end(); ++itrB){
 			//イテレータBからコライダーBを取得
 			Collider* colliderB = *itrB;
 
@@ -132,3 +136,4 @@ void DirectXGame::CheckCollisionPair(Collider *colliderA, Collider *colliderB)
 		colliderB->OnCollision();
 	}
 }
+

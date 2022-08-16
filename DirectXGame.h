@@ -4,6 +4,7 @@
 #include "Player.h"
 #include "Enemy.h"
 #include "Collider.h"
+#include "CollisionManager.h"
 
 class DirectXGame : public GameBase
 {
@@ -25,6 +26,7 @@ private:
 
 	void CheckCollisionPair(Collider* colliderA, Collider* colliderB);
 
+
 private:
 
 	std::unique_ptr<GeometryObject3D> playerObject;
@@ -32,5 +34,8 @@ private:
 
 	std::unique_ptr<GeometryObject3D> enemyObject;
 	std::unique_ptr<Enemy> enemy;
+
+	//衝突判定
+	std::unique_ptr<CollisionManager> collisionManager;
 };
 
