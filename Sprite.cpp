@@ -161,7 +161,7 @@ void Sprite::SpriteTransferVertexBuffer()
 		float tex_left = this->texLeftTop.x / resDesc.Width;
 		float tex_right = (this->texLeftTop.x + this->texSize.x) / resDesc.Width;
 		float tex_top = this->texLeftTop.y / resDesc.Height;
-		float tex_bottom = (this->texLeftTop.x + this->texSize.y) / resDesc.Height;
+		float tex_bottom = (this->texLeftTop.y + this->texSize.y) / resDesc.Height;
 	
 		vertices[LB].uv = {tex_left, tex_bottom};
 		vertices[LT].uv = {tex_left, tex_top};

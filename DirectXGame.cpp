@@ -30,7 +30,7 @@ void DirectXGame::Initialize()
 
 
 	//オブジェクト生成
-	for(int i = 0; i < ObjectNum; i++)
+	/*for(int i = 0; i < ObjectNum; i++)
 	{
 		object[i] = make_unique<GeometryObject3D>();
 		object[i]->Initialize();
@@ -38,7 +38,7 @@ void DirectXGame::Initialize()
 		object[i]->SetTexNumber(i%2 + 1);
 		object[i]->SetRotation({0, 0, float(-0.5 + i*0.25)});
 		object[i]->SetPosition({float(-50 + i*25), 0, 0});
-	}
+	}*/
 	
 	//FBX モデル名を指定してファイル読み込み
 	//FbxLoader::GetInstance()->LoadModeFromFile("cube");
@@ -50,7 +50,7 @@ void DirectXGame::Initialize()
 	modelObject->SetModel(model.get());
 	modelObject->PlayAnimation();
 	modelObject->SetScale({5.f, 5.f, 5.f});
-
+	modelObject->SetRotation({0,90,0});
 
 #pragma endregion
 
@@ -104,7 +104,7 @@ void DirectXGame::Update()
 
 
 	//オブジェクト
-	if(input->Push(DIK_LEFT) || input->Push(DIK_RIGHT) || input->Push(DIK_UP) || input->Push(DIK_DOWN)){
+	/*if(input->Push(DIK_LEFT) || input->Push(DIK_RIGHT) || input->Push(DIK_UP) || input->Push(DIK_DOWN)){
 		XMFLOAT3 pos = object[2]->GetPosition();
 			
 		if(input->Push(DIK_LEFT)){
@@ -124,16 +124,16 @@ void DirectXGame::Update()
 		}
 
 		object[2]->SetPosition(pos);
-	}
+	}*/
 
 	//カメラ更新
 	camera->Update();
 
 	//更新
-	for(int i = 0; i < ObjectNum; i++)
+	/*for(int i = 0; i < ObjectNum; i++)
 	{
 		object[i]->Update();
-	}
+	}*/
 
 	modelObject->Update();
 
@@ -158,10 +158,10 @@ void DirectXGame::Draw()
 
 
 	//3D描画
-	for(int i = 0; i < ObjectNum; i++)
+	/*for(int i = 0; i < ObjectNum; i++)
 	{
 		object[i]->Draw(dxCommon->GetCommandList());
-	}
+	}*/
 
 	modelObject->Draw(dxCommon->GetCommandList());
 
